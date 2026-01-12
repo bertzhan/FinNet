@@ -1,0 +1,38 @@
+# 环境变量文件
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 数据文件
+data/
+*.pdf
+*.csv
+*.parquet
+
+# 日志
+*.log
+logs/
+
+# Docker
+.dockerignore
+
+# 临时文件
+tmp/
+temp/
+*.tmp

@@ -1,0 +1,121 @@
+version: '3.8'
+
+services:
+  # MinIO 对象存储服务
+  minio:
+    image: minio/minio:latest
+    container_name: finnet-minio
+    ports:
+      - "9000:9000"  # API端口
+      - "9001:9001"  # Console端口
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-admin123456}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - finnet-network
+
+  # PostgreSQL 元数据数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: finnet-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-finnet}
+      POSTGRES_USER: ${POSTGRES_USER:-finnet}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-finnet123456}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-finnet}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - finnet-network
+
+  # Milvus Standalone 向量数据库
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.5
+    container_name: finnet-etcd
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - etcd_data:/etcd
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - finnet-network
+
+  minio-milvus:
+    image: minio/minio:latest
+    container_name: finnet-minio-milvus
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+    volumes:
+      - minio_milvus_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - finnet-network
+
+  milvus:
+    image: milvusdb/milvus:v2.3.4
+    container_name: finnet-milvus
+    command: ["milvus", "run", "standalone"]
+    ports:
+      - "19530:19530"  # gRPC端口
+      - "9091:9091"    # 指标端口
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio-milvus:9000
+    volumes:
+      - milvus_data:/var/lib/milvus
+    depends_on:
+      - etcd
+      - minio-milvus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+    networks:
+      - finnet-network
+
+volumes:
+  minio_data:
+    driver: local
+  postgres_data:
+    driver: local
+  etcd_data:
+    driver: local
+  minio_milvus_data:
+    driver: local
+  milvus_data:
+    driver: local
+
+networks:
+  finnet-network:
+    driver: bridge
