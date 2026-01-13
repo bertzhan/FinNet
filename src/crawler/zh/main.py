@@ -999,6 +999,150 @@ class SharedState:
             data[orgid] = existing
             save_json(self.code_change_cache_file, data)
 
+# ----------------------- MinIO上传辅助函数 -----------------------
+def upload_to_minio_in_process(local_path: str, code: str, year: int, quarter: str, out_root: str,
+                               publish_date: Optional[str] = None):
+    """
+    在工作进程中上传文件到MinIO
+    
+    Args:
+        local_path: 本地文件路径
+        code: 股票代码
+        year: 年份
+        quarter: 季度（如 "Q1"）
+        out_root: 输出根目录
+        publish_date: 发布日期（ISO格式，可选）
+    """
+    try:
+        # 检查环境变量
+        use_minio = os.getenv("USE_MINIO", "false").lower() == "true"
+        if not use_minio:
+            return  # MinIO未启用，跳过
+        
+        minio_upload_on_download = os.getenv("MINIO_UPLOAD_ON_DOWNLOAD", "true").lower() == "true"
+        if not minio_upload_on_download:
+            return  # 配置为不在下载时上传
+        
+        # 读取MinIO配置
+        minio_endpoint = os.getenv("MINIO_ENDPOINT")
+        minio_access_key = os.getenv("MINIO_ACCESS_KEY")
+        minio_secret_key = os.getenv("MINIO_SECRET_KEY")
+        minio_bucket = os.getenv("MINIO_BUCKET", "company-datalake")
+        
+        if not all([minio_endpoint, minio_access_key, minio_secret_key]):
+            logging.warning(f"[{code}] MinIO配置不完整，跳过上传")
+            return
+        
+        # 创建MinIO客户端（每个进程独立创建）
+        try:
+            from minio import Minio
+            from minio.error import S3Error
+        except ImportError:
+            logging.warning(f"[{code}] minio库未安装，跳过上传")
+            return
+        
+        endpoint = minio_endpoint.replace("http://", "").replace("https://", "")
+        secure = minio_endpoint.startswith("https://")
+        
+        client = Minio(
+            endpoint,
+            access_key=minio_access_key,
+            secret_key=minio_secret_key,
+            secure=secure
+        )
+        
+        # 确保桶存在
+        try:
+            if not client.bucket_exists(minio_bucket):
+                client.make_bucket(minio_bucket)
+        except S3Error as e:
+            logging.warning(f"[{code}] 检查/创建桶失败: {e}")
+            return
+        
+        # 生成对象名称（符合plan.md规范）
+        # 格式: bronze/zh_stock/quarterly_reports/{year}/{quarter}/{stock_code}/{filename}
+        filename = os.path.basename(local_path)
+        
+        # 确定文档类型
+        quarter_num = int(quarter[1]) if quarter.startswith("Q") else 4
+        if quarter_num == 4:
+            doc_type = "annual_reports"
+        elif quarter_num == 2:
+            doc_type = "interim_reports"
+        else:
+            doc_type = "quarterly_reports"
+        
+        # 构建对象名称（去掉key=value格式，直接使用值）
+        object_name = f"bronze/zh_stock/{doc_type}/{year}/{quarter}/{code}/{filename}"
+        
+        # 检查文件是否已存在
+        try:
+            client.stat_object(minio_bucket, object_name)
+            logging.info(f"[{code}] 文件已在MinIO中存在，跳过上传: {object_name}")
+            return
+        except S3Error:
+            pass  # 文件不存在，继续上传
+        
+        # 上传文件（带元数据）
+        try:
+            # 准备元数据
+            metadata = {
+                "stock_code": code,
+                "year": str(year),
+                "quarter": quarter,
+            }
+            if publish_date:
+                metadata["publish_date"] = publish_date
+            
+            client.fput_object(
+                minio_bucket,
+                object_name,
+                local_path,
+                content_type='application/pdf',
+                metadata=metadata
+            )
+            logging.info(f"[{code}] ✅ 已上传到MinIO: {object_name} (发布日期: {publish_date or 'N/A'})")
+        except S3Error as e:
+            # 上传失败，记录到失败文件
+            error_msg = str(e)
+            logging.error(f"[{code}] ❌ MinIO上传失败: {error_msg}")
+            _record_minio_upload_failure(code, year, quarter, local_path, error_msg, out_root)
+        except Exception as e:
+            error_msg = str(e)
+            logging.error(f"[{code}] ❌ MinIO上传异常: {error_msg}")
+            _record_minio_upload_failure(code, year, quarter, local_path, error_msg, out_root)
+    
+    except Exception as e:
+        # 任何异常都不应该阻塞下载流程
+        logging.warning(f"[{code}] MinIO上传处理异常（不影响下载）: {e}")
+
+
+def _record_minio_upload_failure(code: str, year: int, quarter: str, file_path: str, 
+                                 error_msg: str, out_root: str):
+    """
+    记录MinIO上传失败
+    
+    Args:
+        code: 股票代码
+        year: 年份
+        quarter: 季度
+        file_path: 文件路径
+        error_msg: 错误信息
+        out_root: 输出根目录
+    """
+    try:
+        fail_csv = os.path.join(out_root, "minio_upload_failed.csv")
+        file_exists = os.path.exists(fail_csv)
+        
+        with open(fail_csv, 'a', encoding=CSV_ENCODING, newline='', errors='replace') as f:
+            writer = csv.writer(f)
+            if not file_exists:
+                writer.writerow(['code', 'year', 'quarter', 'file_path', 'error_message', 'timestamp'])
+            writer.writerow([code, year, quarter, file_path, error_msg, datetime.now().isoformat()])
+    except Exception as e:
+        logging.warning(f"记录MinIO上传失败信息时出错: {e}")
+
+
 def process_single_task(task_data: Tuple) -> Tuple[bool, Optional[Tuple]]:
     """
     处理单个下载任务（在独立进程中运行）
@@ -1131,11 +1275,13 @@ def process_single_task(task_data: Tuple) -> Tuple[bool, Optional[Tuple]]:
         adj = best.get("adjunctUrl", "")
         pdf_url = pdf_url_from_adj(adj)
         ts = parse_time_to_ms(best.get("announcementTime"))
-        pub_date = ms_to_ddmmyyyy(ts)
+        pub_date = ms_to_ddmmyyyy(ts)  # 发布日期（用于元数据）
+        pub_date_iso = datetime.fromtimestamp(ts/1000).isoformat() if ts > 0 else None  # ISO格式日期
 
         out_dir = os.path.join(out_root, exch_dir, code, str(year))
         ensure_dir(out_dir)
-        fname = f"{code}_{year}_{quarter}_{pub_date}.pdf"
+        # 文件名不包含发布日期，只包含：股票代码_年份_季度.pdf
+        fname = f"{code}_{year}_{quarter}.pdf"
         out_path = os.path.join(out_dir, fname)
 
         # 定义刷新函数（先尝试带orgId，失败则不带orgId）
@@ -1152,6 +1298,12 @@ def process_single_task(task_data: Tuple) -> Tuple[bool, Optional[Tuple]]:
         if ok:
             logging.info(f"[{code}] 保存成功：{out_path}")
             shared.save_checkpoint(key)
+            
+            # 立即上传到MinIO（如果启用）
+            # quarter 应该是字符串格式（"Q1", "Q2"等），如果不是则转换
+            quarter_str = quarter if isinstance(quarter, str) else f"Q{quarter}"
+            upload_to_minio_in_process(out_path, code, year, quarter_str, out_root, pub_date_iso)
+            
             return True, None
         else:
             logging.error(f"[{code}] 下载失败：{real_company_name}（{code}）{year}-{quarter} - {msg}")
@@ -1438,11 +1590,13 @@ def run(input_csv: str, out_root: str, fail_csv: str, watch_log=False, debug=Fal
         adj = best.get("adjunctUrl","")
         pdf_url = pdf_url_from_adj(adj)
         ts = parse_time_to_ms(best.get("announcementTime"))
-        pub_date = ms_to_ddmmyyyy(ts)
+        pub_date = ms_to_ddmmyyyy(ts)  # 发布日期（用于日志）
+        pub_date_iso = datetime.fromtimestamp(ts/1000).isoformat() if ts > 0 else None  # ISO格式日期（用于元数据）
 
         out_dir = os.path.join(out_root, exch_dir, code, str(year))
         ensure_dir(out_dir)
-        fname = f"{code}_{year}_{quarter}_{pub_date}.pdf"
+        # 文件名不包含发布日期，只包含：股票代码_年份_季度.pdf
+        fname = f"{code}_{year}_{quarter}.pdf"
         out_path = os.path.join(out_dir, fname)
 
         # 定义刷新函数（404 时重新拉列表，先尝试带orgId，失败则不带orgId）
