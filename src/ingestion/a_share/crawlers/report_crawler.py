@@ -34,15 +34,13 @@ class ReportCrawler(CninfoBaseCrawler):
         self,
         enable_minio: bool = True,
         enable_postgres: bool = True,
-        workers: int = 1,
-        old_pdf_dir: Optional[str] = None
+        workers: int = 1
     ):
         """
         Args:
             enable_minio: 是否启用 MinIO 上传
             enable_postgres: 是否启用 PostgreSQL 记录
             workers: 并行进程数（1 表示单线程）
-            old_pdf_dir: 旧PDF目录（用于检查重复下载）
         """
         super().__init__(
             market=Market.A_SHARE,
@@ -50,7 +48,6 @@ class ReportCrawler(CninfoBaseCrawler):
             enable_postgres=enable_postgres
         )
         self.workers = workers
-        self.old_pdf_dir = old_pdf_dir
 
     def _download_file(self, task: CrawlTask) -> Tuple[bool, Optional[str], Optional[str]]:
         """
@@ -66,10 +63,8 @@ class ReportCrawler(CninfoBaseCrawler):
             # 导入任务处理器模块
             try:
                 from ..processor.report_processor import process_single_task
-                from ..utils.file_utils import build_existing_pdf_cache
             except ImportError:
                 from src.ingestion.a_share.processor.report_processor import process_single_task
-                from src.ingestion.a_share.utils.file_utils import build_existing_pdf_cache
 
             # 创建临时目录用于下载
             temp_dir = tempfile.mkdtemp(prefix='cninfo_download_')
@@ -82,10 +77,7 @@ class ReportCrawler(CninfoBaseCrawler):
             orgid_cache_file = self._get_cache_file_path('orgid_cache.json')
             code_change_cache_file = self._get_cache_file_path('code_change_cache.json')
 
-            # 如果指定了旧PDF目录，构建缓存
             existing_pdf_cache = set()
-            if self.old_pdf_dir and os.path.exists(self.old_pdf_dir):
-                existing_pdf_cache = build_existing_pdf_cache(self.old_pdf_dir)
 
             task_data = (
                 task.stock_code,
@@ -108,12 +100,64 @@ class ReportCrawler(CninfoBaseCrawler):
                 return False, None, error_msg
 
             # 查找下载的文件
+            expected_path = self._get_expected_file_path(temp_dir, task)
+            self.logger.debug(f"期望文件路径: {expected_path}")
             file_path = self._find_downloaded_file(temp_dir, task)
 
             if not file_path:
-                error_msg = "文件下载成功但未找到"
-                self.logger.error(f"{error_msg}: {task.stock_code} {task.year} Q{task.quarter}")
-                return False, None, error_msg
+                # 文件未找到，可能是以下情况：
+                # 1. checkpoint 已存在（跳过下载，但文件不在 temp_dir）
+                # 2. 下载失败但返回了成功（异常情况）
+                
+                # 检查临时目录中是否有任何文件
+                temp_files = []
+                if os.path.exists(temp_dir):
+                    for root, dirs, files in os.walk(temp_dir):
+                        for f in files:
+                            if f.endswith('.pdf'):
+                                temp_files.append(os.path.join(root, f))
+                
+                self.logger.warning(
+                    f"文件未找到: {task.stock_code} {task.year} Q{task.quarter}\n"
+                    f"  期望路径: {expected_path}\n"
+                    f"  临时目录: {temp_dir}\n"
+                    f"  临时目录中的PDF文件数: {len(temp_files)}\n"
+                    f"  前3个PDF文件: {temp_files[:3]}"
+                )
+                
+                # 检查 checkpoint
+                from ..state.shared_state import SharedState
+                checkpoint_file = os.path.join(temp_dir, "checkpoint.json")
+                shared = SharedState(checkpoint_file, orgid_cache_file, code_change_cache_file, shared_lock)
+                checkpoint = shared.load_checkpoint()
+                key = f"{task.stock_code}-{task.year}-{quarter_str}"
+                
+                if checkpoint.get(key):
+                    # checkpoint 存在但文件不在 temp_dir，说明是之前运行留下的 checkpoint
+                    # 删除 checkpoint，强制重新下载
+                    self.logger.warning(f"checkpoint存在但文件未找到，删除checkpoint并重新下载: {task.stock_code} {task.year} Q{task.quarter}")
+                    shared.remove_checkpoint(key)
+                    # 重新调用下载
+                    success, failure_record = process_single_task(task_data)
+                    if not success:
+                        error_msg = failure_record[4] if failure_record and len(failure_record) > 4 else "下载失败"
+                        self.logger.error(f"重新下载失败: {task.stock_code} {task.year} Q{task.quarter} - {error_msg}")
+                        return False, None, error_msg
+                    # 再次查找文件
+                    file_path = self._find_downloaded_file(temp_dir, task)
+                    if not file_path:
+                        error_msg = "重新下载后文件仍未找到"
+                        self.logger.error(f"{error_msg}: {task.stock_code} {task.year} Q{task.quarter}")
+                        return False, None, error_msg
+                else:
+                    # 没有 checkpoint，说明下载失败
+                    error_msg = "文件下载失败或未找到"
+                    self.logger.error(
+                        f"{error_msg}: {task.stock_code} {task.year} Q{task.quarter}\n"
+                        f"  process_single_task 返回了成功，但文件不存在\n"
+                        f"  可能原因：1) 下载函数返回成功但实际未保存文件 2) 文件保存路径不匹配"
+                    )
+                    return False, None, error_msg
 
             self.logger.info(f"下载成功: {file_path}")
             return True, file_path, None
@@ -122,6 +166,45 @@ class ReportCrawler(CninfoBaseCrawler):
             error_msg = f"下载异常: {e}"
             self.logger.error(f"{error_msg}: {task.stock_code} {task.year} Q{task.quarter}", exc_info=True)
             return False, None, error_msg
+
+    def _get_expected_file_path(self, output_root: str, task: CrawlTask) -> str:
+        """
+        获取期望的文件路径（用于调试）
+
+        Args:
+            output_root: 输出根目录
+            task: 任务
+
+        Returns:
+            期望的文件路径
+        """
+        from src.storage.object_store.path_manager import PathManager
+        from src.common.constants import Market, DocType
+        
+        quarter_num = task.quarter if task.quarter else 4
+        
+        if quarter_num == 4:
+            doc_type = DocType.ANNUAL_REPORT
+        elif quarter_num == 2:
+            doc_type = DocType.INTERIM_REPORT
+        else:
+            doc_type = DocType.QUARTERLY_REPORT
+        
+        quarter_str = f"Q{quarter_num}" if quarter_num else "Q4"
+        filename = f"{task.stock_code}_{task.year}_{quarter_str}.pdf"
+        
+        path_manager = PathManager()
+        quarter_for_path = quarter_num if quarter_num not in [2, 4] else None
+        minio_path = path_manager.get_bronze_path(
+            market=Market.A_SHARE,
+            doc_type=doc_type,
+            stock_code=task.stock_code,
+            year=task.year,
+            quarter=quarter_for_path,
+            filename=filename
+        )
+        
+        return os.path.join(output_root, minio_path)
 
     def _find_downloaded_file(self, output_root: str, task: CrawlTask) -> Optional[str]:
         """
@@ -252,8 +335,7 @@ class ReportCrawler(CninfoBaseCrawler):
                     out_root=temp_output,
                     fail_csv=temp_fail_csv,
                     workers=self.workers,
-                    debug=False,
-                    old_pdf_dir=self.old_pdf_dir
+                    debug=False
                 )
 
                 # 读取失败记录

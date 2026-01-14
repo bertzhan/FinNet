@@ -27,7 +27,7 @@ class CrawlerConfig:
     minio_endpoint: Optional[str] = None
     minio_access_key: Optional[str] = None
     minio_secret_key: Optional[str] = None
-    minio_bucket: str = "company-datalake"
+    minio_bucket: str = "finnet-datalake"
     minio_upload_on_download: bool = True  # 是否在下载时立即上传
     minio_upload_retry: int = 0  # 上传失败重试次数（默认0，仅记录）
     
@@ -59,7 +59,7 @@ class CrawlerConfig:
             minio_endpoint=os.getenv("MINIO_ENDPOINT"),
             minio_access_key=os.getenv("MINIO_ACCESS_KEY"),
             minio_secret_key=os.getenv("MINIO_SECRET_KEY"),
-            minio_bucket=os.getenv("MINIO_BUCKET", "company-datalake"),
+            minio_bucket=os.getenv("MINIO_BUCKET", "finnet-datalake"),
             minio_upload_on_download=os.getenv("MINIO_UPLOAD_ON_DOWNLOAD", "true").lower() == "true",
             minio_upload_retry=int(os.getenv("MINIO_UPLOAD_RETRY", "0")),
         )

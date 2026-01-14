@@ -100,7 +100,7 @@ def crawl_a_share_quarterly_reports(context) -> Dict:
     use_minio = os.getenv("USE_MINIO", "false").lower() == "true"
     if use_minio:
         minio_endpoint = os.getenv("MINIO_ENDPOINT")
-        minio_bucket = os.getenv("MINIO_BUCKET", "company-datalake")
+        minio_bucket = os.getenv("MINIO_BUCKET", "finnet-datalake")
         if minio_endpoint:
             logger.info(f"✓ MinIO 已启用: {minio_endpoint} (bucket: {minio_bucket})")
         else:

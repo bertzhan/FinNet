@@ -35,7 +35,7 @@ class MinIOConfig(BaseSettings):
     MINIO_ENDPOINT: str = os.getenv("MINIO_ENDPOINT", "localhost:9000")
     MINIO_ACCESS_KEY: str = os.getenv("MINIO_ACCESS_KEY", "admin")
     MINIO_SECRET_KEY: str = os.getenv("MINIO_SECRET_KEY", "admin123456")
-    MINIO_BUCKET: str = os.getenv("MINIO_BUCKET", "company-datalake")
+    MINIO_BUCKET: str = os.getenv("MINIO_BUCKET", "finnet-datalake")
     MINIO_SECURE: bool = os.getenv("MINIO_SECURE", "false").lower() == "true"
 
     class Config:

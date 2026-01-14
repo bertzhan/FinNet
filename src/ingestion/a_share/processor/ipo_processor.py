@@ -140,7 +140,7 @@ def process_single_ipo_task(task_data: Tuple) -> Tuple[bool, Optional[Tuple]]:
 
         if not anns:
             # 尝试通过搜索API获取真实 orgId
-            logger.warning(f"[{code}] 构造的 orgId 可能无效，尝试搜索API方法...")
+            logger.debug(f"[{code}] 构造的 orgId 可能无效，尝试搜索API方法...")
             result = get_orgid_via_search_api(api_session, code)
             if result:
                 real_orgid, company_name = result
@@ -432,7 +432,7 @@ def run_ipo(
 
         if not anns:
             # 搜索API方法
-            logger.warning(f"构造的 orgId 可能无效，尝试搜索API方法...")
+            logger.debug(f"构造的 orgId 可能无效，尝试搜索API方法...")
             result = get_orgid_via_search_api(api_session, code)
             if result:
                 real_orgid, api_company_name = result

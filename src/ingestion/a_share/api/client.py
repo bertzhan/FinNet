@@ -37,9 +37,19 @@ def fetch_anns_by_category(
 
     # 使用季度对应的具体类别，而不是 CATEGORY_ALL
     category = CATEGORY_MAP.get(quarter, CATEGORY_ALL)
+    
+    # 调试：记录类别映射结果
+    if category == CATEGORY_ALL:
+        logger.warning(f"[{code}] 季度 '{quarter}' 未在 CATEGORY_MAP 中找到，使用 CATEGORY_ALL")
+    else:
+        logger.debug(f"[{code}] 季度 '{quarter}' 映射到类别: {category}")
+    
+    # 构建时间窗口
+    se_windows = build_se_windows(year, quarter)
+    logger.debug(f"[{code}] 时间窗口: {se_windows}")
 
     all_list: List[dict] = []
-    for seDate in build_se_windows(year, quarter):
+    for seDate in se_windows:
         page = 1
         while True:
             payload = {

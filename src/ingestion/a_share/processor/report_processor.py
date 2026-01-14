@@ -72,17 +72,15 @@ def process_single_task(task_data: Tuple) -> Tuple[bool, Optional[Tuple]]:
     else:
         shared = SharedState(checkpoint_file, orgid_cache_file, code_change_cache_file, shared_lock)
 
-    # 检查是否已完成
+    # 检查是否已完成（checkpoint）
     key = f"{code}-{year}-{quarter}"
     checkpoint = shared.load_checkpoint()
     if checkpoint.get(key):
+        # checkpoint 存在，但为了确保文件存在，不跳过下载
+        # 如果文件不存在，会在 report_crawler.py 中删除 checkpoint 并重新下载
         return True, None
 
-    # 检查PDF是否已存在于旧目录（使用缓存，O(1)查找）
-    if existing_pdf_cache and check_pdf_exists_in_cache(existing_pdf_cache, code, year, quarter):
-        logger.info(f"[{code}] PDF已存在于旧目录，跳过下载")
-        shared.save_checkpoint(key)  # 标记为已完成，避免重复检查
-        return True, None
+    # 不再检查旧目录，总是重新下载
 
     exch_dir, column_api, _ = detect_exchange(code)
 
@@ -101,19 +99,22 @@ def process_single_task(task_data: Tuple) -> Tuple[bool, Optional[Tuple]]:
         code_change_cache = shared.load_code_change_cache()
         related_codes = get_all_related_codes(code, orgId, code_change_cache)
 
+        # 调试：记录查询参数
+        logger.debug(f"[{code}] 查询参数: year={year} (type={type(year).__name__}), quarter={quarter!r} (type={type(quarter).__name__}), orgId={orgId}")
+
         # 抓公告 - 使用类别过滤（始终先尝试带orgId查询）
         anns = fetch_anns_by_category(api_session, code, orgId, column_api, year, quarter)
 
         # 兜底1：如果类别过滤无结果，尝试使用 CATEGORY_ALL（可能是类别分类问题）
         if not anns:
-            logger.warning(f"[{code}] 类别过滤查询无结果，尝试使用 CATEGORY_ALL")
+            logger.debug(f"[{code}] 类别过滤查询无结果，尝试使用 CATEGORY_ALL")
             anns = fetch_anns(api_session, code, orgId, column_api, year, quarter)  # fetch_anns uses CATEGORY_ALL
             if anns:
                 logger.info(f"[{code}] CATEGORY_ALL查询成功，返回 {len(anns)} 条公告")
 
         # 兜底2：如果带orgId查询无结果，尝试不带orgId查询（处理合并/重组场景，orgId变更）
         if not anns and orgId:
-            logger.warning(f"[{code}] 带orgId查询无结果，尝试不带orgId查询（可能是公司名变更）")
+            logger.debug(f"[{code}] 带orgId查询无结果，尝试不带orgId查询（可能是公司名变更）")
             anns = fetch_anns(api_session, code, None, column_api, year, quarter)  # Use CATEGORY_ALL without orgId
             if anns:
                 logger.info(f"[{code}] 不带orgId查询成功，返回 {len(anns)} 条公告")
@@ -129,7 +130,7 @@ def process_single_task(task_data: Tuple) -> Tuple[bool, Optional[Tuple]]:
         
         if not anns:
             # 尝试通过搜索API获取真实 orgId（新方法，不需要公司名）
-            logger.warning(f"[{code}] 构造的 orgId 可能无效，尝试搜索API方法...")
+            logger.debug(f"[{code}] 构造的 orgId 可能无效，尝试搜索API方法...")
             result = get_orgid_via_search_api(api_session, code)
             if result:
                 real_orgid, company_name = result
@@ -166,7 +167,23 @@ def process_single_task(task_data: Tuple) -> Tuple[bool, Optional[Tuple]]:
                         anns = fetch_anns_by_category(api_session, code, orgId, column_api, year, quarter)
 
         if not anns:
-            logger.error(f"[{code}] 未获得公告列表：{real_company_name}（{code}）{year}-{quarter}")
+            error_msg = (
+                f"未获得公告列表：{real_company_name}（{code}）{year}-{quarter}\n"
+                f"  已尝试的方法：\n"
+                f"  1. 类别过滤查询（带orgId: {orgId}）\n"
+                f"  2. CATEGORY_ALL查询（带orgId）\n"
+                f"  3. CATEGORY_ALL查询（不带orgId）\n"
+                f"  4. 搜索API方法\n"
+                f"  5. searchkey方法\n"
+                f"  6. HTML兜底方法\n"
+                f"  所有方法均未找到公告。\n"
+                f"  可能原因：\n"
+                f"  - 该季度报告尚未发布\n"
+                f"  - orgId不正确（当前: {orgId}）\n"
+                f"  - 查询时间窗口不匹配\n"
+                f"  - API返回空结果"
+            )
+            logger.error(f"[{code}] {error_msg}")
             return False, (code, real_company_name, year, quarter, "no announcements")
 
         # 取最新版（使用相关代码列表）
@@ -449,14 +466,14 @@ def run(
 
         # 兜底1：如果类别过滤无结果，尝试使用 CATEGORY_ALL（可能是类别分类问题）
         if not anns:
-            logger.warning(f"[{code}] 类别过滤查询无结果，尝试使用 CATEGORY_ALL")
+            logger.debug(f"[{code}] 类别过滤查询无结果，尝试使用 CATEGORY_ALL")
             anns = fetch_anns(api_session, code, orgId, column_api, year, quarter)
             if anns:
                 logger.info(f"[{code}] CATEGORY_ALL查询成功，返回 {len(anns)} 条公告")
 
         # 兜底2：如果带orgId查询无结果，尝试不带orgId查询（处理合并/重组场景，orgId变更）
         if not anns and orgId:
-            logger.warning(f"[{code}] 带orgId查询无结果，尝试不带orgId查询（可能是公司名变更）")
+            logger.debug(f"[{code}] 带orgId查询无结果，尝试不带orgId查询（可能是公司名变更）")
             anns = fetch_anns(api_session, code, None, column_api, year, quarter)
             if anns:
                 logger.info(f"[{code}] 不带orgId查询成功，返回 {len(anns)} 条公告")
@@ -482,7 +499,7 @@ def run(
         
         if not anns:
             # 方法2：如果构造的 orgId 无效，尝试通过搜索API获取真实 orgId（不需要公司名）
-            logger.warning(f"构造的 orgId 可能无效，尝试搜索API方法...")
+            logger.debug(f"构造的 orgId 可能无效，尝试搜索API方法...")
             result = get_orgid_via_search_api(api_session, code)
             if result:
                 real_orgid, api_company_name = result

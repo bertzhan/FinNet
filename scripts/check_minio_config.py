@@ -96,7 +96,7 @@ def show_fix_instructions():
     print("MINIO_ENDPOINT=localhost:9000")
     print("MINIO_ACCESS_KEY=admin")
     print("MINIO_SECRET_KEY=admin123456")
-    print("MINIO_BUCKET=company-datalake")
+    print("MINIO_BUCKET=finnet-datalake")
     print("MINIO_SECURE=false")
     
     print("\n方法 2: 设置环境变量")

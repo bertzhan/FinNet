@@ -99,7 +99,7 @@ class FileType:
 # MinIO 桶常量
 class MinIOBucket:
     """MinIO 桶名称（plan.md 5.2）"""
-    DATALAKE = "company-datalake"  # 主数据湖桶
+    DATALAKE = "finnet-datalake"  # 主数据湖桶
 
 
 # PostgreSQL 表名常量

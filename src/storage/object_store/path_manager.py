@@ -17,7 +17,7 @@ class PathManager:
     按照 plan.md 5.2 规范生成对象存储路径
     """
 
-    def __init__(self, bucket: str = "company-datalake"):
+    def __init__(self, bucket: str = "finnet-datalake"):
         """
         Args:
             bucket: MinIO 桶名称

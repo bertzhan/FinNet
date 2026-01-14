@@ -9,9 +9,11 @@ from abc import ABC, abstractmethod
 from typing import List, Dict, Optional, Tuple
 from datetime import datetime
 from dataclasses import dataclass, field
+import os
 
 from src.common.constants import Market, DocType, DocumentStatus
 from src.common.logger import get_logger, LoggerMixin
+from src.common.config import minio_config
 from src.storage.object_store.minio_client import MinIOClient
 from src.storage.object_store.path_manager import PathManager
 from src.storage.metadata.postgres_client import get_postgres_client
@@ -102,13 +104,17 @@ class BaseCrawler(ABC, LoggerMixin):
         self.enable_minio = enable_minio
         self.enable_postgres = enable_postgres
 
+        # 从配置读取 bucket 名称，确保 PathManager 和 MinIOClient 使用相同的 bucket
+        self.bucket_name = minio_config.MINIO_BUCKET
+        self.logger.info(f"BaseCrawler 初始化 - 从配置读取 bucket: '{self.bucket_name}' (环境变量 MINIO_BUCKET: {os.getenv('MINIO_BUCKET', '未设置')})")
+
         # 初始化组件
-        self.path_manager = PathManager()
+        self.path_manager = PathManager(bucket=self.bucket_name)
 
         if self.enable_minio:
             try:
-                self.minio_client = MinIOClient()
-                self.logger.info("MinIO 客户端初始化成功")
+                self.minio_client = MinIOClient(bucket=self.bucket_name)
+                self.logger.info(f"MinIO 客户端初始化成功，bucket: {self.bucket_name}")
             except Exception as e:
                 self.logger.warning(f"MinIO 客户端初始化失败: {e}")
                 self.enable_minio = False
@@ -165,11 +171,15 @@ class BaseCrawler(ABC, LoggerMixin):
         success, local_file_path, error_message = self._download_file(task)
 
         if not success:
-            self.logger.error(f"下载失败: {error_message}")
+            error_msg = error_message or "未知错误"
+            self.logger.error(
+                f"下载失败: {task.stock_code} ({task.company_name}) "
+                f"{task.year if task.year else 'N/A'} Q{task.quarter if task.quarter else 'N/A'} - {error_msg}"
+            )
             return CrawlResult(
                 task=task,
                 success=False,
-                error_message=error_message
+                error_message=error_msg
             )
 
         # 2. 计算文件哈希和大小
@@ -212,8 +222,13 @@ class BaseCrawler(ABC, LoggerMixin):
 
         # 4. 上传到 MinIO
         document_id = None
-        if self.enable_minio and self.minio_client:
+        if not self.enable_minio:
+            self.logger.warning(f"⚠️ MinIO 未启用，跳过上传: {minio_object_name}")
+        elif not self.minio_client:
+            self.logger.error(f"❌ MinIO 客户端未初始化，无法上传: {minio_object_name}")
+        else:
             try:
+                self.logger.info(f"开始上传到 MinIO: {minio_object_name}")
                 upload_success = self.minio_client.upload_file(
                     object_name=minio_object_name,
                     file_path=local_file_path,
@@ -228,9 +243,9 @@ class BaseCrawler(ABC, LoggerMixin):
                 if upload_success:
                     self.logger.info(f"✅ MinIO 上传成功: {minio_object_name}")
                 else:
-                    self.logger.warning(f"⚠️ MinIO 上传失败: {minio_object_name}")
+                    self.logger.error(f"❌ MinIO 上传失败（返回 False）: {minio_object_name}")
             except Exception as e:
-                self.logger.error(f"MinIO 上传异常: {e}")
+                self.logger.error(f"❌ MinIO 上传异常: {e}", exc_info=True)
 
         # 5. 记录到 PostgreSQL
         if self.enable_postgres and self.pg_client:
@@ -274,7 +289,9 @@ class BaseCrawler(ABC, LoggerMixin):
                         document_id = doc.id
                         self.logger.info(f"✅ PostgreSQL 记录成功: id={document_id}")
             except Exception as e:
-                self.logger.error(f"PostgreSQL 记录异常: {e}")
+                self.logger.error(f"❌ PostgreSQL 记录异常: {e}", exc_info=True)
+                # 记录失败但不影响整体成功状态（因为 MinIO 上传已成功）
+                document_id = None
 
         # 6. 返回结果
         return CrawlResult(

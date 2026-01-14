@@ -1,0 +1,32 @@
+# Dagster 爬虫配置示例文件
+# 使用方法：dagster job execute -j crawl_a_share_reports_job -m src.processing.compute.dagster -c examples/dagster_config_example.yaml
+
+ops:
+  crawl_a_share_reports_op:
+    config:
+      # 公司列表文件路径
+      company_list_path: "src/crawler/zh/company_list.csv"
+      
+      # 输出根目录（使用相对路径，避免权限问题）
+      output_root: "./downloads"
+      
+      # 并行进程数（建议 4-8）
+      workers: 4
+      
+      # 旧PDF目录（可选，用于检查重复下载）
+      # old_pdf_dir: "./old_pdfs"
+      
+      # 是否启用 MinIO 上传
+      enable_minio: true
+      
+      # 是否启用 PostgreSQL 记录
+      enable_postgres: true
+      
+      # 年份（可选，不设置则自动计算当前和上一季度）
+      # year: 2023
+      
+      # 季度（可选，1-4，不设置则自动计算）
+      # quarter: 3
+      
+      # 文档类型：quarterly_report（季报）或 annual_report（年报）
+      doc_type: "quarterly_report"

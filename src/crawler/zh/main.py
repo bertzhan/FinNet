@@ -1027,7 +1027,7 @@ def upload_to_minio_in_process(local_path: str, code: str, year: int, quarter: s
         minio_endpoint = os.getenv("MINIO_ENDPOINT")
         minio_access_key = os.getenv("MINIO_ACCESS_KEY")
         minio_secret_key = os.getenv("MINIO_SECRET_KEY")
-        minio_bucket = os.getenv("MINIO_BUCKET", "company-datalake")
+        minio_bucket = os.getenv("MINIO_BUCKET", "finnet-datalake")
         
         if not all([minio_endpoint, minio_access_key, minio_secret_key]):
             logging.warning(f"[{code}] MinIO配置不完整，跳过上传")

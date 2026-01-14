@@ -47,6 +47,9 @@ class MinIOClient(LoggerMixin):
         self.bucket = bucket or minio_config.MINIO_BUCKET
         self.secure = secure if secure is not None else minio_config.MINIO_SECURE
 
+        # 记录实际使用的 bucket 名称（用于调试）
+        self.logger.info(f"MinIOClient 初始化 - 使用的 bucket: '{self.bucket}' (参数: {bucket}, 配置: {minio_config.MINIO_BUCKET})")
+
         # 移除协议前缀
         self.endpoint = self.endpoint.replace("http://", "").replace("https://", "")
 
@@ -64,13 +67,14 @@ class MinIOClient(LoggerMixin):
     def _ensure_bucket(self) -> None:
         """确保桶存在，不存在则创建"""
         try:
+            self.logger.info(f"检查 MinIO bucket '{self.bucket}' 是否存在...")
             if not self.client.bucket_exists(self.bucket):
                 self.client.make_bucket(self.bucket)
-                self.logger.info(f"创建 MinIO 桶: {self.bucket}")
+                self.logger.info(f"✅ 创建 MinIO bucket: {self.bucket}")
             else:
-                self.logger.debug(f"MinIO 桶已存在: {self.bucket}")
+                self.logger.info(f"✅ MinIO bucket '{self.bucket}' 已存在")
         except S3Error as e:
-            self.logger.error(f"检查/创建桶失败: {e}")
+            self.logger.error(f"❌ 检查/创建 bucket '{self.bucket}' 失败: {e}")
             raise
 
     def upload_file(
@@ -116,6 +120,7 @@ class MinIOClient(LoggerMixin):
             if file_path:
                 # 从文件路径上传
                 file_size = Path(file_path).stat().st_size
+                self.logger.info(f"开始上传到 MinIO bucket '{self.bucket}': {object_name} ({file_size} bytes)")
                 self.client.fput_object(
                     self.bucket,
                     object_name,
@@ -123,7 +128,7 @@ class MinIOClient(LoggerMixin):
                     content_type=content_type,
                     metadata=metadata
                 )
-                self.logger.info(f"上传成功: {object_name} ({file_size} bytes)")
+                self.logger.info(f"✅ 上传成功到 bucket '{self.bucket}': {object_name} ({file_size} bytes)")
             elif data:
                 # 从字节数据上传
                 data_stream = io.BytesIO(data)

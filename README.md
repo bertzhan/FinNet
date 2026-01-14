@@ -17,8 +17,9 @@ FinNet MVP 是一个面向大模型训练和知识库应用的数据湖平台，
 
 ### 前置要求
 
-- Docker >= 20.10
-- Docker Compose >= 2.0
+- Python >= 3.9
+- Docker >= 20.10 (可选，用于运行 MinIO/PostgreSQL/Milvus)
+- Docker Compose >= 2.0 (可选)
 - 至少 8GB 可用内存
 - 至少 20GB 可用磁盘空间
 
@@ -29,7 +30,20 @@ git clone <repository-url>
 cd FinNet
 ```
 
-### 2. 配置环境变量
+### 2. 安装 Python 依赖
+
+```bash
+# 方式1：使用安装脚本（推荐）
+bash scripts/install_dependencies.sh
+
+# 方式2：手动安装
+pip install -r requirements.txt
+
+# 如果网络较慢，可以使用国内镜像
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+### 3. 配置环境变量
 
 ```bash
 cp env.example .env

@@ -37,7 +37,7 @@ def upload_existing_files(reports_dir="./reports", dry_run=False):
         print("  export MINIO_ENDPOINT=http://localhost:9000")
         print("  export MINIO_ACCESS_KEY=admin")
         print("  export MINIO_SECRET_KEY=admin123456")
-        print("  export MINIO_BUCKET=company-datalake")
+        print("  export MINIO_BUCKET=finnet-datalake")
         return False
     
     # 创建MinIO存储实例

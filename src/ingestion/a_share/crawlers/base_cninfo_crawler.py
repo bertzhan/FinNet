@@ -144,8 +144,13 @@ class CninfoBaseCrawler(BaseCrawler):
 
         # 上传到 MinIO
         document_id = None
-        if self.enable_minio and self.minio_client:
+        if not self.enable_minio:
+            self.logger.warning(f"⚠️ MinIO 未启用，跳过上传: {minio_object_name}")
+        elif not self.minio_client:
+            self.logger.error(f"❌ MinIO 客户端未初始化，无法上传: {minio_object_name}")
+        else:
             try:
+                self.logger.info(f"开始上传到 MinIO: {minio_object_name}")
                 metadata = {
                     'stock_code': task.stock_code,
                     'year': str(year) if year else '',
@@ -173,12 +178,17 @@ class CninfoBaseCrawler(BaseCrawler):
                 if upload_success:
                     self.logger.info(f"✅ MinIO 上传成功: {minio_object_name}")
                 else:
-                    self.logger.warning(f"⚠️ MinIO 上传失败: {minio_object_name}")
+                    self.logger.error(f"❌ MinIO 上传失败（返回 False）: {minio_object_name}")
             except Exception as e:
-                self.logger.error(f"MinIO 上传异常: {e}")
+                self.logger.error(f"❌ MinIO 上传异常: {e}", exc_info=True)
 
         # 记录到 PostgreSQL
-        if self.enable_postgres and self.pg_client:
+        document_id = None
+        if not self.enable_postgres:
+            self.logger.warning(f"⚠️ PostgreSQL 未启用，跳过记录: {minio_object_name}")
+        elif not self.pg_client:
+            self.logger.error(f"❌ PostgreSQL 客户端未初始化，无法记录: {minio_object_name}")
+        elif self.enable_postgres and self.pg_client:
             try:
                 from src.storage.metadata import crud
                 with self.pg_client.get_session() as session:
@@ -206,7 +216,9 @@ class CninfoBaseCrawler(BaseCrawler):
                         document_id = doc.id
                         self.logger.info(f"✅ PostgreSQL 记录成功: id={document_id}")
             except Exception as e:
-                self.logger.error(f"PostgreSQL 记录异常: {e}")
+                self.logger.error(f"❌ PostgreSQL 记录异常: {e}", exc_info=True)
+                # 记录失败但不影响整体成功状态（因为 MinIO 上传已成功）
+                document_id = None
 
         return CrawlResult(
             task=task,

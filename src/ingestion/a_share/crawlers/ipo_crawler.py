@@ -160,8 +160,18 @@ class CninfoIPOProspectusCrawler(CninfoBaseCrawler):
         if not os.path.exists(ipo_dir):
             return None
 
-        # IPO文件命名：code_year_date.pdf 或 code_year_date.html
         import glob
+        # IPO文件命名：根据 ipo_processor.py，文件名格式为 {code}.pdf 或 {code}.html
+        # 先尝试精确匹配：{code}.pdf 或 {code}.html
+        exact_pdf = os.path.join(ipo_dir, f"{task.stock_code}.pdf")
+        if os.path.exists(exact_pdf):
+            return exact_pdf
+        
+        exact_html = os.path.join(ipo_dir, f"{task.stock_code}.html")
+        if os.path.exists(exact_html):
+            return exact_html
+        
+        # 兼容旧格式：{code}_*.pdf 或 {code}_*.html（如果有的话）
         pattern = f"{task.stock_code}_*.pdf"
         pdf_files = glob.glob(os.path.join(ipo_dir, pattern))
         if pdf_files:
@@ -255,6 +265,16 @@ class CninfoIPOProspectusCrawler(CninfoBaseCrawler):
                         # 成功任务，查找文件
                         file_path = self._find_downloaded_file(temp_output, task)
                         if file_path and os.path.exists(file_path):
+                            # 检查文件格式，如果是HTML则不保存（与单任务模式一致）
+                            if file_path.lower().endswith(('.html', '.htm')):
+                                self.logger.info(f"检测到HTML格式文件，跳过保存: {file_path}")
+                                results.append(CrawlResult(
+                                    task=task,
+                                    success=False,
+                                    error_message="HTML格式文件不保存"
+                                ))
+                                continue
+                            
                             # 读取发布日期信息（从metadata文件）
                             metadata_file = file_path.replace('.pdf', '.meta.json').replace('.html', '.meta.json')
                             if os.path.exists(metadata_file):
