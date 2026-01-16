@@ -34,6 +34,7 @@ from src.ingestion.a_share import ReportCrawler, CninfoIPOProspectusCrawler
 from src.ingestion.base.base_crawler import CrawlTask, CrawlResult
 from src.common.constants import Market, DocType
 from src.common.config import common_config
+from src.storage.metadata.quarantine_manager import QuarantineManager
 
 # 获取项目根目录
 PROJECT_ROOT = Path(common_config.PROJECT_ROOT)
@@ -489,6 +490,15 @@ def validate_crawl_results_op(context, crawl_results: Dict) -> Dict:
     results = crawl_results.get("results", [])
     validated_count = 0
     failed_count = 0
+    quarantined_count = 0
+    
+    # 初始化隔离管理器
+    quarantine_manager = None
+    try:
+        quarantine_manager = QuarantineManager()
+        logger.info("隔离管理器初始化成功")
+    except Exception as e:
+        logger.warning(f"隔离管理器初始化失败: {e}，将跳过自动隔离")
     
     # 数据质量检查
     failed_results = []
@@ -499,46 +509,84 @@ def validate_crawl_results_op(context, crawl_results: Dict) -> Dict:
         company_name = result_info.get("company_name", "未知")
         year = result_info.get("year")
         quarter = result_info.get("quarter")
+        doc_type = result_info.get("doc_type", "quarterly_report")
+        minio_path = result_info.get("minio_object_name")
+        doc_id = result_info.get("document_id")
         
         # 如果任务本身失败，记录失败原因
         if not result_info.get("success"):
             error_msg = result_info.get("error", "未知错误")
+            reason = f"爬取失败: {error_msg}"
             failed_results.append({
                 "stock_code": stock_code,
                 "company_name": company_name,
                 "year": year,
                 "quarter": quarter,
-                "reason": f"爬取失败: {error_msg}"
+                "reason": reason
             })
             failed_count += 1
+            
+            # 如果文件已上传但爬取失败，隔离文件
+            if quarantine_manager and minio_path and doc_id:
+                try:
+                    quarantine_manager.quarantine_document(
+                        document_id=doc_id,
+                        source_type="a_share",
+                        doc_type=doc_type,
+                        original_path=minio_path,
+                        failure_stage="ingestion_failed",
+                        failure_reason=reason,
+                        failure_details=error_msg
+                    )
+                    quarantined_count += 1
+                    logger.info(f"✅ 已隔离爬取失败的文档: {minio_path}")
+                except Exception as e:
+                    logger.error(f"❌ 隔离失败: {e}")
             continue
         
         # 检查1: MinIO路径是否存在
-        minio_path = result_info.get("minio_object_name")
         if not minio_path:
             logger.warning(f"缺少MinIO路径: {stock_code}")
+            reason = "缺少MinIO路径"
             failed_results.append({
                 "stock_code": stock_code,
                 "company_name": company_name,
                 "year": year,
                 "quarter": quarter,
-                "reason": "缺少MinIO路径"
+                "reason": reason
             })
             failed_count += 1
             continue
         
         # 检查2: 数据库ID是否存在
-        doc_id = result_info.get("document_id")
         if not doc_id:
             logger.warning(f"缺少数据库ID: {stock_code}")
+            reason = "缺少数据库ID"
             failed_results.append({
                 "stock_code": stock_code,
                 "company_name": company_name,
                 "year": year,
                 "quarter": quarter,
-                "reason": "缺少数据库ID"
+                "reason": reason
             })
             failed_count += 1
+            
+            # 隔离文件（如果已上传到MinIO）
+            if quarantine_manager and minio_path:
+                try:
+                    quarantine_manager.quarantine_document(
+                        document_id=None,
+                        source_type="a_share",
+                        doc_type=doc_type,
+                        original_path=minio_path,
+                        failure_stage="validation_failed",
+                        failure_reason=reason,
+                        failure_details="文档记录未成功创建到数据库"
+                    )
+                    quarantined_count += 1
+                    logger.info(f"✅ 已隔离缺少数据库ID的文档: {minio_path}")
+                except Exception as e:
+                    logger.error(f"❌ 隔离失败: {e}")
             continue
         
         # 检查3: 文件大小合理性（PDF应该>10KB）
@@ -556,7 +604,7 @@ def validate_crawl_results_op(context, crawl_results: Dict) -> Dict:
         })
         validated_count += 1
     
-    logger.info(f"验证完成: 通过 {validated_count}, 失败 {failed_count}")
+    logger.info(f"验证完成: 通过 {validated_count}, 失败 {failed_count}, 隔离 {quarantined_count}")
     
     # 数据质量指标
     total = len(results)
@@ -571,6 +619,7 @@ def validate_crawl_results_op(context, crawl_results: Dict) -> Dict:
                 "total": MetadataValue.int(total),
                 "validated": MetadataValue.int(validated_count),
                 "failed": MetadataValue.int(failed_count),
+                "quarantined": MetadataValue.int(quarantined_count),
                 "success_rate": MetadataValue.float(success_rate),
             }
         )
@@ -581,6 +630,7 @@ def validate_crawl_results_op(context, crawl_results: Dict) -> Dict:
         "total": total,
         "passed": validated_count,
         "failed": failed_count,
+        "quarantined": quarantined_count,
         "success_rate": success_rate,
         "passed_results": passed_results[:10],  # 最多返回10个通过的任务
         "failed_results": failed_results[:10]   # 最多返回10个失败的任务

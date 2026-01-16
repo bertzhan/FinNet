@@ -18,6 +18,7 @@ from src.storage.object_store.minio_client import MinIOClient
 from src.storage.object_store.path_manager import PathManager
 from src.storage.metadata.postgres_client import get_postgres_client
 from src.storage.metadata import crud
+from src.storage.metadata.quarantine_manager import QuarantineManager
 
 
 @dataclass
@@ -92,17 +93,20 @@ class BaseCrawler(ABC, LoggerMixin):
         self,
         market: Market,
         enable_minio: bool = True,
-        enable_postgres: bool = True
+        enable_postgres: bool = True,
+        enable_quarantine: bool = True
     ):
         """
         Args:
             market: 市场类型
             enable_minio: 是否启用 MinIO 上传
             enable_postgres: 是否启用 PostgreSQL 记录
+            enable_quarantine: 是否启用自动隔离（验证失败时）
         """
         self.market = market
         self.enable_minio = enable_minio
         self.enable_postgres = enable_postgres
+        self.enable_quarantine = enable_quarantine
 
         # 从配置读取 bucket 名称，确保 PathManager 和 MinIOClient 使用相同的 bucket
         self.bucket_name = minio_config.MINIO_BUCKET
@@ -132,6 +136,21 @@ class BaseCrawler(ABC, LoggerMixin):
                 self.pg_client = None
         else:
             self.pg_client = None
+
+        # 初始化隔离管理器（如果启用）
+        if self.enable_quarantine and self.enable_minio and self.enable_postgres:
+            try:
+                self.quarantine_manager = QuarantineManager(
+                    minio_client=self.minio_client,
+                    path_manager=self.path_manager
+                )
+                self.logger.info("隔离管理器初始化成功")
+            except Exception as e:
+                self.logger.warning(f"隔离管理器初始化失败: {e}")
+                self.enable_quarantine = False
+                self.quarantine_manager = None
+        else:
+            self.quarantine_manager = None
 
     @abstractmethod
     def _download_file(self, task: CrawlTask) -> Tuple[bool, Optional[str], Optional[str]]:
@@ -293,8 +312,8 @@ class BaseCrawler(ABC, LoggerMixin):
                 # 记录失败但不影响整体成功状态（因为 MinIO 上传已成功）
                 document_id = None
 
-        # 6. 返回结果
-        return CrawlResult(
+        # 6. 创建结果对象
+        result = CrawlResult(
             task=task,
             success=True,
             local_file_path=local_file_path,
@@ -304,6 +323,36 @@ class BaseCrawler(ABC, LoggerMixin):
             file_hash=file_hash,
             metadata=task.metadata
         )
+
+        # 7. 验证结果（如果启用自动隔离）
+        if self.enable_quarantine and self.quarantine_manager:
+            is_valid, error_msg = self.validate_result(result)
+            
+            if not is_valid:
+                # 验证失败，自动隔离
+                self.logger.warning(f"验证失败，自动隔离: {error_msg}")
+                try:
+                    self.quarantine_manager.quarantine_document(
+                        document_id=document_id,
+                        source_type=task.market.value,
+                        doc_type=task.doc_type.value,
+                        original_path=minio_object_name,
+                        failure_stage="validation_failed",
+                        failure_reason=error_msg or "验证失败",
+                        failure_details=f"文件大小: {file_size} bytes, 文件哈希: {file_hash}",
+                        extra_metadata={
+                            "stock_code": task.stock_code,
+                            "company_name": task.company_name,
+                            "year": task.year,
+                            "quarter": task.quarter
+                        }
+                    )
+                    self.logger.info(f"✅ 文档已自动隔离: {minio_object_name}")
+                except Exception as e:
+                    self.logger.error(f"❌ 自动隔离失败: {e}", exc_info=True)
+
+        # 8. 返回结果
+        return result
 
     def crawl_batch(self, tasks: List[CrawlTask]) -> List[CrawlResult]:
         """

@@ -426,3 +426,39 @@ def get_quarantine_records(
     return session.query(QuarantineRecord).filter(
         QuarantineRecord.status == status
     ).order_by(QuarantineRecord.quarantine_time).limit(limit).all()
+
+
+def get_quarantine_record_by_id(
+    session: Session,
+    record_id: int
+) -> Optional[QuarantineRecord]:
+    """根据ID获取隔离记录"""
+    return session.query(QuarantineRecord).filter(
+        QuarantineRecord.id == record_id
+    ).first()
+
+
+def update_quarantine_record_status(
+    session: Session,
+    record_id: int,
+    status: str,
+    handler: Optional[str] = None,
+    resolution: Optional[str] = None
+) -> Optional[QuarantineRecord]:
+    """更新隔离记录状态"""
+    record = session.query(QuarantineRecord).filter(
+        QuarantineRecord.id == record_id
+    ).first()
+    
+    if not record:
+        return None
+    
+    record.status = status
+    if handler:
+        record.handler = handler
+    if resolution:
+        record.resolution = resolution
+    record.resolution_time = datetime.now()
+    
+    session.flush()
+    return record
