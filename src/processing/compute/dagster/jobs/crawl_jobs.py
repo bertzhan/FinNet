@@ -81,11 +81,6 @@ REPORT_CRAWL_CONFIG_SCHEMA = {
         is_required=False,
         description="Quarter to crawl (1-4, None = auto)"
     ),
-    "doc_type": Field(
-        str,
-        default_value="quarterly_report",
-        description="Document type: quarterly_report or annual_report"
-    ),
 }
 
 IPO_CRAWL_CONFIG_SCHEMA = {
@@ -205,14 +200,6 @@ def crawl_a_share_reports_op(context) -> Dict:
     workers = config.get("workers", 4)
     enable_minio = config.get("enable_minio", True)
     enable_postgres = config.get("enable_postgres", True)
-    doc_type_str = config.get("doc_type", "quarterly_report")
-    
-    # 文档类型映射
-    doc_type_map = {
-        "quarterly_report": DocType.QUARTERLY_REPORT,
-        "annual_report": DocType.ANNUAL_REPORT,
-    }
-    doc_type = doc_type_map.get(doc_type_str, DocType.QUARTERLY_REPORT)
     
     # 计算年份和季度
     year = config.get("year")
@@ -314,6 +301,14 @@ def crawl_a_share_reports_op(context) -> Dict:
     # 记录资产物化（Dagster 数据血缘）
     for result in results:
         if result.success:
+            # 根据季度确定文档类型字符串（用于资产key）
+            if result.task.quarter == 4:
+                doc_type_str = "annual_report"
+            elif result.task.quarter == 2:
+                doc_type_str = "interim_report"
+            else:
+                doc_type_str = "quarterly_report"
+            
             context.log_event(
                 AssetMaterialization(
                     asset_key=["bronze", "a_share", doc_type_str, str(result.task.year), f"Q{result.task.quarter}"],
@@ -342,6 +337,7 @@ def crawl_a_share_reports_op(context) -> Dict:
                 "company_name": r.task.company_name,
                 "year": r.task.year,
                 "quarter": r.task.quarter,
+                "doc_type": r.task.doc_type.value if r.task.doc_type else "quarterly_report",
                 "success": r.success,
                 "minio_object_path": r.minio_object_path if r.success else None,
                 "document_id": r.document_id if r.success else None,
@@ -561,33 +557,88 @@ def validate_crawl_results_op(context, crawl_results: Dict) -> Dict:
         # 检查2: 数据库ID是否存在
         if not doc_id:
             logger.warning(f"缺少数据库ID: {stock_code}")
-            reason = "缺少数据库ID"
-            failed_results.append({
-                "stock_code": stock_code,
-                "company_name": company_name,
-                "year": year,
-                "quarter": quarter,
-                "reason": reason
-            })
-            failed_count += 1
             
-            # 隔离文件（如果已上传到MinIO）
-            if quarantine_manager and minio_path:
+            # 先尝试重新创建数据库记录
+            retry_success = False
+            if minio_path and stock_code and company_name and year:
                 try:
-                    quarantine_manager.quarantine_document(
-                        document_id=None,
-                        source_type="a_share",
-                        doc_type=doc_type,
-                        original_path=minio_path,
-                        failure_stage="validation_failed",
-                        failure_reason=reason,
-                        failure_details="文档记录未成功创建到数据库"
-                    )
-                    quarantined_count += 1
-                    logger.info(f"✅ 已隔离缺少数据库ID的文档: {minio_path}")
+                    from src.storage.metadata import get_postgres_client, crud
+                    from src.common.constants import Market, DocType
+                    
+                    pg_client = get_postgres_client()
+                    with pg_client.get_session() as session:
+                        # 检查是否已存在（可能在其他地方已创建）
+                        existing_doc = crud.get_document_by_path(session, minio_path)
+                        if existing_doc:
+                            doc_id = existing_doc.id
+                            logger.info(f"✅ 发现已存在的数据库记录: id={doc_id}")
+                            retry_success = True
+                        else:
+                            # 尝试创建新记录
+                            # 将doc_type字符串转换为DocType枚举
+                            doc_type_enum = None
+                            if doc_type == "quarterly_report":
+                                doc_type_enum = DocType.QUARTERLY_REPORT
+                            elif doc_type == "annual_report":
+                                doc_type_enum = DocType.ANNUAL_REPORT
+                            elif doc_type == "interim_report":
+                                doc_type_enum = DocType.INTERIM_REPORT
+                            elif doc_type == "ipo_prospectus":
+                                doc_type_enum = DocType.IPO_PROSPECTUS
+                            else:
+                                doc_type_enum = DocType.QUARTERLY_REPORT  # 默认值
+                            
+                            doc = crud.create_document(
+                                session=session,
+                                stock_code=stock_code,
+                                company_name=company_name,
+                                market=Market.A_SHARE.value,
+                                doc_type=doc_type_enum.value,
+                                year=year,
+                                quarter=quarter,
+                                minio_object_path=minio_path,
+                                file_size=None,  # 验证阶段无法获取文件大小
+                                file_hash=None,  # 验证阶段无法获取文件哈希
+                                metadata=None
+                            )
+                            doc_id = doc.id
+                            logger.info(f"✅ 重新创建数据库记录成功: id={doc_id}")
+                            retry_success = True
                 except Exception as e:
-                    logger.error(f"❌ 隔离失败: {e}")
-            continue
+                    logger.error(f"❌ 重新创建数据库记录失败: {e}", exc_info=True)
+            
+            # 如果重新创建失败，则隔离文件
+            if not retry_success:
+                reason = "缺少数据库ID且重新创建失败"
+                failed_results.append({
+                    "stock_code": stock_code,
+                    "company_name": company_name,
+                    "year": year,
+                    "quarter": quarter,
+                    "reason": reason
+                })
+                failed_count += 1
+                
+                # 隔离文件（如果已上传到MinIO）
+                if quarantine_manager and minio_path:
+                    try:
+                        quarantine_manager.quarantine_document(
+                            document_id=None,
+                            source_type="a_share",
+                            doc_type=doc_type,
+                            original_path=minio_path,
+                            failure_stage="validation_failed",
+                            failure_reason=reason,
+                            failure_details="文档记录未成功创建到数据库，且重新创建失败"
+                        )
+                        quarantined_count += 1
+                        logger.info(f"✅ 已隔离缺少数据库ID的文档: {minio_path}")
+                    except Exception as e:
+                        logger.error(f"❌ 隔离失败: {e}")
+                continue
+            
+            # 重新创建成功，继续验证流程（不continue，继续执行后面的验证）
+            logger.info(f"✅ 数据库记录已恢复: {stock_code}, document_id={doc_id}")
         
         # 检查3: 文件大小合理性（PDF应该>10KB）
         # 这个信息在crawl_results中没有，需要从数据库查询

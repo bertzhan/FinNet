@@ -200,8 +200,8 @@ def process_single_ipo_task(task_data: Tuple) -> Tuple[bool, Optional[Tuple]]:
             doc_url = pdf_url_from_adj(adj)
 
         # 使用 PathManager 生成与 MinIO 一致的路径结构
-        # 文件名不包含发布日期，只包含股票代码和扩展名
-        fname = f"{code}{file_ext}"
+        # 文件名统一为 document.pdf 或 document.html
+        fname = f"document{file_ext}"
         path_manager = PathManager()
         minio_path = path_manager.get_bronze_path(
             market=Market.A_SHARE,
@@ -499,8 +499,8 @@ def run_ipo(
             logger.debug(f"PDF文件URL: {doc_url} (adjunctUrl: {adj})")
 
         # 使用 PathManager 生成与 MinIO 一致的路径结构
-        # 文件名不包含发布日期，只包含股票代码和扩展名
-        fname = f"{code}{file_ext}"
+        # 文件名统一为 document.pdf 或 document.html
+        fname = f"document{file_ext}"
         path_manager = PathManager()
         minio_path = path_manager.get_bronze_path(
             market=Market.A_SHARE,

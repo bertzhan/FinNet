@@ -70,9 +70,9 @@ ops:
       company_list_path: "src/crawler/zh/company_list.csv"
       output_root: "./downloads"
       workers: 4
-      doc_type: "quarterly_report"  # quarterly_report 或 annual_report
       year: null  # null = 自动计算当前和上一季度
       quarter: null  # null = 自动计算
+      # 注意：文档类型会根据季度自动判断（Q1/Q3=季度报告，Q2=半年报，Q4=年报）
       enable_minio: true
       enable_postgres: true
 ```
@@ -88,8 +88,8 @@ ops:
       company_list_path: "src/crawler/zh/company_list.csv"
       output_root: "./downloads"
       workers: 6
-      doc_type: "quarterly_report"
       enable_minio: true
+      # 文档类型会根据季度自动判断（Q1/Q3=季度报告，Q2=半年报，Q4=年报）
       enable_postgres: true
 ```
 

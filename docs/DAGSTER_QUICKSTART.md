@@ -104,10 +104,10 @@ ops:
   crawl_a_share_reports_op:
     config:
       workers: 6
-      doc_type: "quarterly_report"  # 或 "annual_report"
       year: 2023
       quarter: 3
       # year 和 quarter 为 null 时，自动计算当前和上一季度
+      # 注意：文档类型会根据季度自动判断（Q1/Q3=季度报告，Q2=半年报，Q4=年报）
 ```
 
 ## ⏰ 启用定时调度

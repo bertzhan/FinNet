@@ -165,6 +165,38 @@ class BaseCrawler(ABC, LoggerMixin):
         """
         pass
 
+    def _prepare_minio_metadata(self, task: CrawlTask) -> Dict[str, str]:
+        """
+        准备MinIO上传的metadata，统一格式：只保留source_url和publish_date
+        
+        Args:
+            task: 爬取任务
+            
+        Returns:
+            统一的metadata字典，只包含source_url和publish_date（ISO格式字符串）
+        """
+        metadata = {}
+        
+        # 提取source_url
+        if task.metadata:
+            source_url = task.metadata.get('source_url') or task.metadata.get('doc_url') or task.metadata.get('pdf_url')
+            if source_url:
+                metadata['source_url'] = str(source_url)
+        
+        # 提取publish_date（转换为ISO格式字符串）
+        if task.metadata:
+            # 优先使用ISO格式的日期字段
+            date_str = task.metadata.get('publication_date_iso') or task.metadata.get('pub_date_iso') or task.metadata.get('publish_date_iso')
+            if date_str:
+                # 如果已经是字符串，直接使用
+                if isinstance(date_str, str):
+                    metadata['publish_date'] = date_str
+                # 如果是datetime对象，转换为ISO格式字符串
+                elif isinstance(date_str, datetime):
+                    metadata['publish_date'] = date_str.isoformat()
+        
+        return metadata
+
     def crawl(self, task: CrawlTask) -> CrawlResult:
         """
         执行单个爬取任务
@@ -246,7 +278,7 @@ class BaseCrawler(ABC, LoggerMixin):
                 filename=actual_filename
             )
         else:
-            filename = f"{task.stock_code}_{task.year}_Q{task.quarter}.pdf"
+            filename = "document.pdf"
             minio_object_path = self.path_manager.get_bronze_path(
                 market=task.market,
                 doc_type=task.doc_type,
@@ -265,15 +297,12 @@ class BaseCrawler(ABC, LoggerMixin):
         else:
             try:
                 self.logger.info(f"开始上传到 MinIO: {minio_object_path}")
+                # 统一metadata格式：只保留source_url和publish_date
+                minio_metadata = self._prepare_minio_metadata(task)
                 upload_success = self.minio_client.upload_file(
                     object_name=minio_object_path,
                     file_path=local_file_path,
-                    metadata={
-                        'stock_code': task.stock_code,
-                        'year': str(task.year) if task.year else '',
-                        'quarter': str(task.quarter) if task.quarter else '',
-                        **task.metadata
-                    }
+                    metadata=minio_metadata
                 )
 
                 if upload_success:

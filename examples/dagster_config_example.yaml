@@ -26,7 +26,8 @@ ops:
       # year: 2023
       
       # 季度（可选，1-4，不设置则自动计算）
+      # 注意：文档类型会根据季度自动判断：
+      #   Q1, Q3: 季度报告 (quarterly_report)
+      #   Q2: 半年报 (interim_report)
+      #   Q4: 年报 (annual_report)
       # quarter: 3
-      
-      # 文档类型：quarterly_report（季报）或 annual_report（年报）
-      doc_type: "quarterly_report"

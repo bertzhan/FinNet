@@ -215,7 +215,7 @@ def process_single_task(task_data: Tuple) -> Tuple[bool, Optional[Tuple]]:
             doc_type = DocType.QUARTERLY_REPORT
         
         # 生成文件名
-        fname = f"{code}_{year}_{quarter}.pdf"
+        fname = "document.pdf"
         
         # 使用 PathManager 生成路径（与 MinIO 一致）
         path_manager = PathManager()
@@ -597,7 +597,7 @@ def run(
             doc_type = DocType.QUARTERLY_REPORT
         
         # 生成文件名
-        fname = f"{code}_{year}_{quarter}.pdf"
+        fname = "document.pdf"
         
         # 使用 PathManager 生成路径（与 MinIO 一致）
         path_manager = PathManager()

@@ -29,8 +29,8 @@ ops:
       workers: 4
       enable_minio: true
       enable_postgres: true
-      doc_type: "quarterly_report"
       # year 和 quarter 不设置，自动计算
+      # 注意：文档类型会根据季度自动判断（Q1/Q3=季度报告，Q2=半年报，Q4=年报）
 ```
 
 ### 自动计算逻辑
@@ -49,8 +49,7 @@ ops:
     config:
       workers: 4
       year: 2023
-      quarter: 3  # Q3
-      doc_type: "quarterly_report"
+      quarter: 3  # Q3（自动判断为季度报告）
 ```
 
 ### 爬取年报
@@ -61,8 +60,7 @@ ops:
     config:
       workers: 4
       year: 2023
-      quarter: 4  # 年报通常用 Q4 表示
-      doc_type: "annual_report"
+      quarter: 4  # Q4（自动判断为年报）
 ```
 
 ## 🔍 完整配置示例
@@ -91,7 +89,10 @@ ops:
       enable_postgres: true
       year: 2023
       quarter: 3
-      doc_type: "quarterly_report"  # 或 "annual_report"
+      # 文档类型会根据季度自动判断：
+      #   Q1, Q3: 季度报告 (quarterly_report)
+      #   Q2: 半年报 (interim_report)
+      #   Q4: 年报 (annual_report)
 ```
 
 ### 示例3：测试配置（少量数据）
@@ -105,7 +106,6 @@ ops:
       workers: 2
       year: 2023
       quarter: 3
-      doc_type: "quarterly_report"
       enable_minio: true
       enable_postgres: true
 ```
@@ -161,7 +161,7 @@ quarter: 3
 | `enable_postgres` | bool | 否 | True | 是否启用PostgreSQL记录 |
 | `year` | int | 否 | None | 年份（None=自动计算） |
 | `quarter` | int | 否 | None | 季度1-4（None=自动计算） |
-| `doc_type` | str | 否 | `quarterly_report` | 文档类型：`quarterly_report` 或 `annual_report` |
+| | | | | **注意**：文档类型会根据季度自动判断：Q1/Q3=季度报告，Q2=半年报，Q4=年报 |
 
 ## 🚀 快速测试
 

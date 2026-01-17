@@ -190,8 +190,7 @@ class ReportCrawler(CninfoBaseCrawler):
         else:
             doc_type = DocType.QUARTERLY_REPORT
         
-        quarter_str = f"Q{quarter_num}" if quarter_num else "Q4"
-        filename = f"{task.stock_code}_{task.year}_{quarter_str}.pdf"
+        filename = "document.pdf"
         
         path_manager = PathManager()
         quarter_for_path = quarter_num if quarter_num not in [2, 4] else None
@@ -232,8 +231,7 @@ class ReportCrawler(CninfoBaseCrawler):
             doc_type = DocType.QUARTERLY_REPORT
         
         # 生成文件名
-        quarter_str = f"Q{quarter_num}" if quarter_num else "Q4"
-        filename = f"{task.stock_code}_{task.year}_{quarter_str}.pdf"
+        filename = "document.pdf"
         
         # 使用 PathManager 生成路径
         path_manager = PathManager()
@@ -264,10 +262,11 @@ class ReportCrawler(CninfoBaseCrawler):
             if os.path.exists(old_file_path):
                 return old_file_path
             
-            # 旧格式：包含日期（兼容）
+            # 旧格式：兼容旧文件名格式（如果有的话）
             import glob
-            pattern = f"{task.stock_code}_{task.year}_{quarter_str}_*.pdf"
-            files = glob.glob(os.path.join(code_dir, pattern))
+            # 尝试查找旧格式的文件名
+            old_pattern = f"{task.stock_code}_{task.year}_*.pdf"
+            files = glob.glob(os.path.join(code_dir, old_pattern))
             if files:
                 return files[0]
 

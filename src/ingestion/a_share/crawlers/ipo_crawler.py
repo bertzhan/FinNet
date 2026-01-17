@@ -143,7 +143,7 @@ class CninfoIPOProspectusCrawler(CninfoBaseCrawler):
         Returns:
             文件路径，如果未找到则返回 None
         """
-        # IPO文件格式（与MinIO一致）：{output_root}/bronze/a_share/ipo_prospectus/{code}/{code}_{year}_{date}.pdf 或 .html
+        # IPO文件格式（与MinIO一致）：{output_root}/bronze/a_share/ipo_prospectus/{code}/document.pdf 或 document.html
         from src.storage.object_store.path_manager import PathManager
         from src.common.constants import Market, DocType
         
@@ -162,13 +162,13 @@ class CninfoIPOProspectusCrawler(CninfoBaseCrawler):
             return None
 
         import glob
-        # IPO文件命名：根据 ipo_processor.py，文件名格式为 {code}.pdf 或 {code}.html
-        # 先尝试精确匹配：{code}.pdf 或 {code}.html
-        exact_pdf = os.path.join(ipo_dir, f"{task.stock_code}.pdf")
+        # IPO文件命名：统一为 document.pdf 或 document.html
+        # 先尝试精确匹配：document.pdf 或 document.html
+        exact_pdf = os.path.join(ipo_dir, "document.pdf")
         if os.path.exists(exact_pdf):
             return exact_pdf
         
-        exact_html = os.path.join(ipo_dir, f"{task.stock_code}.html")
+        exact_html = os.path.join(ipo_dir, "document.html")
         if os.path.exists(exact_html):
             return exact_html
         

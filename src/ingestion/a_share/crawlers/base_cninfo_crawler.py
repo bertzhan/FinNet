@@ -119,7 +119,7 @@ class CninfoBaseCrawler(BaseCrawler):
 
         # 生成文件名和年份
         if extract_year_from_filename:
-            # IPO: 文件名格式为 code.pdf 或 code.html，年份从metadata获取
+            # IPO: 文件名统一为 document.pdf 或 document.html，年份从metadata获取
             filename = os.path.basename(file_path)
             # 从task.metadata中获取年份（如果processor传递了）
             year = task.metadata.get('publication_year') if task.metadata else None
@@ -133,7 +133,7 @@ class CninfoBaseCrawler(BaseCrawler):
             # 定期报告: 使用任务的year和quarter
             year = task.year
             quarter = task.quarter
-            filename = f"{task.stock_code}_{task.year}_Q{task.quarter}.pdf"
+            filename = "document.pdf"
         
         # 生成 MinIO 路径
         # Q2（半年报）和 Q4（年报）不需要季度文件夹
@@ -168,28 +168,12 @@ class CninfoBaseCrawler(BaseCrawler):
         else:
             try:
                 self.logger.info(f"开始上传到 MinIO: {minio_object_path}")
-                metadata = {
-                    'stock_code': task.stock_code,
-                    'year': str(year) if year else '',
-                    **task.metadata  # 包含publication_date等IPO metadata
-                }
-                
-                if quarter:
-                    metadata['quarter'] = str(quarter)
-                if extract_year_from_filename:
-                    metadata['doc_type'] = 'ipo_prospectus'
-                    # 确保IPO的发布日期在metadata中（如果task.metadata中有）
-                    if 'publication_date' not in metadata and 'publication_date_iso' not in metadata:
-                        # 如果没有，尝试从其他字段获取
-                        if 'pub_date' in task.metadata:
-                            metadata['publication_date'] = task.metadata['pub_date']
-                        if 'pub_date_iso' in task.metadata:
-                            metadata['publication_date_iso'] = task.metadata['pub_date_iso']
-                
+                # 统一metadata格式：只保留source_url和publish_date
+                minio_metadata = self._prepare_minio_metadata(task)
                 upload_success = self.minio_client.upload_file(
                     object_name=minio_object_path,
                     file_path=file_path,
-                    metadata=metadata
+                    metadata=minio_metadata
                 )
 
                 if upload_success:
