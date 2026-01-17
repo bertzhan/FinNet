@@ -163,7 +163,7 @@ with pg_client.get_session() as session:
         doc_type="quarterly_reports",
         year=2023,
         quarter=3,
-        minio_object_name="bronze/a_share/quarterly_reports/2023/Q3/000001/report.pdf",
+        minio_object_path="bronze/a_share/quarterly_reports/2023/Q3/000001/report.pdf",
         file_size=1024000,
         file_hash="a1b2c3d4...",
         metadata={"publish_date": "2023-10-31"}
@@ -474,7 +474,7 @@ with pg_client.get_session() as session:
         doc_type="quarterly_reports",
         year=2023,
         quarter=3,
-        minio_object_name=object_name,
+        minio_object_path=object_name,
         file_size=1024000,
         metadata={"publish_date": "2023-10-31"}
     )

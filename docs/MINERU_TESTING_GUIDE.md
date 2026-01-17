@@ -163,7 +163,7 @@ pip install mineru
 
 **解决**:
 1. 检查 MinIO 中的实际文件路径
-2. 更新数据库中的 `minio_object_name` 字段
+2. 更新数据库中的 `minio_object_path` 字段
 3. 或者重新运行爬虫任务
 
 ### Q3: 解析失败

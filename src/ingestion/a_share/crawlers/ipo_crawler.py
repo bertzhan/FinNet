@@ -108,17 +108,18 @@ class CninfoIPOProspectusCrawler(CninfoBaseCrawler):
                 self.logger.info(f"检测到HTML格式文件，跳过保存: {file_path}")
                 return False, None, "HTML格式文件不保存"
 
-            # 读取发布日期信息（从metadata文件）
+            # 读取发布日期信息和URL（从metadata文件）
             metadata_file = file_path.replace('.pdf', '.meta.json').replace('.html', '.meta.json')
             if os.path.exists(metadata_file):
                 try:
                     from ..utils.file_utils import load_json
                     metadata_info = load_json(metadata_file, {})
-                    # 将发布日期信息添加到task.metadata
+                    # 将发布日期信息和URL添加到task.metadata
                     task.metadata.update({
                         'publication_date': metadata_info.get('publication_date', ''),
                         'publication_year': metadata_info.get('publication_year', ''),
-                        'publication_date_iso': metadata_info.get('publication_date_iso', '')
+                        'publication_date_iso': metadata_info.get('publication_date_iso', ''),
+                        'source_url': metadata_info.get('source_url', '')  # 文档来源URL
                     })
                 except Exception as e:
                     self.logger.warning(f"读取metadata文件失败: {e}")
@@ -275,17 +276,18 @@ class CninfoIPOProspectusCrawler(CninfoBaseCrawler):
                                 ))
                                 continue
                             
-                            # 读取发布日期信息（从metadata文件）
+                            # 读取发布日期信息和URL（从metadata文件）
                             metadata_file = file_path.replace('.pdf', '.meta.json').replace('.html', '.meta.json')
                             if os.path.exists(metadata_file):
                                 try:
                                     from ..utils.file_utils import load_json
                                     metadata_info = load_json(metadata_file, {})
-                                    # 将发布日期信息添加到task.metadata
+                                    # 将发布日期信息和URL添加到task.metadata
                                     task.metadata.update({
                                         'publication_date': metadata_info.get('publication_date', ''),
                                         'publication_year': metadata_info.get('publication_year', ''),
-                                        'publication_date_iso': metadata_info.get('publication_date_iso', '')
+                                        'publication_date_iso': metadata_info.get('publication_date_iso', ''),
+                                        'source_url': metadata_info.get('source_url', '')  # 文档来源URL
                                     })
                                 except Exception as e:
                                     self.logger.warning(f"读取metadata文件失败: {e}")
@@ -341,7 +343,7 @@ def main():
     # 打印结果
     if result.success:
         print(f"✅ 爬取成功：{result.local_file_path}")
-        print(f"   MinIO: {result.minio_object_name}")
+        print(f"   MinIO: {result.minio_object_path}")
         print(f"   数据库ID: {result.document_id}")
     else:
         print(f"❌ 爬取失败：{result.error_message}")

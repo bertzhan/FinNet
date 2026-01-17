@@ -101,7 +101,7 @@ def test_find_pending_documents():
                 print("   示例文档:")
                 for i, doc in enumerate(docs[:3], 1):
                     print(f"   {i}. ID={doc.id}, {doc.stock_code} {doc.year} Q{doc.quarter}")
-                    print(f"      MinIO路径: {doc.minio_object_name}")
+                    print(f"      MinIO路径: {doc.minio_object_path}")
                     print(f"      状态: {doc.status}")
             else:
                 print("   ⚠️  没有待解析的文档")
@@ -140,12 +140,12 @@ def test_parse_single_document():
             
             doc = docs[0]
             print(f"测试文档: ID={doc.id}, {doc.stock_code} {doc.year} Q{doc.quarter}")
-            print(f"MinIO 路径: {doc.minio_object_name}")
+            print(f"MinIO 路径: {doc.minio_object_path}")
             print()
             
             # 检查文件是否存在
-            if not parser.minio_client.file_exists(doc.minio_object_name):
-                print(f"⚠️  MinIO 文件不存在: {doc.minio_object_name}")
+            if not parser.minio_client.file_exists(doc.minio_object_path):
+                print(f"⚠️  MinIO 文件不存在: {doc.minio_object_path}")
                 print("   跳过解析测试")
                 return True
             

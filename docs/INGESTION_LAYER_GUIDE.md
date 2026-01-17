@@ -102,7 +102,7 @@ result = crawler.crawl(task)
 if result.success:
     print(f"✅ 成功！")
     print(f"本地路径: {result.local_file_path}")
-    print(f"MinIO路径: {result.minio_object_name}")
+    print(f"MinIO路径: {result.minio_object_path}")
     print(f"数据库ID: {result.document_id}")
 else:
     print(f"❌ 失败：{result.error_message}")
@@ -300,7 +300,7 @@ task = CrawlTask(
 6. 返回 CrawlResult
    - success: True
    - local_file_path: 本地路径
-   - minio_object_name: MinIO 对象名
+   - minio_object_path: MinIO 对象路径
    - document_id: 数据库ID
    - file_size: 文件大小
    - file_hash: 文件哈希
@@ -333,7 +333,7 @@ bronze/a_share/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf
 
 - **documents** - 文档元数据
   - id, stock_code, company_name, market, doc_type
-  - year, quarter, minio_object_name
+  - year, quarter, minio_object_path
   - status, crawled_at, file_size, file_hash
   - metadata (JSONB)
 

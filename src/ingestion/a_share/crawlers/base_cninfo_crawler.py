@@ -90,6 +90,23 @@ class CninfoBaseCrawler(BaseCrawler):
         Returns:
             爬取结果
         """
+        # 读取metadata文件（如果存在），将URL等信息添加到task.metadata
+        metadata_file = file_path.replace('.pdf', '.meta.json').replace('.html', '.meta.json').replace('.htm', '.meta.json')
+        if os.path.exists(metadata_file):
+            try:
+                from ..utils.file_utils import load_json
+                metadata_info = load_json(metadata_file, {})
+                # 将URL等信息添加到task.metadata
+                if 'source_url' in metadata_info:
+                    task.metadata['source_url'] = metadata_info['source_url']
+                # 保留其他metadata字段（如publication_date等）
+                for key, value in metadata_info.items():
+                    if key not in task.metadata:
+                        task.metadata[key] = value
+                self.logger.debug(f"从metadata文件读取URL: {metadata_info.get('source_url', 'N/A')}")
+            except Exception as e:
+                self.logger.warning(f"读取metadata文件失败: {e}")
+
         # 计算文件哈希和大小
         try:
             from src.common.utils import calculate_file_hash
@@ -128,7 +145,7 @@ class CninfoBaseCrawler(BaseCrawler):
         # 调试：记录路径生成参数
         self.logger.debug(f"[路径生成] quarter={quarter}, quarter_for_path={quarter_for_path}, doc_type={task.doc_type}")
         
-        minio_object_name = self.path_manager.get_bronze_path(
+        minio_object_path = self.path_manager.get_bronze_path(
             market=task.market,
             doc_type=task.doc_type,
             stock_code=task.stock_code,
@@ -138,19 +155,19 @@ class CninfoBaseCrawler(BaseCrawler):
         )
         
         # 调试：验证路径生成
-        self.logger.debug(f"[路径生成] 生成的路径: {minio_object_name}")
-        if quarter == 4 and '/Q4/' in minio_object_name:
-            self.logger.warning(f"⚠️ Q4路径仍包含Q4文件夹: {minio_object_name}, quarter_for_path={quarter_for_path}, quarter={quarter}")
+        self.logger.debug(f"[路径生成] 生成的路径: {minio_object_path}")
+        if quarter == 4 and '/Q4/' in minio_object_path:
+            self.logger.warning(f"⚠️ Q4路径仍包含Q4文件夹: {minio_object_path}, quarter_for_path={quarter_for_path}, quarter={quarter}")
 
         # 上传到 MinIO
         document_id = None
         if not self.enable_minio:
-            self.logger.warning(f"⚠️ MinIO 未启用，跳过上传: {minio_object_name}")
+            self.logger.warning(f"⚠️ MinIO 未启用，跳过上传: {minio_object_path}")
         elif not self.minio_client:
-            self.logger.error(f"❌ MinIO 客户端未初始化，无法上传: {minio_object_name}")
+            self.logger.error(f"❌ MinIO 客户端未初始化，无法上传: {minio_object_path}")
         else:
             try:
-                self.logger.info(f"开始上传到 MinIO: {minio_object_name}")
+                self.logger.info(f"开始上传到 MinIO: {minio_object_path}")
                 metadata = {
                     'stock_code': task.stock_code,
                     'year': str(year) if year else '',
@@ -170,30 +187,30 @@ class CninfoBaseCrawler(BaseCrawler):
                             metadata['publication_date_iso'] = task.metadata['pub_date_iso']
                 
                 upload_success = self.minio_client.upload_file(
-                    object_name=minio_object_name,
+                    object_name=minio_object_path,
                     file_path=file_path,
                     metadata=metadata
                 )
 
                 if upload_success:
-                    self.logger.info(f"✅ MinIO 上传成功: {minio_object_name}")
+                    self.logger.info(f"✅ MinIO 上传成功: {minio_object_path}")
                 else:
-                    self.logger.error(f"❌ MinIO 上传失败（返回 False）: {minio_object_name}")
+                    self.logger.error(f"❌ MinIO 上传失败（返回 False）: {minio_object_path}")
             except Exception as e:
                 self.logger.error(f"❌ MinIO 上传异常: {e}", exc_info=True)
 
         # 记录到 PostgreSQL
         document_id = None
         if not self.enable_postgres:
-            self.logger.warning(f"⚠️ PostgreSQL 未启用，跳过记录: {minio_object_name}")
+            self.logger.warning(f"⚠️ PostgreSQL 未启用，跳过记录: {minio_object_path}")
         elif not self.pg_client:
-            self.logger.error(f"❌ PostgreSQL 客户端未初始化，无法记录: {minio_object_name}")
+            self.logger.error(f"❌ PostgreSQL 客户端未初始化，无法记录: {minio_object_path}")
         elif self.enable_postgres and self.pg_client:
             try:
                 from src.storage.metadata import crud
                 with self.pg_client.get_session() as session:
                     # 检查是否已存在
-                    existing_doc = crud.get_document_by_path(session, minio_object_name)
+                    existing_doc = crud.get_document_by_path(session, minio_object_path)
 
                     if existing_doc:
                         self.logger.info(f"文档已存在: id={existing_doc.id}")
@@ -208,7 +225,7 @@ class CninfoBaseCrawler(BaseCrawler):
                             doc_type=task.doc_type.value,
                             year=year,
                             quarter=quarter,
-                            minio_object_name=minio_object_name,
+                            minio_object_path=minio_object_path,
                             file_size=file_size,
                             file_hash=file_hash,
                             metadata=task.metadata
@@ -224,7 +241,7 @@ class CninfoBaseCrawler(BaseCrawler):
             task=task,
             success=True,
             local_file_path=file_path,
-            minio_object_name=minio_object_name,
+            minio_object_path=minio_object_path,
             document_id=document_id,
             file_size=file_size,
             file_hash=file_hash,

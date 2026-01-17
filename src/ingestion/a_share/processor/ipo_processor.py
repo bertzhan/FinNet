@@ -269,12 +269,13 @@ def process_single_ipo_task(task_data: Tuple) -> Tuple[bool, Optional[Tuple]]:
 
         if ok:
             logger.info(f"[{code}] 保存成功：{out_path}")
-            # 保存发布日期信息到metadata文件（供crawler读取）
+            # 保存发布日期信息和URL到metadata文件（供crawler读取）
             metadata_file = out_path.replace(file_ext, ".meta.json")
             metadata_info = {
                 'publication_date': pub_date,  # DDMMYYYY格式
                 'publication_year': pub_year,  # YYYY格式
-                'publication_date_iso': pub_date_iso  # ISO格式
+                'publication_date_iso': pub_date_iso,  # ISO格式
+                'source_url': doc_url  # 文档来源URL
             }
             save_json(metadata_file, metadata_info)
             shared.save_checkpoint(key)

@@ -58,7 +58,7 @@ pip install ultralytics
 
 **解决方案**:
 1. 重新运行爬虫任务，确保路径一致
-2. 或手动更新数据库中的 `minio_object_name` 字段
+2. 或手动更新数据库中的 `minio_object_path` 字段
 
 ---
 
@@ -100,7 +100,7 @@ with pg_client.get_session() as session:
     # 更新路径（根据实际情况）
     for doc in docs:
         # 检查 MinIO 中实际存在的路径
-        # 更新 doc.minio_object_name
+        # 更新 doc.minio_object_path
         session.commit()
 ```
 

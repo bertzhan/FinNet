@@ -150,7 +150,7 @@ if not self.validate_result(result):
         failure_stage="validation_failed",
         failure_reason="文件验证失败",
         failure_details=error_message,
-        original_path=result.minio_object_name
+        original_path=result.minio_object_path
     )
 ```
 
@@ -172,7 +172,7 @@ def validate_crawl_results_op(context, crawl_results: Dict) -> Dict:
             failure_stage="validation_failed",
             failure_reason=result.reason,
             failure_details=result.error_message,
-            original_path=result.minio_object_name
+            original_path=result.minio_object_path
         )
 ```
 

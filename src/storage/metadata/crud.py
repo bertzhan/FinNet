@@ -30,10 +30,12 @@ def create_document(
     doc_type: str,
     year: int,
     quarter: Optional[int],
-    minio_object_name: str,
+    minio_object_path: str,
     file_size: Optional[int] = None,
     file_hash: Optional[str] = None,
-    metadata: Optional[Dict] = None
+    metadata: Optional[Dict] = None,
+    source_url: Optional[str] = None,
+    publish_date: Optional[datetime] = None
 ) -> Document:
     """
     创建文档记录
@@ -46,10 +48,12 @@ def create_document(
         doc_type: 文档类型
         year: 年份
         quarter: 季度
-        minio_object_name: MinIO 对象名称
+        minio_object_path: MinIO 对象路径
         file_size: 文件大小
         file_hash: 文件哈希
-        metadata: 元数据
+        metadata: 元数据（用于提取source_url和publish_date，不会保存到数据库）
+        source_url: 文档来源URL（如果为None，会尝试从metadata中提取）
+        publish_date: 文档发布日期（如果为None，会尝试从metadata中提取）
 
     Returns:
         Document 对象
@@ -59,10 +63,34 @@ def create_document(
         ...     doc = create_document(
         ...         session, "000001", "平安银行", "a_share",
         ...         "quarterly_reports", 2023, 3,
-        ...         "bronze/a_share/quarterly_reports/2023/Q3/000001/report.pdf"
+        ...         minio_object_path="bronze/a_share/quarterly_reports/2023/Q3/000001/report.pdf",
+        ...         source_url="https://www.cninfo.com.cn/...",
+        ...         publish_date=datetime(2023, 10, 1)
         ...     )
         ...     print(doc.id)
     """
+    # 如果source_url未提供，尝试从metadata中提取
+    if source_url is None and metadata:
+        source_url = metadata.get('source_url') or metadata.get('doc_url') or metadata.get('pdf_url')
+    
+    # 如果publish_date未提供，尝试从metadata中提取
+    if publish_date is None and metadata:
+        # 尝试多种日期字段名和格式
+        date_str = metadata.get('publication_date_iso') or metadata.get('pub_date_iso') or metadata.get('publish_date_iso')
+        if date_str:
+            try:
+                # 尝试解析ISO格式日期字符串
+                if isinstance(date_str, str):
+                    # ISO格式: "2023-10-01T00:00:00" 或 "2023-10-01"
+                    if 'T' in date_str:
+                        publish_date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                    else:
+                        publish_date = datetime.fromisoformat(date_str)
+                elif isinstance(date_str, datetime):
+                    publish_date = date_str
+            except (ValueError, TypeError) as e:
+                logger.warning(f"无法解析发布日期: {date_str}, 错误: {e}")
+    
     doc = Document(
         stock_code=stock_code,
         company_name=company_name,
@@ -70,12 +98,13 @@ def create_document(
         doc_type=doc_type,
         year=year,
         quarter=quarter,
-        minio_object_name=minio_object_name,
+        minio_object_path=minio_object_path,
         file_size=file_size,
         file_hash=file_hash,
+        source_url=source_url,
+        publish_date=publish_date,
         status=DocumentStatus.CRAWLED.value,
-        crawled_at=datetime.now(),
-        extra_metadata=metadata or {}
+        crawled_at=datetime.now()
     )
 
     session.add(doc)
@@ -89,9 +118,9 @@ def get_document_by_id(session: Session, document_id: int) -> Optional[Document]
     return session.query(Document).filter(Document.id == document_id).first()
 
 
-def get_document_by_path(session: Session, minio_object_name: str) -> Optional[Document]:
+def get_document_by_path(session: Session, minio_object_path: str) -> Optional[Document]:
     """获取文档（按 MinIO 路径）"""
-    return session.query(Document).filter(Document.minio_object_name == minio_object_name).first()
+    return session.query(Document).filter(Document.minio_object_path == minio_object_path).first()
 
 
 def get_documents_by_status(

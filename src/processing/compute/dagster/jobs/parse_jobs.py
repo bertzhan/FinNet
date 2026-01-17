@@ -132,7 +132,7 @@ def scan_pending_documents_op(context) -> Dict:
             # 只处理 PDF 文档
             pdf_documents = [
                 d for d in documents
-                if d.minio_object_name and d.minio_object_name.endswith('.pdf')
+                if d.minio_object_path and d.minio_object_path.endswith('.pdf')
             ]
             
             # 验证文件是否在 MinIO 中存在（避免解析不存在的文件）
@@ -140,10 +140,10 @@ def scan_pending_documents_op(context) -> Dict:
             minio_client = MinIOClient()
             existing_pdf_documents = []
             for doc in pdf_documents:
-                if minio_client.file_exists(doc.minio_object_name):
+                if minio_client.file_exists(doc.minio_object_path):
                     existing_pdf_documents.append(doc)
                 else:
-                    logger.warning(f"文档文件不存在，跳过: document_id={doc.id}, path={doc.minio_object_name}")
+                    logger.warning(f"文档文件不存在，跳过: document_id={doc.id}, path={doc.minio_object_path}")
             
             pdf_documents = existing_pdf_documents
             logger.info(f"找到 {len(pdf_documents)} 个待解析的 PDF 文档（已过滤不存在的文件）")
@@ -159,7 +159,7 @@ def scan_pending_documents_op(context) -> Dict:
                     "doc_type": doc.doc_type,
                     "year": doc.year,
                     "quarter": doc.quarter,
-                    "minio_object_name": doc.minio_object_name,
+                    "minio_object_path": doc.minio_object_path,
                     "file_size": doc.file_size,
                     "file_hash": doc.file_hash,
                 })
@@ -289,7 +289,7 @@ def parse_documents_op(context, scan_result: Dict) -> Dict:
     for doc_info in documents:
         document_id = doc_info["document_id"]
         stock_code = doc_info["stock_code"]
-        minio_path = doc_info["minio_object_name"]
+        minio_path = doc_info["minio_object_path"]
         
         logger.info(f"解析文档 {document_id}: {stock_code} - {minio_path}")
         

@@ -321,7 +321,7 @@ def crawl_a_share_reports_op(context) -> Dict:
                     metadata={
                         "stock_code": MetadataValue.text(result.task.stock_code),
                         "company_name": MetadataValue.text(result.task.company_name),
-                        "minio_path": MetadataValue.text(result.minio_object_name or ""),
+                        "minio_path": MetadataValue.text(result.minio_object_path or ""),
                         "file_size": MetadataValue.int(result.file_size or 0),
                         "file_hash": MetadataValue.text(result.file_hash or ""),
                         "document_id": MetadataValue.int(result.document_id or 0),
@@ -343,7 +343,7 @@ def crawl_a_share_reports_op(context) -> Dict:
                 "year": r.task.year,
                 "quarter": r.task.quarter,
                 "success": r.success,
-                "minio_object_name": r.minio_object_name if r.success else None,
+                "minio_object_path": r.minio_object_path if r.success else None,
                 "document_id": r.document_id if r.success else None,
                 "error": r.error_message if not r.success else None,
             }
@@ -417,8 +417,8 @@ def crawl_a_share_ipo_op(context) -> Dict:
     fail_count = len(results) - success_count
     
     # 统计 MinIO 上传情况
-    minio_upload_count = sum(1 for r in results if r.success and r.minio_object_name)
-    minio_fail_count = sum(1 for r in results if r.success and not r.minio_object_name)
+    minio_upload_count = sum(1 for r in results if r.success and r.minio_object_path)
+    minio_fail_count = sum(1 for r in results if r.success and not r.minio_object_path)
     
     logger.info(f"IPO爬取完成: 成功 {success_count}, 失败 {fail_count}")
     if enable_minio:
@@ -438,7 +438,7 @@ def crawl_a_share_ipo_op(context) -> Dict:
                     metadata={
                         "stock_code": MetadataValue.text(result.task.stock_code),
                         "company_name": MetadataValue.text(result.task.company_name),
-                        "minio_path": MetadataValue.text(result.minio_object_name or ""),
+                        "minio_path": MetadataValue.text(result.minio_object_path or ""),
                         "file_size": MetadataValue.int(result.file_size or 0),
                         "file_hash": MetadataValue.text(result.file_hash or ""),
                         "document_id": MetadataValue.int(result.document_id or 0),
@@ -457,7 +457,7 @@ def crawl_a_share_ipo_op(context) -> Dict:
                 "stock_code": r.task.stock_code,
                 "company_name": r.task.company_name,
                 "success": r.success,
-                "minio_object_name": r.minio_object_name if r.success else None,
+                "minio_object_path": r.minio_object_path if r.success else None,
                 "document_id": r.document_id if r.success else None,
                 "error": r.error_message if not r.success else None,
             }
@@ -510,7 +510,7 @@ def validate_crawl_results_op(context, crawl_results: Dict) -> Dict:
         year = result_info.get("year")
         quarter = result_info.get("quarter")
         doc_type = result_info.get("doc_type", "quarterly_report")
-        minio_path = result_info.get("minio_object_name")
+        minio_path = result_info.get("minio_object_path")
         doc_id = result_info.get("document_id")
         
         # 如果任务本身失败，记录失败原因

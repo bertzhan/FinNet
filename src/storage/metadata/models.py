@@ -34,9 +34,10 @@ class Document(Base):
     quarter = Column(Integer, nullable=True, index=True)
     
     # 文件信息
-    minio_object_name = Column(String(500), nullable=False, unique=True, index=True)
+    minio_object_path = Column(String(500), nullable=False, unique=True, index=True)
     file_size = Column(BigInteger)
     file_hash = Column(String(64), index=True)
+    source_url = Column(String(1000), nullable=True, index=True)  # 文档来源URL
     
     # 状态和时间
     status = Column(String(50), nullable=False, default='pending', index=True)
@@ -45,13 +46,11 @@ class Document(Base):
     parsed_at = Column(DateTime)
     vectorized_at = Column(DateTime)
     updated_at = Column(DateTime, onupdate=func.now())
+    publish_date = Column(DateTime, nullable=True, index=True)  # 文档发布日期
 
     # 错误和重试
     error_message = Column(Text)
     retry_count = Column(Integer, default=0)
-
-    # 元数据
-    extra_metadata = Column(JSON, default={})
     
     # 索引
     __table_args__ = (

@@ -249,6 +249,14 @@ def process_single_task(task_data: Tuple) -> Tuple[bool, Optional[Tuple]]:
                                         refresh_fn=refresh_fn, max_retries=3)
         if ok:
             logger.info(f"[{code}] 保存成功：{out_path}")
+            # 保存URL和发布日期到metadata文件（供crawler读取）
+            metadata_file = out_path.replace('.pdf', '.meta.json')
+            from ..utils.file_utils import save_json
+            metadata_info = {
+                'source_url': pdf_url,  # 文档来源URL
+                'publication_date_iso': pub_date_iso  # 发布日期（ISO格式）
+            }
+            save_json(metadata_file, metadata_info)
             shared.save_checkpoint(key)
             
             # 注意：MinIO 上传已移除，由 report_crawler.py 统一处理

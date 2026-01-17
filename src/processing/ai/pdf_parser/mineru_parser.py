@@ -94,7 +94,7 @@ class MinerUParser(LoggerMixin):
         start_time = datetime.now()
         
         # 在 session 内获取文档信息并保存需要的属性
-        minio_object_name = None
+        minio_object_path = None
         doc_status = None
         
         with self.pg_client.get_session() as session:
@@ -107,7 +107,7 @@ class MinerUParser(LoggerMixin):
                 }
 
             # 保存需要的属性值（在 session 关闭前）
-            minio_object_name = doc.minio_object_name
+            minio_object_path = doc.minio_object_path
             doc_status = doc.status
 
             # 检查是否已解析
@@ -143,13 +143,13 @@ class MinerUParser(LoggerMixin):
             self.logger.info(
                 f"开始解析文档: document_id={document_id}, "
                 f"parse_task_id={parse_task_id}, "
-                f"minio_path={minio_object_name}"
+                f"minio_path={minio_object_path}"
             )
 
         # 3. 下载 PDF 到临时文件
         temp_pdf_path = None
         try:
-            temp_pdf_path = self._download_pdf_to_temp(minio_object_name)
+            temp_pdf_path = self._download_pdf_to_temp(minio_object_path)
             if not temp_pdf_path:
                 raise Exception("PDF 下载失败")
 
@@ -231,21 +231,21 @@ class MinerUParser(LoggerMixin):
                 except Exception as e:
                     self.logger.warning(f"清理临时文件失败: {e}")
 
-    def _download_pdf_to_temp(self, minio_object_name: str) -> Optional[str]:
+    def _download_pdf_to_temp(self, minio_object_path: str) -> Optional[str]:
         """
         从 MinIO 下载 PDF 到临时文件
 
         Args:
-            minio_object_name: MinIO 对象名称
+            minio_object_path: MinIO 对象路径
 
         Returns:
             临时文件路径
         """
         try:
             # 下载文件数据
-            file_data = self.minio_client.download_file(minio_object_name)
+            file_data = self.minio_client.download_file(minio_object_path)
             if not file_data:
-                self.logger.error(f"无法下载文件: {minio_object_name}")
+                self.logger.error(f"无法下载文件: {minio_object_path}")
                 return None
 
             # 创建临时文件

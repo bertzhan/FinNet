@@ -55,7 +55,7 @@ class CrawlResult:
     task: CrawlTask                      # 任务信息
     success: bool                        # 是否成功
     local_file_path: Optional[str] = None    # 本地文件路径（临时）
-    minio_object_name: Optional[str] = None  # MinIO 对象名称
+    minio_object_path: Optional[str] = None  # MinIO 对象路径
     document_id: Optional[int] = None        # 数据库文档 ID
     file_size: Optional[int] = None          # 文件大小（字节）
     file_hash: Optional[str] = None          # 文件哈希
@@ -68,7 +68,7 @@ class CrawlResult:
             'task': self.task.to_dict(),
             'success': self.success,
             'local_file_path': self.local_file_path,
-            'minio_object_name': self.minio_object_name,
+            'minio_object_path': self.minio_object_path,
             'document_id': self.document_id,
             'file_size': self.file_size,
             'file_hash': self.file_hash,
@@ -201,7 +201,24 @@ class BaseCrawler(ABC, LoggerMixin):
                 error_message=error_msg
             )
 
-        # 2. 计算文件哈希和大小
+        # 2. 读取metadata文件（如果存在），将URL等信息添加到task.metadata
+        metadata_file = local_file_path.replace('.pdf', '.meta.json').replace('.html', '.meta.json').replace('.htm', '.meta.json')
+        if os.path.exists(metadata_file):
+            try:
+                import json
+                with open(metadata_file, 'r', encoding='utf-8') as f:
+                    metadata_info = json.load(f)
+                    # 将URL等信息添加到task.metadata
+                    if 'source_url' in metadata_info:
+                        task.metadata['source_url'] = metadata_info['source_url']
+                    # 保留其他metadata字段（如publication_date等）
+                    for key, value in metadata_info.items():
+                        if key not in task.metadata:
+                            task.metadata[key] = value
+            except Exception as e:
+                self.logger.warning(f"读取metadata文件失败: {e}")
+
+        # 3. 计算文件哈希和大小
         try:
             from src.common.utils import calculate_file_hash
             from pathlib import Path
@@ -215,12 +232,12 @@ class BaseCrawler(ABC, LoggerMixin):
             file_hash = None
             file_size = None
 
-        # 3. 生成 MinIO 路径
+        # 4. 生成 MinIO 路径
         if task.doc_type == DocType.IPO_PROSPECTUS:
             # IPO招股说明书：从下载的文件名中提取实际文件名
             import os
             actual_filename = os.path.basename(local_file_path)
-            minio_object_name = self.path_manager.get_bronze_path(
+            minio_object_path = self.path_manager.get_bronze_path(
                 market=task.market,
                 doc_type=task.doc_type,
                 stock_code=task.stock_code,
@@ -230,7 +247,7 @@ class BaseCrawler(ABC, LoggerMixin):
             )
         else:
             filename = f"{task.stock_code}_{task.year}_Q{task.quarter}.pdf"
-            minio_object_name = self.path_manager.get_bronze_path(
+            minio_object_path = self.path_manager.get_bronze_path(
                 market=task.market,
                 doc_type=task.doc_type,
                 stock_code=task.stock_code,
@@ -239,17 +256,17 @@ class BaseCrawler(ABC, LoggerMixin):
                 filename=filename
             )
 
-        # 4. 上传到 MinIO
+        # 5. 上传到 MinIO
         document_id = None
         if not self.enable_minio:
-            self.logger.warning(f"⚠️ MinIO 未启用，跳过上传: {minio_object_name}")
+            self.logger.warning(f"⚠️ MinIO 未启用，跳过上传: {minio_object_path}")
         elif not self.minio_client:
-            self.logger.error(f"❌ MinIO 客户端未初始化，无法上传: {minio_object_name}")
+            self.logger.error(f"❌ MinIO 客户端未初始化，无法上传: {minio_object_path}")
         else:
             try:
-                self.logger.info(f"开始上传到 MinIO: {minio_object_name}")
+                self.logger.info(f"开始上传到 MinIO: {minio_object_path}")
                 upload_success = self.minio_client.upload_file(
-                    object_name=minio_object_name,
+                    object_name=minio_object_path,
                     file_path=local_file_path,
                     metadata={
                         'stock_code': task.stock_code,
@@ -260,18 +277,18 @@ class BaseCrawler(ABC, LoggerMixin):
                 )
 
                 if upload_success:
-                    self.logger.info(f"✅ MinIO 上传成功: {minio_object_name}")
+                    self.logger.info(f"✅ MinIO 上传成功: {minio_object_path}")
                 else:
-                    self.logger.error(f"❌ MinIO 上传失败（返回 False）: {minio_object_name}")
+                    self.logger.error(f"❌ MinIO 上传失败（返回 False）: {minio_object_path}")
             except Exception as e:
                 self.logger.error(f"❌ MinIO 上传异常: {e}", exc_info=True)
 
-        # 5. 记录到 PostgreSQL
+        # 6. 记录到 PostgreSQL
         if self.enable_postgres and self.pg_client:
             try:
                 with self.pg_client.get_session() as session:
                     # 检查是否已存在
-                    existing_doc = crud.get_document_by_path(session, minio_object_name)
+                    existing_doc = crud.get_document_by_path(session, minio_object_path)
 
                     if existing_doc:
                         self.logger.info(f"文档已存在: id={existing_doc.id}")
@@ -300,7 +317,7 @@ class BaseCrawler(ABC, LoggerMixin):
                             doc_type=task.doc_type.value,
                             year=year if year else datetime.now().year,  # 确保year不为None
                             quarter=task.quarter if task.quarter else None,
-                            minio_object_name=minio_object_name,
+                            minio_object_path=minio_object_path,
                             file_size=file_size,
                             file_hash=file_hash,
                             metadata=task.metadata
@@ -312,19 +329,19 @@ class BaseCrawler(ABC, LoggerMixin):
                 # 记录失败但不影响整体成功状态（因为 MinIO 上传已成功）
                 document_id = None
 
-        # 6. 创建结果对象
+        # 7. 创建结果对象
         result = CrawlResult(
             task=task,
             success=True,
             local_file_path=local_file_path,
-            minio_object_name=minio_object_name,
+            minio_object_path=minio_object_path,
             document_id=document_id,
             file_size=file_size,
             file_hash=file_hash,
             metadata=task.metadata
         )
 
-        # 7. 验证结果（如果启用自动隔离）
+        # 8. 验证结果（如果启用自动隔离）
         if self.enable_quarantine and self.quarantine_manager:
             is_valid, error_msg = self.validate_result(result)
             
@@ -336,7 +353,7 @@ class BaseCrawler(ABC, LoggerMixin):
                         document_id=document_id,
                         source_type=task.market.value,
                         doc_type=task.doc_type.value,
-                        original_path=minio_object_name,
+                        original_path=minio_object_path,
                         failure_stage="validation_failed",
                         failure_reason=error_msg or "验证失败",
                         failure_details=f"文件大小: {file_size} bytes, 文件哈希: {file_hash}",
@@ -347,7 +364,7 @@ class BaseCrawler(ABC, LoggerMixin):
                             "quarter": task.quarter
                         }
                     )
-                    self.logger.info(f"✅ 文档已自动隔离: {minio_object_name}")
+                    self.logger.info(f"✅ 文档已自动隔离: {minio_object_path}")
                 except Exception as e:
                     self.logger.error(f"❌ 自动隔离失败: {e}", exc_info=True)
 

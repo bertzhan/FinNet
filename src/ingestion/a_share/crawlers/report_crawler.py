@@ -411,7 +411,7 @@ def main():
     # 打印结果
     if result.success:
         print(f"✅ 爬取成功：{result.local_file_path}")
-        print(f"   MinIO: {result.minio_object_name}")
+        print(f"   MinIO: {result.minio_object_path}")
         print(f"   数据库ID: {result.document_id}")
     else:
         print(f"❌ 爬取失败：{result.error_message}")

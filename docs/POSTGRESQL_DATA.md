@@ -17,7 +17,7 @@
 | `doc_type` | String(50) | 文档类型 | `"ipo_prospectus"` 或 `"quarterly_reports"` |
 | `year` | Integer | 年份 | `2023` |
 | `quarter` | Integer | 季度 (1-4)，IPO 为 NULL | `3` 或 `NULL` |
-| `minio_object_name` | String(500) | MinIO 对象路径（唯一） | `"bronze/a_share/ipo_prospectus/000001/000001.pdf"` |
+| `minio_object_path` | String(500) | MinIO 对象路径（唯一） | `"bronze/a_share/ipo_prospectus/000001/000001.pdf"` |
 | `file_size` | BigInteger | 文件大小（字节） | `1024000` |
 | `file_hash` | String(64) | 文件哈希（MD5） | `"a1b2c3d4e5f6..."` |
 | `status` | String(50) | 文档状态 | `"crawled"` |
@@ -28,7 +28,8 @@
 | `updated_at` | DateTime | 更新时间 | `2024-01-01 10:00:00` |
 | `error_message` | Text | 错误信息（成功时为 NULL） | `NULL` |
 | `retry_count` | Integer | 重试次数 | `0` |
-| `extra_metadata` | JSON | 额外元数据（JSON 格式） | 见下方说明 |
+| `source_url` | String(1000) | 文档来源URL | `"https://www.cninfo.com.cn/..."` |
+| `publish_date` | DateTime | 文档发布日期 | `2023-10-01 00:00:00` |
 
 ### IPO 招股说明书数据示例
 
@@ -41,7 +42,7 @@
   "doc_type": "ipo_prospectus",
   "year": 2023,
   "quarter": null,
-  "minio_object_name": "bronze/a_share/ipo_prospectus/000001/000001.pdf",
+  "minio_object_path": "bronze/a_share/ipo_prospectus/000001/000001.pdf",
   "file_size": 2048000,
   "file_hash": "a1b2c3d4e5f6789012345678901234567890abcd",
   "status": "crawled",
@@ -52,12 +53,8 @@
   "updated_at": "2024-01-01T10:00:00",
   "error_message": null,
   "retry_count": 0,
-  "extra_metadata": {
-    "publication_date": "01012023",
-    "publication_year": "2023",
-    "publication_date_iso": "2023-01-01T00:00:00",
-    "doc_type": "ipo_prospectus"
-  }
+  "source_url": "https://www.cninfo.com.cn/new/disclosure/detail?plate=&orgId=xxx&stockCode=000001&announcementId=xxx",
+  "publish_date": "2023-01-01T00:00:00"
 }
 ```
 
@@ -72,7 +69,7 @@
   "doc_type": "quarterly_reports",
   "year": 2023,
   "quarter": 3,
-  "minio_object_name": "bronze/a_share/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf",
+  "minio_object_path": "bronze/a_share/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf",
   "file_size": 3072000,
   "file_hash": "b2c3d4e5f6789012345678901234567890abcdef",
   "status": "crawled",
@@ -83,38 +80,24 @@
   "updated_at": "2024-01-01T10:05:00",
   "error_message": null,
   "retry_count": 0,
-  "extra_metadata": {
-    "stock_code": "000001",
-    "year": "2023",
-    "quarter": "3"
-  }
+  "source_url": "https://www.cninfo.com.cn/new/disclosure/detail?plate=&orgId=xxx&stockCode=000001&announcementId=xxx",
+  "publish_date": "2023-10-01T00:00:00"
 }
 ```
 
-## extra_metadata 字段说明
+## 重要字段说明
 
-`extra_metadata` 是一个 JSON 字段，存储额外的元数据信息。
+### source_url 字段
 
-### IPO 招股说明书的 extra_metadata
+文档的原始来源URL，从爬取时获取。用于追踪文档的原始位置。
 
-```json
-{
-  "publication_date": "01012023",           // 发布日期（DDMMYYYY 格式）
-  "publication_year": "2023",              // 发布年份（YYYY 格式）
-  "publication_date_iso": "2023-01-01T00:00:00",  // 发布日期（ISO 格式）
-  "doc_type": "ipo_prospectus"             // 文档类型
-}
-```
+### publish_date 字段
 
-### 定期报告的 extra_metadata
+文档的发布日期，从公告时间解析得到。格式为 DateTime (TIMESTAMP)。
 
-```json
-{
-  "stock_code": "000001",                  // 股票代码
-  "year": "2023",                          // 年份
-  "quarter": "3"                           // 季度
-}
-```
+**注意**: 原 `extra_metadata` 字段已删除，相关数据已迁移到独立字段：
+- `source_url`: 文档来源URL
+- `publish_date`: 文档发布日期
 
 ## 数据流程
 
@@ -138,7 +121,7 @@
    - doc_type: "ipo_prospectus"
    - year: 从 metadata 获取的发布年份
    - quarter: NULL（IPO 不需要季度）
-   - minio_object_name: MinIO 路径
+   - minio_object_path: MinIO 路径
    - file_size: 文件大小
    - file_hash: MD5 哈希
    - status: "crawled"
@@ -164,7 +147,7 @@
    - doc_type: "quarterly_reports" 或 "annual_reports"
    - year: 报告年份
    - quarter: 季度 (1-4)
-   - minio_object_name: MinIO 路径
+   - minio_object_path: MinIO 路径
    - file_size: 文件大小
    - file_hash: MD5 哈希
    - status: "crawled"
@@ -176,14 +159,14 @@
 
 `documents` 表有以下唯一性约束：
 
-1. **`minio_object_name`** - 唯一索引，确保同一文件路径不会重复记录
+1. **`minio_object_path`** - 唯一索引，确保同一文件路径不会重复记录
 2. **`(stock_code, year, quarter, doc_type)`** - 唯一约束，确保同一公司的同一文档不会重复
 
 ## 去重逻辑
 
 在存入 PostgreSQL 前，代码会检查：
 
-1. **按 MinIO 路径检查**：如果 `minio_object_name` 已存在，则返回现有记录的 ID，不创建新记录
+1. **按 MinIO 路径检查**：如果 `minio_object_path` 已存在，则返回现有记录的 ID，不创建新记录
 2. **按业务键检查**：如果 `(stock_code, year, quarter, doc_type)` 已存在，则返回现有记录的 ID
 
 这样可以避免重复爬取和存储相同文档。
