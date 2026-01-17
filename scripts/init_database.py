@@ -38,8 +38,13 @@ def init_database():
         
         # 检查表是否存在
         print("\n2️⃣ 检查数据库表...")
-        required_tables = ['documents', 'document_chunks', 'crawl_tasks', 'parse_tasks', 
-                          'validation_logs', 'quarantine_records', 'embedding_tasks']
+        required_tables = [
+            # 基础表
+            'documents', 'document_chunks', 'crawl_tasks', 'parse_tasks', 
+            'validation_logs', 'quarantine_records', 'embedding_tasks',
+            # 新增表（Silver 层）
+            'parsed_documents', 'images', 'image_annotations'
+        ]
         
         missing_tables = []
         for table_name in required_tables:
@@ -65,16 +70,21 @@ def init_database():
             print("\n3️⃣ 所有表已存在，跳过创建")
         
         # 检查表
-        print("\n3️⃣ 检查创建的表...")
+        print("\n4️⃣ 检查创建的表...")
         table_info = pg_client.get_table_info()
         print("   📊 表统计:")
         for table_name, count in table_info.items():
             print(f"      - {table_name}: {count} 条记录")
         
         # 列出所有表
-        print("\n4️⃣ 已创建的表:")
-        required_tables = ['documents', 'document_chunks', 'crawl_tasks', 'parse_tasks', 
-                          'validation_logs', 'quarantine_records', 'embedding_tasks']
+        print("\n5️⃣ 已创建的表:")
+        required_tables = [
+            # 基础表
+            'documents', 'document_chunks', 'crawl_tasks', 'parse_tasks', 
+            'validation_logs', 'quarantine_records', 'embedding_tasks',
+            # 新增表（Silver 层）
+            'parsed_documents', 'images', 'image_annotations'
+        ]
         for table in required_tables:
             if pg_client.table_exists(table):
                 print(f"      ✅ {table}")

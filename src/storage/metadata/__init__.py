@@ -13,7 +13,10 @@ from .models import (
     ParseTask,
     ValidationLog,
     QuarantineRecord,
-    EmbeddingTask
+    EmbeddingTask,
+    ParsedDocument,
+    Image,
+    ImageAnnotation
 )
 from . import crud
 from .quarantine_manager import QuarantineManager, get_quarantine_manager
@@ -31,6 +34,9 @@ __all__ = [
     'ValidationLog',
     'QuarantineRecord',
     'EmbeddingTask',
+    'ParsedDocument',
+    'Image',
+    'ImageAnnotation',
     # CRUD
     'crud',
     # 隔离管理器

@@ -112,16 +112,21 @@ class QuarantineManager(LoggerMixin):
                 if file_data:
                     # 上传到隔离区
                     content_type = self._guess_content_type(original_path)
+                    # MinIO 元数据仅支持 US-ASCII，使用 document_id 代替中文错误信息
+                    metadata = {
+                        "original_path": original_path,
+                        "failure_stage": failure_stage,
+                        "quarantine_time": datetime.now().isoformat()
+                    }
+                    # 仅在 document_id 存在时添加
+                    if document_id:
+                        metadata["document_id"] = str(document_id)
+
                     success = self.minio_client.upload_file(
                         object_name=quarantine_path,
                         data=file_data,
                         content_type=content_type,
-                        metadata={
-                            "original_path": original_path,
-                            "failure_stage": failure_stage,
-                            "failure_reason": failure_reason,
-                            "quarantine_time": datetime.now().isoformat()
-                        }
+                        metadata=metadata
                     )
                     if success:
                         file_copied = True

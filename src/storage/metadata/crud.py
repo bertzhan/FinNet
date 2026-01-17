@@ -7,11 +7,12 @@ CRUD 操作辅助类
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, desc
+from sqlalchemy import and_, or_, desc, func
 
 from src.storage.metadata.models import (
     Document, DocumentChunk, CrawlTask, ParseTask,
-    ValidationLog, QuarantineRecord, EmbeddingTask
+    ValidationLog, QuarantineRecord, EmbeddingTask,
+    ParsedDocument, Image, ImageAnnotation
 )
 from src.common.constants import DocumentStatus
 from src.common.logger import get_logger
@@ -120,7 +121,7 @@ def get_documents_by_status(
     return session.query(Document).filter(
         Document.status == status
     ).order_by(
-        Document.created_at.asc()
+        Document.crawled_at.asc()
     ).limit(limit).offset(offset).all()
 
 
@@ -462,3 +463,319 @@ def update_quarantine_record_status(
     
     session.flush()
     return record
+
+
+# ==================== ParsedDocument CRUD ====================
+
+def create_parsed_document(
+    session: Session,
+    document_id: int,
+    parse_task_id: int,
+    content_json_path: str,
+    content_json_hash: str,
+    source_document_hash: str,
+    parser_type: str,
+    parser_version: Optional[str] = None,
+    markdown_path: Optional[str] = None,
+    markdown_hash: Optional[str] = None,
+    middle_json_path: Optional[str] = None,
+    model_json_path: Optional[str] = None,
+    image_folder_path: Optional[str] = None,
+    text_length: int = 0,
+    tables_count: int = 0,
+    images_count: int = 0,
+    pages_count: int = 0,
+    parsing_quality_score: Optional[float] = None,
+    has_tables: bool = False,
+    has_images: bool = False,
+    status: str = 'active'
+) -> ParsedDocument:
+    """
+    创建解析文档记录
+    
+    Args:
+        session: 数据库会话
+        document_id: 文档ID
+        parse_task_id: 解析任务ID
+        content_json_path: JSON文件路径
+        content_json_hash: JSON文件哈希
+        source_document_hash: 源PDF哈希
+        parser_type: 解析器类型
+        parser_version: 解析器版本
+        markdown_path: Markdown文件路径（可选）
+        markdown_hash: Markdown文件哈希（可选）
+        image_folder_path: 图片文件夹路径（可选）
+        text_length: 文本长度
+        tables_count: 表格数量
+        images_count: 图片数量
+        pages_count: 页数
+        parsing_quality_score: 解析质量评分
+        has_tables: 是否包含表格
+        has_images: 是否包含图片
+        status: 状态
+    
+    Returns:
+        ParsedDocument 对象
+    """
+    parsed_doc = ParsedDocument(
+        document_id=document_id,
+        parse_task_id=parse_task_id,
+        content_json_path=content_json_path,
+        content_json_hash=content_json_hash,
+        source_document_hash=source_document_hash,
+        parser_type=parser_type,
+        parser_version=parser_version,
+        markdown_path=markdown_path,
+        markdown_hash=markdown_hash,
+        middle_json_path=middle_json_path,
+        model_json_path=model_json_path,
+        image_folder_path=image_folder_path,
+        text_length=text_length,
+        tables_count=tables_count,
+        images_count=images_count,
+        pages_count=pages_count,
+        parsing_quality_score=parsing_quality_score,
+        has_tables=has_tables,
+        has_images=has_images,
+        status=status
+    )
+    
+    session.add(parsed_doc)
+    session.flush()
+    logger.debug(f"创建解析文档记录: id={parsed_doc.id}, document_id={document_id}")
+    return parsed_doc
+
+
+def get_parsed_document_by_id(session: Session, parsed_doc_id: int) -> Optional[ParsedDocument]:
+    """获取解析文档（按ID）"""
+    return session.query(ParsedDocument).filter(ParsedDocument.id == parsed_doc_id).first()
+
+
+def get_parsed_documents_by_document_id(
+    session: Session,
+    document_id: int,
+    status: Optional[str] = None
+) -> List[ParsedDocument]:
+    """获取文档的所有解析结果"""
+    query = session.query(ParsedDocument).filter(ParsedDocument.document_id == document_id)
+    if status:
+        query = query.filter(ParsedDocument.status == status)
+    return query.order_by(desc(ParsedDocument.parsed_at)).all()
+
+
+def get_latest_parsed_document(
+    session: Session,
+    document_id: int
+) -> Optional[ParsedDocument]:
+    """获取文档的最新解析结果"""
+    return session.query(ParsedDocument).filter(
+        ParsedDocument.document_id == document_id,
+        ParsedDocument.status == 'active'
+    ).order_by(desc(ParsedDocument.parsed_at)).first()
+
+
+def update_parsed_document_status(
+    session: Session,
+    parsed_doc_id: int,
+    status: str
+) -> bool:
+    """更新解析文档状态"""
+    parsed_doc = session.query(ParsedDocument).filter(ParsedDocument.id == parsed_doc_id).first()
+    if not parsed_doc:
+        return False
+    
+    parsed_doc.status = status
+    parsed_doc.updated_at = datetime.now()
+    session.flush()
+    return True
+
+
+# ==================== Image CRUD ====================
+
+def create_image(
+    session: Session,
+    parsed_document_id: int,
+    document_id: int,
+    image_index: int,
+    filename: str,
+    file_path: str,
+    page_number: int,
+    file_hash: Optional[str] = None,
+    bbox: Optional[Dict] = None,
+    description: Optional[str] = None,
+    width: Optional[int] = None,
+    height: Optional[int] = None,
+    file_size: Optional[int] = None
+) -> Image:
+    """
+    创建图片记录
+    
+    Args:
+        session: 数据库会话
+        parsed_document_id: 解析文档ID
+        document_id: 文档ID
+        image_index: 图片序号
+        filename: 文件名
+        file_path: MinIO完整路径
+        page_number: 页码
+        file_hash: 文件哈希
+        bbox: 边界框
+        description: 描述
+        width: 宽度
+        height: 高度
+        file_size: 文件大小
+    
+    Returns:
+        Image 对象
+    """
+    image = Image(
+        parsed_document_id=parsed_document_id,
+        document_id=document_id,
+        image_index=image_index,
+        filename=filename,
+        file_path=file_path,
+        page_number=page_number,
+        file_hash=file_hash,
+        bbox=bbox,
+        description=description,
+        width=width,
+        height=height,
+        file_size=file_size
+    )
+    
+    session.add(image)
+    session.flush()
+    logger.debug(f"创建图片记录: id={image.id}, filename={filename}")
+    return image
+
+
+def get_images_by_parsed_document(
+    session: Session,
+    parsed_document_id: int
+) -> List[Image]:
+    """获取解析文档的所有图片"""
+    return session.query(Image).filter(
+        Image.parsed_document_id == parsed_document_id
+    ).order_by(Image.image_index).all()
+
+
+def get_images_by_document_id(
+    session: Session,
+    document_id: int
+) -> List[Image]:
+    """获取文档的所有图片"""
+    return session.query(Image).filter(
+        Image.document_id == document_id
+    ).order_by(Image.page_number, Image.image_index).all()
+
+
+def get_image_by_id(session: Session, image_id: int) -> Optional[Image]:
+    """获取图片（按ID）"""
+    return session.query(Image).filter(Image.id == image_id).first()
+
+
+# ==================== ImageAnnotation CRUD ====================
+
+def create_image_annotation(
+    session: Session,
+    image_id: int,
+    category: str,
+    annotator_type: str,
+    annotator_id: Optional[str] = None,
+    annotator_name: Optional[str] = None,
+    subcategory: Optional[str] = None,
+    confidence: Optional[float] = None,
+    annotation_text: Optional[str] = None,
+    tags: Optional[List[str]] = None,
+    metadata: Optional[Dict] = None,
+    status: str = 'pending'
+) -> ImageAnnotation:
+    """
+    创建图片标注
+    
+    Args:
+        session: 数据库会话
+        image_id: 图片ID
+        category: 分类类别
+        annotator_type: 标注者类型（human/ai/auto）
+        annotator_id: 标注者ID
+        annotator_name: 标注者名称
+        subcategory: 子类别
+        confidence: 置信度
+        annotation_text: 标注文本
+        tags: 标签列表
+        metadata: 元数据
+        status: 状态
+    
+    Returns:
+        ImageAnnotation 对象
+    """
+    # 获取当前最大版本号
+    max_version = session.query(
+        func.max(ImageAnnotation.annotation_version)
+    ).filter(
+        ImageAnnotation.image_id == image_id
+    ).scalar() or 0
+    
+    annotation = ImageAnnotation(
+        image_id=image_id,
+        annotation_version=max_version + 1,
+        category=category,
+        annotator_type=annotator_type,
+        annotator_id=annotator_id,
+        annotator_name=annotator_name,
+        subcategory=subcategory,
+        confidence=confidence,
+        annotation_text=annotation_text,
+        tags=tags or [],
+        extra_metadata=metadata or {},
+        status=status
+    )
+    
+    session.add(annotation)
+    session.flush()
+    logger.debug(f"创建图片标注: id={annotation.id}, image_id={image_id}, category={category}")
+    return annotation
+
+
+def get_image_annotations_by_image_id(
+    session: Session,
+    image_id: int,
+    status: Optional[str] = None
+) -> List[ImageAnnotation]:
+    """获取图片的所有标注"""
+    query = session.query(ImageAnnotation).filter(ImageAnnotation.image_id == image_id)
+    if status:
+        query = query.filter(ImageAnnotation.status == status)
+    return query.order_by(desc(ImageAnnotation.annotation_version)).all()
+
+
+def get_latest_image_annotation(
+    session: Session,
+    image_id: int
+) -> Optional[ImageAnnotation]:
+    """获取图片的最新标注"""
+    return session.query(ImageAnnotation).filter(
+        ImageAnnotation.image_id == image_id,
+        ImageAnnotation.status == 'approved'
+    ).order_by(desc(ImageAnnotation.annotation_version)).first()
+
+
+def update_image_annotation_status(
+    session: Session,
+    annotation_id: int,
+    status: str,
+    reviewed_by: Optional[str] = None
+) -> bool:
+    """更新图片标注状态"""
+    annotation = session.query(ImageAnnotation).filter(ImageAnnotation.id == annotation_id).first()
+    if not annotation:
+        return False
+    
+    annotation.status = status
+    if reviewed_by:
+        annotation.reviewed_by = reviewed_by
+        annotation.reviewed_at = datetime.now()
+    annotation.updated_at = datetime.now()
+    session.flush()
+    return True

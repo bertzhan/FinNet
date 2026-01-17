@@ -1,0 +1,81 @@
+# Dagster 解析作业配置示例
+# 用于在 Dagster UI Launchpad 中配置解析任务
+
+# ⚠️ 重要提示：
+# 1. start_page_id 和 end_page_id 必须配置在 parse_documents_op 下
+# 2. 不要配置在 scan_pending_documents_op 下（那个op不处理解析参数）
+# 3. 页码从 0 开始，end_page_id 是包含的（inclusive）
+
+# 示例1：解析前5页（页码 0-4）
+ops:
+  scan_pending_documents_op:
+    config:
+      batch_size: 2
+      limit: 5
+      # doc_type: null  # 可选：过滤文档类型，null 表示所有类型
+  parse_documents_op:  # ⚠️ 页面参数必须在这里配置
+    config:
+      enable_silver_upload: true
+      start_page_id: 0      # 起始页码（从0开始）
+      end_page_id: 4        # 结束页码（包含），解析页码 0, 1, 2, 3, 4
+
+---
+# 示例2：解析前10页（页码 0-9）
+ops:
+  scan_pending_documents_op:
+    config:
+      batch_size: 2
+      limit: 10
+  parse_documents_op:
+    config:
+      enable_silver_upload: true
+      start_page_id: 0
+      end_page_id: 9        # 解析页码 0-9，共10页
+
+---
+# 示例3：只解析第5-10页（跳过前4页）
+ops:
+  scan_pending_documents_op:
+    config:
+      batch_size: 2
+      limit: 5
+  parse_documents_op:
+    config:
+      enable_silver_upload: true
+      start_page_id: 4      # 从第5页开始（页码4）
+      end_page_id: 9        # 到第10页（页码9）
+
+---
+# 示例4：解析全部（不限制页数）
+ops:
+  scan_pending_documents_op:
+    config:
+      batch_size: 2
+      limit: 5
+  parse_documents_op:
+    config:
+      enable_silver_upload: true
+      start_page_id: 0
+      # 不设置 end_page_id，表示解析到最后
+
+---
+# 示例5：只解析 IPO 招股说明书的前3页
+ops:
+  scan_pending_documents_op:
+    config:
+      batch_size: 2
+      limit: 10
+      doc_type: "ipo_prospectus"  # 只解析招股说明书
+  parse_documents_op:
+    config:
+      enable_silver_upload: true
+      start_page_id: 0
+      end_page_id: 2        # 只解析前3页（0, 1, 2）
+
+---
+# 注意事项：
+# 1. start_page_id 和 end_page_id 必须配置在 parse_documents_op 下，不是 scan_pending_documents_op
+# 2. 页码从 0 开始，end_page_id 是包含的（inclusive）
+# 3. 如果不设置 end_page_id，将解析整个文档
+# 4. batch_size 控制并发解析的文档数量
+# 5. limit 控制本次作业最多处理的文档数量

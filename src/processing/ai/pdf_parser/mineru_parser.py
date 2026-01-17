@@ -8,6 +8,7 @@ MinerU PDF 解析器
 import os
 import json
 import tempfile
+import hashlib
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 from pathlib import Path
@@ -15,7 +16,7 @@ from pathlib import Path
 from src.storage.object_store.minio_client import MinIOClient
 from src.storage.object_store.path_manager import PathManager
 from src.storage.metadata.postgres_client import get_postgres_client
-from src.storage.metadata.models import Document, ParseTask
+from src.storage.metadata.models import Document, ParseTask, ParsedDocument, Image
 from src.storage.metadata import crud
 from src.common.constants import Market, DocType, DocumentStatus
 from src.common.config import pdf_parser_config, minio_config
@@ -115,7 +116,7 @@ class MinerUParser(LoggerMixin):
                 # 查找已有的解析任务
                 existing_task = session.query(ParseTask).filter(
                     ParseTask.document_id == document_id,
-                    ParseTask.success == True
+                    ParseTask.status == 'completed'
                 ).first()
                 if existing_task:
                     return {
@@ -179,6 +180,7 @@ class MinerUParser(LoggerMixin):
                     
                     output_path = self._save_to_silver(
                         doc=doc,
+                        parse_task_id=parse_task_id,
                         parse_result=parse_result
                     )
                     if not output_path:
@@ -322,7 +324,7 @@ class MinerUParser(LoggerMixin):
                 ("return_middle_json", "true"),  # 返回 middle JSON（boolean，转换为字符串）
                 ("return_content_list", "true"),  # 返回内容列表（boolean，转换为字符串）
                 ("return_images", "true"),  # 返回图片（包含图片文件）
-                ("return_model_output", "false"),  # 不返回模型原始输出
+                ("return_model_output", "true"),  # 返回模型原始输出
                 ("response_format_zip", "true"),  # 返回 ZIP 格式
                 ("start_page_id", str(start_page_id)),  # 起始页码（从0开始）
             ]
@@ -1072,6 +1074,7 @@ class MinerUParser(LoggerMixin):
     def _save_to_silver(
         self,
         doc: Document,
+        parse_task_id: int,
         parse_result: Dict[str, Any]
     ) -> Optional[str]:
         """
@@ -1089,18 +1092,19 @@ class MinerUParser(LoggerMixin):
             all_files = parse_result.get("all_files", [])
             uploaded_file_paths = {}  # 按文件类型分类存储路径
             uploaded_image_paths = []
+            uploaded_image_sizes = {}  # 记录图片文件大小 {minio_path: file_size}
             
             if all_files:
                 self.logger.info(f"开始上传 {len(all_files)} 个原始文件...")
                 
-                # 生成统一的存储路径：silver/mineru/{market}/{doc_type}/{stock_code}/
+                # 生成统一的存储路径：silver/{market}/mineru/{doc_type}/{stock_code}/
                 market = Market(doc.market)
                 doc_type = DocType(doc.doc_type)
-                
+
                 if doc_type == DocType.IPO_PROSPECTUS:
-                    base_path = f"silver/mineru/{market.value}/{doc_type.value}/{doc.stock_code}"
+                    base_path = f"silver/{market.value}/mineru/{doc_type.value}/{doc.stock_code}"
                 else:
-                    base_path = f"silver/mineru/{market.value}/{doc_type.value}/{doc.year}/Q{doc.quarter if doc.quarter else 'Annual'}/{doc.stock_code}"
+                    base_path = f"silver/{market.value}/mineru/{doc_type.value}/{doc.year}/Q{doc.quarter if doc.quarter else 'Annual'}/{doc.stock_code}"
                 
                 # 所有文件都上传到同一个目录，保持相对路径结构
                 for file_info in all_files:
@@ -1113,9 +1117,20 @@ class MinerUParser(LoggerMixin):
                         self.logger.warning(f"文件不存在: {local_path}")
                         continue
                     
-                    # 使用相对路径构建 MinIO 路径，保持 ZIP 中的目录结构
-                    # 例如：images/xxx.jpg -> silver/mineru/.../images/xxx.jpg
-                    object_path = f"{base_path}/{relative_path}"
+                    # 使用相对路径构建 MinIO 路径，并重命名特定文件
+                    # 重命名规则：
+                    # - document_content_list.json -> content_list.json
+                    # - document_middle.json -> middle.json
+                    # - document_model.json -> model.json
+                    renamed_path = relative_path
+                    if filename == "document_content_list.json":
+                        renamed_path = "content_list.json"
+                    elif filename == "document_middle.json":
+                        renamed_path = "middle.json"
+                    elif filename == "document_model.json":
+                        renamed_path = "model.json"
+
+                    object_path = f"{base_path}/{renamed_path}"
                     
                     # 根据文件类型确定 Content-Type
                     if file_type == "image":
@@ -1131,7 +1146,9 @@ class MinerUParser(LoggerMixin):
                     try:
                         with open(local_path, "rb") as f:
                             file_data = f.read()
-                        
+
+                        file_size = len(file_data)  # 记录文件大小
+
                         success = self.minio_client.upload_file(
                             object_name=object_path,
                             data=file_data,
@@ -1144,15 +1161,16 @@ class MinerUParser(LoggerMixin):
                                 "uploaded_at": datetime.now().isoformat()
                             }
                         )
-                        
+
                         if success:
                             if file_type not in uploaded_file_paths:
                                 uploaded_file_paths[file_type] = []
                             uploaded_file_paths[file_type].append(object_path)
-                            
+
                             if file_type == "image":
                                 uploaded_image_paths.append(object_path)
-                            
+                                uploaded_image_sizes[object_path] = file_size  # 记录图片大小
+
                             self.logger.debug(f"✅ {file_type} 文件已上传: {object_path}")
                         else:
                             self.logger.warning(f"❌ {file_type} 文件上传失败: {object_path}")
@@ -1174,11 +1192,11 @@ class MinerUParser(LoggerMixin):
             # 3. 生成 Silver 层基础路径（用于数据库记录，不创建汇总 JSON）
             market = Market(doc.market)
             doc_type = DocType(doc.doc_type)
-            
+
             if doc_type == DocType.IPO_PROSPECTUS:
-                base_path = f"silver/mineru/{market.value}/{doc_type.value}/{doc.stock_code}"
+                base_path = f"silver/{market.value}/mineru/{doc_type.value}/{doc.stock_code}"
             else:
-                base_path = f"silver/mineru/{market.value}/{doc_type.value}/{doc.year}/Q{doc.quarter if doc.quarter else 'Annual'}/{doc.stock_code}"
+                base_path = f"silver/{market.value}/mineru/{doc_type.value}/{doc.year}/Q{doc.quarter if doc.quarter else 'Annual'}/{doc.stock_code}"
             
             # 使用 base_path 作为 output_path（用于数据库记录）
             silver_path = base_path
@@ -1190,7 +1208,23 @@ class MinerUParser(LoggerMixin):
                 f"(包含 {len(uploaded_image_paths)} 个图片, 总共 {total_files} 个文件)"
             )
             
-            # 5. 清理临时目录（如果存在）
+            # 5. 创建 ParsedDocument 和 Image 记录
+            try:
+                self._create_parsed_document_records(
+                    doc=doc,
+                    parse_task_id=parse_task_id,
+                    silver_path=silver_path,
+                    uploaded_file_paths=uploaded_file_paths,
+                    uploaded_image_paths=uploaded_image_paths,
+                    uploaded_image_sizes=uploaded_image_sizes,
+                    images_metadata=images_metadata,
+                    parse_result=parse_result
+                )
+            except Exception as e:
+                self.logger.error(f"创建 ParsedDocument 记录失败: {e}", exc_info=True)
+                # 不中断流程，继续执行
+            
+            # 6. 清理临时目录（如果存在）
             temp_extract_dir = parse_result.get("temp_extract_dir") or parse_result.get("metadata", {}).get("temp_extract_dir")
             if temp_extract_dir and os.path.exists(temp_extract_dir):
                 try:
@@ -1236,6 +1270,235 @@ class MinerUParser(LoggerMixin):
             '.webp': 'image/webp',
         }
         return content_types.get(ext, 'application/octet-stream')
+    
+    def _calculate_file_hash(self, file_path: str) -> Optional[str]:
+        """
+        计算文件的 SHA256 哈希值
+        
+        Args:
+            file_path: MinIO 对象路径或本地文件路径
+        
+        Returns:
+            SHA256 哈希值（64字符十六进制字符串），失败返回 None
+        """
+        try:
+            # 如果是 MinIO 路径，从 MinIO 下载文件数据
+            if file_path.startswith(('silver/', 'bronze/', 'gold/')):
+                file_data = self.minio_client.download_file(file_path)
+                if not file_data:
+                    self.logger.warning(f"无法下载文件计算哈希: {file_path}")
+                    return None
+            else:
+                # 本地文件路径
+                if not os.path.exists(file_path):
+                    self.logger.warning(f"文件不存在: {file_path}")
+                    return None
+                with open(file_path, 'rb') as f:
+                    file_data = f.read()
+            
+            # 计算 SHA256 哈希
+            hash_obj = hashlib.sha256(file_data)
+            return hash_obj.hexdigest()
+        except Exception as e:
+            self.logger.error(f"计算文件哈希失败 {file_path}: {e}", exc_info=True)
+            return None
+    
+    def _create_parsed_document_records(
+        self,
+        doc: Document,
+        parse_task_id: int,
+        silver_path: str,
+        uploaded_file_paths: Dict[str, List[str]],
+        uploaded_image_paths: List[str],
+        uploaded_image_sizes: Dict[str, int],
+        images_metadata: List[Dict[str, Any]],
+        parse_result: Dict[str, Any]
+    ) -> None:
+        """
+        创建 ParsedDocument 和 Image 记录
+        
+        Args:
+            doc: 文档对象
+            parse_task_id: 解析任务ID
+            silver_path: Silver 层基础路径
+            uploaded_file_paths: 已上传的文件路径（按类型分类）
+            uploaded_image_paths: 已上传的图片路径列表
+            images_metadata: 图片元数据列表
+            parse_result: 解析结果
+        """
+        with self.pg_client.get_session() as session:
+            try:
+                # 1. 确定文件路径
+                content_list_paths = uploaded_file_paths.get("content_list", [])
+                markdown_paths = uploaded_file_paths.get("markdown", [])
+                middle_json_paths = uploaded_file_paths.get("middle_json", [])
+                model_json_paths = uploaded_file_paths.get("other", [])  # model_json 在 other 分类中
+
+                # 使用新的路径格式
+                content_json_path = None
+                markdown_path = None
+                middle_json_path = None
+                model_json_path = None
+                image_folder_path = None
+
+                # 查找 content_list.json 文件
+                for path in content_list_paths:
+                    if path.endswith("content_list.json"):
+                        content_json_path = path
+                        break
+
+                # 如果没有找到，使用第一个 content_list 文件
+                if not content_json_path and content_list_paths:
+                    content_json_path = content_list_paths[0]
+
+                # 查找 markdown 文件
+                for path in markdown_paths:
+                    if path.endswith("document.md"):
+                        markdown_path = path
+                        break
+
+                # 如果没有找到，使用第一个 markdown 文件
+                if not markdown_path and markdown_paths:
+                    markdown_path = markdown_paths[0]
+
+                # 查找 middle.json 文件
+                for path in middle_json_paths:
+                    if path.endswith("middle.json"):
+                        middle_json_path = path
+                        break
+
+                if not middle_json_path and middle_json_paths:
+                    middle_json_path = middle_json_paths[0]
+
+                # 查找 model.json 文件
+                for path in model_json_paths:
+                    if path.endswith("model.json"):
+                        model_json_path = path
+                        break
+
+                # 确定图片文件夹路径
+                if uploaded_image_paths:
+                    # 使用第一个图片路径的目录作为图片文件夹路径
+                    first_image_path = uploaded_image_paths[0]
+                    image_folder_path = os.path.dirname(first_image_path) + "/"
+                
+                # 2. 计算哈希值
+                content_json_hash = ""
+                markdown_hash = None
+                source_document_hash = doc.file_hash or ""
+                
+                if content_json_path:
+                    content_json_hash = self._calculate_file_hash(content_json_path) or ""
+                
+                if markdown_path:
+                    markdown_hash = self._calculate_file_hash(markdown_path)
+                
+                # 3. 获取统计信息
+                text_length = parse_result.get("text_length", 0)
+                tables_count = parse_result.get("tables_count", 0)
+                images_count = len(uploaded_image_paths)
+                pages_count = parse_result.get("pages_count", 0)
+                
+                # 4. 获取解析器信息
+                parser_type = "mineru"
+                parser_version = self._get_mineru_version()
+                
+                # 5. 创建 ParsedDocument 记录
+                if not content_json_path:
+                    self.logger.warning("未找到 content_list.json 文件，跳过创建 ParsedDocument 记录")
+                    return
+                
+                parsed_doc = crud.create_parsed_document(
+                    session=session,
+                    document_id=doc.id,
+                    parse_task_id=parse_task_id,
+                    content_json_path=content_json_path,
+                    content_json_hash=content_json_hash,
+                    source_document_hash=source_document_hash,
+                    parser_type=parser_type,
+                    parser_version=parser_version,
+                    markdown_path=markdown_path,
+                    markdown_hash=markdown_hash,
+                    middle_json_path=middle_json_path,
+                    model_json_path=model_json_path,
+                    image_folder_path=image_folder_path,
+                    text_length=text_length,
+                    tables_count=tables_count,
+                    images_count=images_count,
+                    pages_count=pages_count,
+                    has_tables=tables_count > 0,
+                    has_images=images_count > 0
+                )
+                
+                parsed_document_id = parsed_doc.id
+                self.logger.info(f"✅ 创建 ParsedDocument 记录: id={parsed_document_id}")
+                
+                # 6. 创建 Image 记录
+                self.logger.info(f"准备创建 Image 记录: images_metadata 数量={len(images_metadata)}, uploaded_image_paths 数量={len(uploaded_image_paths)}")
+
+                # 如果有上传的图片但没有元数据，创建基本的 Image 记录
+                if uploaded_image_paths:
+                    if not images_metadata:
+                        # 没有详细元数据，创建基本记录
+                        self.logger.warning(f"图片元数据为空，将为 {len(uploaded_image_paths)} 张图片创建基本记录")
+                        images_metadata = []
+                        for idx, img_path in enumerate(uploaded_image_paths):
+                            images_metadata.append({
+                                "image_index": idx,
+                                "page": 0,  # 未知页码
+                                "filename": os.path.basename(img_path),
+                                "description": None,
+                                "bbox": None,
+                                "width": None,
+                                "height": None,
+                                "file_size": None
+                            })
+
+                    for idx, (img_meta, img_path) in enumerate(zip(images_metadata, uploaded_image_paths)):
+                        try:
+                            # 获取图片信息
+                            image_index = img_meta.get("image_index", idx)
+                            page_number = img_meta.get("page", img_meta.get("page_number", 1))
+                            filename = os.path.basename(img_path)
+                            bbox = img_meta.get("bbox")
+                            description = img_meta.get("description")
+                            
+                            # 计算图片文件哈希
+                            image_hash = self._calculate_file_hash(img_path)
+                            
+                            # 获取图片尺寸（如果元数据中有）
+                            width = img_meta.get("width")
+                            height = img_meta.get("height")
+                            file_size = uploaded_image_sizes.get(img_path)
+                            
+                            # 创建 Image 记录
+                            image = crud.create_image(
+                                session=session,
+                                parsed_document_id=parsed_document_id,
+                                document_id=doc.id,
+                                image_index=image_index,
+                                filename=filename,
+                                file_path=img_path,
+                                page_number=page_number,
+                                file_hash=image_hash,
+                                bbox=bbox,
+                                description=description,
+                                width=width,
+                                height=height,
+                                file_size=file_size
+                            )
+                            self.logger.debug(f"✅ 创建 Image 记录: id={image.id}, filename={filename}")
+                        except Exception as e:
+                            self.logger.error(f"创建 Image 记录失败 (image_index={idx}): {e}", exc_info=True)
+                            continue
+                    
+                    self.logger.info(f"✅ 创建 {len(uploaded_image_paths)} 个 Image 记录")
+                
+                session.commit()
+                
+            except Exception as e:
+                session.rollback()
+                raise e
 
     def _update_parse_task_success(
         self,

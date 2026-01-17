@@ -192,7 +192,25 @@ def scan_pending_documents_op(context) -> Dict:
         }
 
 
-@op
+@op(
+    config_schema={
+        "enable_silver_upload": Field(
+            bool,
+            default_value=True,
+            description="是否上传解析结果到 Silver 层"
+        ),
+        "start_page_id": Field(
+            int,
+            default_value=0,
+            description="起始页码（从0开始），默认0"
+        ),
+        "end_page_id": Field(
+            int,
+            is_required=False,
+            description="结束页码（从0开始），None 表示解析到最后。例如：设置为 4 表示解析前5页（0-4）"
+        ),
+    }
+)
 def parse_documents_op(context, scan_result: Dict) -> Dict:
     """
     批量解析文档
@@ -220,15 +238,21 @@ def parse_documents_op(context, scan_result: Dict) -> Dict:
     
     # 安全获取 config
     config = context.op_config if hasattr(context, 'op_config') else {}
-    
+
+    # 调试：打印配置信息
+    logger.info(f"🔍 DEBUG: config = {config}")
+    logger.info(f"🔍 DEBUG: hasattr(context, 'op_config') = {hasattr(context, 'op_config')}")
+
     enable_silver_upload = config.get("enable_silver_upload", True) if config else True
     start_page_id = config.get("start_page_id", 0) if config else 0
     end_page_id = config.get("end_page_id") if config else None
-    
+
+    logger.info(f"🔍 DEBUG: enable_silver_upload={enable_silver_upload}, start_page_id={start_page_id}, end_page_id={end_page_id}")
+
     if end_page_id is not None:
-        logger.info(f"页面范围: {start_page_id} - {end_page_id} (共 {end_page_id - start_page_id + 1} 页)")
+        logger.info(f"📄 页面范围: {start_page_id} - {end_page_id} (共 {end_page_id - start_page_id + 1} 页)")
     else:
-        logger.info(f"页面范围: {start_page_id} - 最后 (解析全部)")
+        logger.info(f"📄 页面范围: {start_page_id} - 最后 (解析全部)")
     
     if not scan_result.get("success"):
         logger.error(f"扫描失败，跳过解析: {scan_result.get('error_message')}")
@@ -406,15 +430,96 @@ def validate_parse_results_op(context, parse_results: Dict) -> Dict:
 
 # ==================== Dagster Jobs ====================
 
-@job
+@job(
+    config={
+        "ops": {
+            "scan_pending_documents_op": {
+                "config": {
+                    "batch_size": 2,
+                    "limit": 10,
+                    # doc_type 是可选的，不设置表示所有类型
+                }
+            },
+            "parse_documents_op": {
+                "config": {
+                    "enable_silver_upload": True,
+                    "start_page_id": 0,
+                    "end_page_id": 4,  # 默认只解析前5页（0-4），用于快速测试
+                }
+            }
+        }
+    },
+    description="PDF 解析作业 - 默认配置解析前5页"
+)
 def parse_pdf_job():
     """
-    PDF 解析作业
-    
+    PDF 解析作业（默认解析前5页）
+
     完整流程：
     1. 扫描待解析文档（状态为 'crawled'）
     2. 批量解析文档（调用 MinerU 解析器）
     3. 验证解析结果
+
+    默认配置：
+    - scan_pending_documents_op:
+        - batch_size: 2 (并发解析2个文档)
+        - limit: 10 (最多处理10个文档)
+    - parse_documents_op:
+        - start_page_id: 0
+        - end_page_id: 4 (只解析前5页，用于快速测试)
+
+    如需解析完整文档，请在 Launchpad 中修改配置：
+    ops:
+      parse_documents_op:
+        config:
+          enable_silver_upload: true
+          start_page_id: 0
+          # 不设置 end_page_id，表示解析全部
+    """
+    scan_result = scan_pending_documents_op()
+    parse_results = parse_documents_op(scan_result)
+    validate_parse_results_op(parse_results)
+
+
+@job(
+    config={
+        "ops": {
+            "scan_pending_documents_op": {
+                "config": {
+                    "batch_size": 5,
+                    "limit": 100,
+                    # doc_type 是可选的，不设置表示所有类型
+                }
+            },
+            "parse_documents_op": {
+                "config": {
+                    "enable_silver_upload": True,
+                    "start_page_id": 0,
+                    # 不设置 end_page_id，解析完整文档
+                }
+            }
+        }
+    },
+    description="PDF 解析作业 - 解析完整文档（所有页）"
+)
+def parse_pdf_full_job():
+    """
+    PDF 解析作业（解析完整文档）
+
+    完整流程：
+    1. 扫描待解析文档（状态为 'crawled'）
+    2. 批量解析文档（调用 MinerU 解析器）
+    3. 验证解析结果
+
+    默认配置：
+    - scan_pending_documents_op:
+        - batch_size: 5 (并发解析5个文档)
+        - limit: 100 (最多处理100个文档)
+    - parse_documents_op:
+        - start_page_id: 0
+        - end_page_id: None (解析所有页面)
+
+    ⚠️ 注意：解析完整文档可能需要较长时间，建议先用 parse_pdf_job 测试前几页
     """
     scan_result = scan_pending_documents_op()
     parse_results = parse_documents_op(scan_result)
