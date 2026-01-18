@@ -1,4 +1,19 @@
--- FinNet MVP 数据库初始化脚本
+-- FinNet MVP 数据库初始化脚本（已废弃）
+-- 
+-- ⚠️ 注意：此文件已不再使用！
+-- 
+-- 当前项目使用 SQLAlchemy ORM 自动创建表结构（scripts/init_database.py）
+-- 所有表的主键已更新为 UUID 类型，定义在 src/storage/metadata/models.py
+-- 
+-- 如需初始化数据库，请运行：
+--   python scripts/init_database.py
+-- 
+-- 或重建数据库（删除所有表并重新创建）：
+--   python scripts/recreate_database.py --yes
+--
+-- ============================================================
+-- 以下是旧的表结构定义（仅供参考，不再使用）
+-- ============================================================
 -- 创建公告元数据表
 
 CREATE TABLE IF NOT EXISTS announcements (

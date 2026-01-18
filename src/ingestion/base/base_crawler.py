@@ -5,8 +5,9 @@
 遵循 plan.md 设计，集成 storage 层
 """
 
+import uuid
 from abc import ABC, abstractmethod
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Union
 from datetime import datetime
 from dataclasses import dataclass, field
 import os
@@ -56,7 +57,7 @@ class CrawlResult:
     success: bool                        # 是否成功
     local_file_path: Optional[str] = None    # 本地文件路径（临时）
     minio_object_path: Optional[str] = None  # MinIO 对象路径
-    document_id: Optional[int] = None        # 数据库文档 ID
+    document_id: Optional[Union[uuid.UUID, str]] = None        # 数据库文档 ID
     file_size: Optional[int] = None          # 文件大小（字节）
     file_hash: Optional[str] = None          # 文件哈希
     error_message: Optional[str] = None      # 错误信息（失败时）

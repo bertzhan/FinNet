@@ -3,6 +3,11 @@
 """
 数据库初始化脚本
 创建所有必要的数据库表
+
+注意：
+- 所有表的主键使用 UUID 类型（定义在 src/storage/metadata/models.py）
+- 使用 SQLAlchemy ORM 自动创建表结构
+- 如果表已存在，会跳过创建（不会删除现有数据）
 """
 
 import sys

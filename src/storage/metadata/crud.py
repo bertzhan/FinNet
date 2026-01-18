@@ -4,7 +4,8 @@ CRUD 操作辅助类
 提供常用的数据库增删改查操作
 """
 
-from typing import Optional, List, Dict, Any
+import uuid
+from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, desc, func
@@ -18,6 +19,15 @@ from src.common.constants import DocumentStatus
 from src.common.logger import get_logger
 
 logger = get_logger(__name__)
+
+
+# ==================== UUID 辅助函数 ====================
+
+def _to_uuid(value: Union[uuid.UUID, str]) -> uuid.UUID:
+    """将字符串或 UUID 转换为 UUID 对象"""
+    if isinstance(value, str):
+        return uuid.UUID(value)
+    return value
 
 
 # ==================== Document CRUD ====================
@@ -113,8 +123,9 @@ def create_document(
     return doc
 
 
-def get_document_by_id(session: Session, document_id: int) -> Optional[Document]:
+def get_document_by_id(session: Session, document_id: Union[uuid.UUID, str]) -> Optional[Document]:
     """获取文档（按 ID）"""
+    document_id = _to_uuid(document_id)
     return session.query(Document).filter(Document.id == document_id).first()
 
 
@@ -156,7 +167,7 @@ def get_documents_by_status(
 
 def update_document_status(
     session: Session,
-    document_id: int,
+    document_id: Union[uuid.UUID, str],
     status: str,
     error_message: Optional[str] = None,
     **kwargs
@@ -180,6 +191,7 @@ def update_document_status(
         ...         session, 1, "parsed", parsed_at=datetime.now()
         ...     )
     """
+    document_id = _to_uuid(document_id)
     doc = session.query(Document).filter(Document.id == document_id).first()
     if not doc:
         logger.error(f"文档不存在: id={document_id}")
@@ -231,7 +243,7 @@ def get_documents_by_stock(
 
 def create_document_chunk(
     session: Session,
-    document_id: int,
+    document_id: Union[uuid.UUID, str],
     chunk_index: int,
     chunk_text: str,
     chunk_size: int,
@@ -240,6 +252,7 @@ def create_document_chunk(
     metadata: Optional[Dict] = None
 ) -> DocumentChunk:
     """创建文档分块"""
+    document_id = _to_uuid(document_id)
     chunk = DocumentChunk(
         document_id=document_id,
         chunk_index=chunk_index,
@@ -256,8 +269,9 @@ def create_document_chunk(
     return chunk
 
 
-def get_document_chunks(session: Session, document_id: int) -> List[DocumentChunk]:
+def get_document_chunks(session: Session, document_id: Union[uuid.UUID, str]) -> List[DocumentChunk]:
     """获取文档的所有分块"""
+    document_id = _to_uuid(document_id)
     return session.query(DocumentChunk).filter(
         DocumentChunk.document_id == document_id
     ).order_by(DocumentChunk.chunk_index).all()
@@ -318,7 +332,7 @@ def update_crawl_task_status(
     task_id: int,
     status: str,
     success: bool = False,
-    document_id: Optional[int] = None,
+    document_id: Optional[Union[uuid.UUID, str]] = None,
     error_message: Optional[str] = None
 ) -> bool:
     """更新爬取任务状态"""
@@ -329,7 +343,7 @@ def update_crawl_task_status(
     task.status = status
     task.success = success
     if document_id:
-        task.document_id = document_id
+        task.document_id = _to_uuid(document_id)
     if error_message:
         task.error_message = error_message
 
@@ -348,11 +362,12 @@ def update_crawl_task_status(
 
 def create_parse_task(
     session: Session,
-    document_id: int,
+    document_id: Union[uuid.UUID, str],
     parser_type: str,
     parser_version: Optional[str] = None
 ) -> ParseTask:
     """创建解析任务"""
+    document_id = _to_uuid(document_id)
     task = ParseTask(
         document_id=document_id,
         parser_type=parser_type,
@@ -377,7 +392,7 @@ def get_pending_parse_tasks(session: Session, limit: int = 10) -> List[ParseTask
 
 def create_validation_log(
     session: Session,
-    document_id: int,
+    document_id: Union[uuid.UUID, str],
     validation_stage: str,
     validation_rule: str,
     validation_level: str,
@@ -386,6 +401,7 @@ def create_validation_log(
     metadata: Optional[Dict] = None
 ) -> ValidationLog:
     """创建验证日志"""
+    document_id = _to_uuid(document_id)
     log = ValidationLog(
         document_id=document_id,
         validation_stage=validation_stage,
@@ -403,10 +419,11 @@ def create_validation_log(
 
 def get_validation_logs(
     session: Session,
-    document_id: int,
+    document_id: Union[uuid.UUID, str],
     validation_stage: Optional[str] = None
 ) -> List[ValidationLog]:
     """获取验证日志"""
+    document_id = _to_uuid(document_id)
     query = session.query(ValidationLog).filter(ValidationLog.document_id == document_id)
 
     if validation_stage:
@@ -419,7 +436,7 @@ def get_validation_logs(
 
 def create_quarantine_record(
     session: Session,
-    document_id: int,
+    document_id: Optional[Union[uuid.UUID, str]],
     source_type: str,
     doc_type: str,
     original_path: str,
@@ -429,6 +446,8 @@ def create_quarantine_record(
     failure_details: Optional[str] = None
 ) -> QuarantineRecord:
     """创建隔离记录"""
+    if document_id is not None:
+        document_id = _to_uuid(document_id)
     record = QuarantineRecord(
         document_id=document_id,
         source_type=source_type,
@@ -498,8 +517,8 @@ def update_quarantine_record_status(
 
 def create_parsed_document(
     session: Session,
-    document_id: int,
-    parse_task_id: int,
+    document_id: Union[uuid.UUID, str],
+    parse_task_id: Union[uuid.UUID, str],
     content_json_path: str,
     content_json_hash: str,
     source_document_hash: str,
@@ -546,6 +565,8 @@ def create_parsed_document(
     Returns:
         ParsedDocument 对象
     """
+    document_id = _to_uuid(document_id)
+    parse_task_id = _to_uuid(parse_task_id)
     parsed_doc = ParsedDocument(
         document_id=document_id,
         parse_task_id=parse_task_id,
@@ -575,17 +596,19 @@ def create_parsed_document(
     return parsed_doc
 
 
-def get_parsed_document_by_id(session: Session, parsed_doc_id: int) -> Optional[ParsedDocument]:
+def get_parsed_document_by_id(session: Session, parsed_doc_id: Union[uuid.UUID, str]) -> Optional[ParsedDocument]:
     """获取解析文档（按ID）"""
+    parsed_doc_id = _to_uuid(parsed_doc_id)
     return session.query(ParsedDocument).filter(ParsedDocument.id == parsed_doc_id).first()
 
 
 def get_parsed_documents_by_document_id(
     session: Session,
-    document_id: int,
+    document_id: Union[uuid.UUID, str],
     status: Optional[str] = None
 ) -> List[ParsedDocument]:
     """获取文档的所有解析结果"""
+    document_id = _to_uuid(document_id)
     query = session.query(ParsedDocument).filter(ParsedDocument.document_id == document_id)
     if status:
         query = query.filter(ParsedDocument.status == status)
@@ -594,9 +617,10 @@ def get_parsed_documents_by_document_id(
 
 def get_latest_parsed_document(
     session: Session,
-    document_id: int
+    document_id: Union[uuid.UUID, str]
 ) -> Optional[ParsedDocument]:
     """获取文档的最新解析结果"""
+    document_id = _to_uuid(document_id)
     return session.query(ParsedDocument).filter(
         ParsedDocument.document_id == document_id,
         ParsedDocument.status == 'active'
@@ -623,8 +647,8 @@ def update_parsed_document_status(
 
 def create_image(
     session: Session,
-    parsed_document_id: int,
-    document_id: int,
+    parsed_document_id: Union[uuid.UUID, str],
+    document_id: Union[uuid.UUID, str],
     image_index: int,
     filename: str,
     file_path: str,
@@ -657,6 +681,8 @@ def create_image(
     Returns:
         Image 对象
     """
+    parsed_document_id = _to_uuid(parsed_document_id)
+    document_id = _to_uuid(document_id)
     image = Image(
         parsed_document_id=parsed_document_id,
         document_id=document_id,
@@ -680,9 +706,10 @@ def create_image(
 
 def get_images_by_parsed_document(
     session: Session,
-    parsed_document_id: int
+    parsed_document_id: Union[uuid.UUID, str]
 ) -> List[Image]:
     """获取解析文档的所有图片"""
+    parsed_document_id = _to_uuid(parsed_document_id)
     return session.query(Image).filter(
         Image.parsed_document_id == parsed_document_id
     ).order_by(Image.image_index).all()
@@ -690,7 +717,7 @@ def get_images_by_parsed_document(
 
 def get_images_by_document_id(
     session: Session,
-    document_id: int
+    document_id: Union[uuid.UUID, str]
 ) -> List[Image]:
     """获取文档的所有图片"""
     return session.query(Image).filter(
@@ -698,8 +725,9 @@ def get_images_by_document_id(
     ).order_by(Image.page_number, Image.image_index).all()
 
 
-def get_image_by_id(session: Session, image_id: int) -> Optional[Image]:
+def get_image_by_id(session: Session, image_id: Union[uuid.UUID, str]) -> Optional[Image]:
     """获取图片（按ID）"""
+    image_id = _to_uuid(image_id)
     return session.query(Image).filter(Image.id == image_id).first()
 
 
@@ -707,7 +735,7 @@ def get_image_by_id(session: Session, image_id: int) -> Optional[Image]:
 
 def create_image_annotation(
     session: Session,
-    image_id: int,
+    image_id: Union[uuid.UUID, str],
     category: str,
     annotator_type: str,
     annotator_id: Optional[str] = None,
@@ -739,6 +767,7 @@ def create_image_annotation(
     Returns:
         ImageAnnotation 对象
     """
+    image_id = _to_uuid(image_id)
     # 获取当前最大版本号
     max_version = session.query(
         func.max(ImageAnnotation.annotation_version)
@@ -769,10 +798,11 @@ def create_image_annotation(
 
 def get_image_annotations_by_image_id(
     session: Session,
-    image_id: int,
+    image_id: Union[uuid.UUID, str],
     status: Optional[str] = None
 ) -> List[ImageAnnotation]:
     """获取图片的所有标注"""
+    image_id = _to_uuid(image_id)
     query = session.query(ImageAnnotation).filter(ImageAnnotation.image_id == image_id)
     if status:
         query = query.filter(ImageAnnotation.status == status)
@@ -781,9 +811,10 @@ def get_image_annotations_by_image_id(
 
 def get_latest_image_annotation(
     session: Session,
-    image_id: int
+    image_id: Union[uuid.UUID, str]
 ) -> Optional[ImageAnnotation]:
     """获取图片的最新标注"""
+    image_id = _to_uuid(image_id)
     return session.query(ImageAnnotation).filter(
         ImageAnnotation.image_id == image_id,
         ImageAnnotation.status == 'approved'

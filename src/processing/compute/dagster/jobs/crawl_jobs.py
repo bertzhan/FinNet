@@ -319,7 +319,7 @@ def crawl_a_share_reports_op(context) -> Dict:
                         "minio_path": MetadataValue.text(result.minio_object_path or ""),
                         "file_size": MetadataValue.int(result.file_size or 0),
                         "file_hash": MetadataValue.text(result.file_hash or ""),
-                        "document_id": MetadataValue.int(result.document_id or 0),
+                        "document_id": MetadataValue.text(str(result.document_id) if result.document_id else ""),
                     }
                 )
             )
@@ -437,7 +437,7 @@ def crawl_a_share_ipo_op(context) -> Dict:
                         "minio_path": MetadataValue.text(result.minio_object_path or ""),
                         "file_size": MetadataValue.int(result.file_size or 0),
                         "file_hash": MetadataValue.text(result.file_hash or ""),
-                        "document_id": MetadataValue.int(result.document_id or 0),
+                        "document_id": MetadataValue.text(str(result.document_id) if result.document_id else ""),
                     }
                 )
             )

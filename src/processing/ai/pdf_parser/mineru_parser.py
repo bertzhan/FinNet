@@ -9,7 +9,8 @@ import os
 import json
 import tempfile
 import hashlib
-from typing import Optional, Dict, Any, List
+import uuid
+from typing import Optional, Dict, Any, List, Union
 from datetime import datetime
 from pathlib import Path
 
@@ -54,7 +55,7 @@ class MinerUParser(LoggerMixin):
 
     def parse_document(
         self,
-        document_id: int,
+        document_id: Union[uuid.UUID, str],
         save_to_silver: bool = True,
         start_page_id: int = 0,
         end_page_id: Optional[int] = None
@@ -1074,7 +1075,7 @@ class MinerUParser(LoggerMixin):
     def _save_to_silver(
         self,
         doc: Document,
-        parse_task_id: int,
+        parse_task_id: Union[uuid.UUID, str],
         parse_result: Dict[str, Any]
     ) -> Optional[str]:
         """
@@ -1306,7 +1307,7 @@ class MinerUParser(LoggerMixin):
     def _create_parsed_document_records(
         self,
         doc: Document,
-        parse_task_id: int,
+        parse_task_id: Union[uuid.UUID, str],
         silver_path: str,
         uploaded_file_paths: Dict[str, List[str]],
         uploaded_image_paths: List[str],
@@ -1502,7 +1503,7 @@ class MinerUParser(LoggerMixin):
 
     def _update_parse_task_success(
         self,
-        parse_task_id: int,
+        parse_task_id: Union[uuid.UUID, str],
         output_path: str,
         extracted_text_length: int,
         extracted_tables_count: int,
@@ -1527,7 +1528,7 @@ class MinerUParser(LoggerMixin):
 
     def _update_parse_task_failed(
         self,
-        parse_task_id: int,
+        parse_task_id: Union[uuid.UUID, str],
         error_message: str
     ) -> None:
         """更新解析任务为失败状态"""
@@ -1542,7 +1543,7 @@ class MinerUParser(LoggerMixin):
                 task.error_message = error_message
                 session.commit()
 
-    def _update_document_parsed(self, document_id: int) -> None:
+    def _update_document_parsed(self, document_id: Union[uuid.UUID, str]) -> None:
         """更新文档状态为已解析"""
         with self.pg_client.get_session() as session:
             doc = crud.get_document_by_id(session, document_id)

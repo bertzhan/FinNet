@@ -4,17 +4,16 @@
 定义所有数据库表的 SQLAlchemy 模型
 """
 
+import uuid
 from datetime import datetime
 from sqlalchemy import (
     Column, Integer, String, DateTime, Boolean, Float, BigInteger, Text, JSON,
     ForeignKey, Index, UniqueConstraint, ForeignKeyConstraint, func
 )
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
-
-
-# ==================== Document 相关模型 ====================
 
 class Document(Base):
     """
@@ -23,7 +22,7 @@ class Document(Base):
     """
     __tablename__ = 'documents'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     
     # 基本信息
     stock_code = Column(String(20), nullable=False, index=True)
@@ -66,10 +65,10 @@ class ParseTask(Base):
     """
     __tablename__ = 'parse_tasks'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     
     # 关联字段
-    document_id = Column(Integer, ForeignKey('documents.id', ondelete='CASCADE'), nullable=False, index=True)
+    document_id = Column(UUID(as_uuid=True), ForeignKey('documents.id', ondelete='CASCADE'), nullable=False, index=True)
     
     # 解析器信息
     parser_type = Column(String(50), nullable=False)  # mineru/docling
@@ -106,11 +105,11 @@ class ParsedDocument(Base):
     """
     __tablename__ = 'parsed_documents'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     
     # ==================== 关联字段 ====================
-    document_id = Column(Integer, nullable=False, index=True)
-    parse_task_id = Column(Integer, nullable=False, index=True)
+    document_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    parse_task_id = Column(UUID(as_uuid=True), nullable=False, index=True)
     
     # ==================== 路径信息 ====================
     content_json_path = Column(String(500), nullable=False)    # 内容 JSON 文件路径（主文件）
@@ -161,7 +160,6 @@ class ParsedDocument(Base):
     )
 
 
-# ==================== Image 相关模型 ====================
 
 class Image(Base):
     """
@@ -170,11 +168,11 @@ class Image(Base):
     """
     __tablename__ = 'images'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     
     # 关联字段
-    parsed_document_id = Column(Integer, nullable=False, index=True)
-    document_id = Column(Integer, nullable=False, index=True)          # 关联 Document（快速查询）
+    parsed_document_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    document_id = Column(UUID(as_uuid=True), nullable=False, index=True)          # 关联 Document（快速查询）
     
     # 图片基本信息
     image_index = Column(Integer, nullable=False)                      # 图片序号（在文档中的顺序）
@@ -213,10 +211,10 @@ class ImageAnnotation(Base):
     """
     __tablename__ = 'image_annotations'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     
     # 关联字段
-    image_id = Column(Integer, nullable=False, index=True)            # 关联 Image
+    image_id = Column(UUID(as_uuid=True), nullable=False, index=True)            # 关联 Image
     annotation_version = Column(Integer, nullable=False, default=1)    # 标注版本号
     
     # 标注信息
@@ -254,7 +252,6 @@ class ImageAnnotation(Base):
     )
 
 
-# ==================== 其他现有模型 ====================
 
 class DocumentChunk(Base):
     """
@@ -263,8 +260,8 @@ class DocumentChunk(Base):
     """
     __tablename__ = 'document_chunks'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    document_id = Column(Integer, ForeignKey('documents.id', ondelete='CASCADE'), nullable=False, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id = Column(UUID(as_uuid=True), ForeignKey('documents.id', ondelete='CASCADE'), nullable=False, index=True)
     chunk_index = Column(Integer, nullable=False)
     chunk_text = Column(Text, nullable=False)
     chunk_size = Column(Integer, nullable=False)
@@ -286,7 +283,7 @@ class CrawlTask(Base):
     """
     __tablename__ = 'crawl_tasks'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     task_type = Column(String(50), nullable=False)
     stock_code = Column(String(20), nullable=False, index=True)
     company_name = Column(String(200), nullable=False)
@@ -296,7 +293,7 @@ class CrawlTask(Base):
     quarter = Column(Integer, nullable=True, index=True)
     status = Column(String(50), nullable=False, default='pending', index=True)
     success = Column(Boolean, default=False)
-    document_id = Column(Integer, ForeignKey('documents.id', ondelete='SET NULL'))
+    document_id = Column(UUID(as_uuid=True), ForeignKey('documents.id', ondelete='SET NULL'))
     error_message = Column(Text)
     created_at = Column(DateTime, nullable=False, default=func.now())
     started_at = Column(DateTime)
@@ -316,8 +313,8 @@ class ValidationLog(Base):
     """
     __tablename__ = 'validation_logs'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    document_id = Column(Integer, ForeignKey('documents.id', ondelete='CASCADE'), nullable=False, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id = Column(UUID(as_uuid=True), ForeignKey('documents.id', ondelete='CASCADE'), nullable=False, index=True)
     validation_type = Column(String(50), nullable=False)
     validation_status = Column(String(50), nullable=False)  # passed/failed/warning
     message = Column(Text)
@@ -336,8 +333,8 @@ class QuarantineRecord(Base):
     """
     __tablename__ = 'quarantine_records'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    document_id = Column(Integer, ForeignKey('documents.id', ondelete='CASCADE'), nullable=True, index=True)  # 允许为空
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id = Column(UUID(as_uuid=True), ForeignKey('documents.id', ondelete='CASCADE'), nullable=True, index=True)  # 允许为空
 
     # 来源和类型信息
     source_type = Column(String(50), nullable=False)  # a_share/hk_stock/us_stock
@@ -367,7 +364,7 @@ class QuarantineRecord(Base):
     __table_args__ = (
         Index('idx_quarantine_status', 'status', 'quarantine_time'),
         Index('idx_failure_stage', 'failure_stage'),
-        Index('idx_document_id', 'document_id'),
+        Index('idx_quarantine_document_id', 'document_id'),
     )
 
 
@@ -378,8 +375,8 @@ class EmbeddingTask(Base):
     """
     __tablename__ = 'embedding_tasks'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    document_id = Column(Integer, ForeignKey('documents.id', ondelete='CASCADE'), nullable=False, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id = Column(UUID(as_uuid=True), ForeignKey('documents.id', ondelete='CASCADE'), nullable=False, index=True)
     embedding_model = Column(String(100), nullable=False)
     status = Column(String(50), nullable=False, default='pending', index=True)
     chunks_count = Column(Integer, default=0)

@@ -4,7 +4,8 @@
 按照 plan.md 7.6 设计，实现数据隔离和管理功能
 """
 
-from typing import Optional, List, Dict, Any
+import uuid
+from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 from sqlalchemy.orm import Session
 
@@ -41,7 +42,7 @@ class QuarantineManager(LoggerMixin):
 
     def quarantine_document(
         self,
-        document_id: Optional[int],
+        document_id: Optional[Union[uuid.UUID, str]],
         source_type: str,
         doc_type: str,
         original_path: str,
@@ -210,7 +211,7 @@ class QuarantineManager(LoggerMixin):
             self.logger.debug(f"查询到 {len(records)} 条待处理隔离记录")
             return records
 
-    def get_record_by_id(self, record_id: int) -> Optional[QuarantineRecord]:
+    def get_record_by_id(self, record_id: Union[uuid.UUID, str]) -> Optional[QuarantineRecord]:
         """
         根据ID获取隔离记录
 
@@ -227,7 +228,7 @@ class QuarantineManager(LoggerMixin):
 
     def resolve_record(
         self,
-        record_id: int,
+        record_id: Union[uuid.UUID, str],
         resolution: str,
         handler: str,
         action: str = "discard"
