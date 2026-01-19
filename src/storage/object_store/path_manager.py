@@ -241,6 +241,156 @@ class PathManager:
         """
         return f"{DataLayer.QUARANTINE.value}/{reason.value}/{original_path}"
 
+    def get_silver_structure_path(
+        self,
+        market: Optional[Market] = None,
+        doc_type: Optional[DocType] = None,
+        stock_code: Optional[str] = None,
+        year: Optional[int] = None,
+        quarter: Optional[int] = None,
+        base_filename: Optional[str] = None,
+        markdown_path: Optional[str] = None
+    ) -> str:
+        """
+        生成 structure.json 文件的 Silver 层路径
+        
+        路径格式（基于 markdown_path）：
+        - 从 markdown_path 提取目录，生成 structure.json 路径
+        - 例如: silver/a_share/mineru/annual_reports/2023/Q4/300542/document.md
+        - -> silver/a_share/mineru/annual_reports/2023/Q4/300542/structure.json
+        
+        如果提供 markdown_path，则优先使用（推荐方式）
+        否则使用传统的参数方式（向后兼容）
+        
+        Args:
+            market: 市场类型（markdown_path 未提供时必需）
+            doc_type: 文档类型（markdown_path 未提供时必需）
+            stock_code: 股票代码（markdown_path 未提供时必需）
+            year: 年份（markdown_path 未提供时可能需要）
+            quarter: 季度（markdown_path 未提供时可选）
+            base_filename: 基础文件名（markdown_path 未提供时可选）
+            markdown_path: Markdown 文件路径（推荐使用）
+            
+        Returns:
+            structure.json 文件路径
+        """
+        # 优先使用 markdown_path（新方式）
+        if markdown_path:
+            # 从 markdown_path 提取目录，生成 structure.json 路径
+            markdown_dir = "/".join(markdown_path.split("/")[:-1])  # 去掉文件名，保留目录
+            return f"{markdown_dir}/structure.json"
+        
+        # 向后兼容：使用传统参数方式
+        if base_filename is None:
+            if doc_type == DocType.IPO_PROSPECTUS:
+                base_filename = f"{stock_code}_IPO"
+            elif quarter is not None:
+                base_filename = f"{stock_code}_{year}_Q{quarter}"
+            else:
+                base_filename = f"{stock_code}_{year}"
+        
+        filename = f"{base_filename}_structure.json"
+        
+        # IPO 文档不需要 year 和 quarter
+        if doc_type == DocType.IPO_PROSPECTUS:
+            components = [
+                DataLayer.SILVER.value,
+                "text_cleaned",
+                market.value,
+                doc_type.value,
+                stock_code,
+                filename
+            ]
+            return "/".join(components)
+        else:
+            # 常规文档需要 year
+            if year is None:
+                raise ValueError(f"year is required for doc_type {doc_type}")
+            return self.get_silver_path(
+                market=market,
+                doc_type=doc_type,
+                stock_code=stock_code,
+                year=year,
+                quarter=quarter,
+                filename=filename,
+                subdir="text_cleaned"
+            )
+    
+    def get_silver_chunks_path(
+        self,
+        market: Optional[Market] = None,
+        doc_type: Optional[DocType] = None,
+        stock_code: Optional[str] = None,
+        year: Optional[int] = None,
+        quarter: Optional[int] = None,
+        base_filename: Optional[str] = None,
+        markdown_path: Optional[str] = None
+    ) -> str:
+        """
+        生成 chunks.json 文件的 Silver 层路径
+        
+        路径格式（基于 markdown_path）：
+        - 从 markdown_path 提取目录，生成 chunks.json 路径
+        - 例如: silver/a_share/mineru/annual_reports/2023/Q4/300542/document.md
+        - -> silver/a_share/mineru/annual_reports/2023/Q4/300542/chunks.json
+        
+        如果提供 markdown_path，则优先使用（推荐方式）
+        否则使用传统的参数方式（向后兼容）
+        
+        Args:
+            market: 市场类型（markdown_path 未提供时必需）
+            doc_type: 文档类型（markdown_path 未提供时必需）
+            stock_code: 股票代码（markdown_path 未提供时必需）
+            year: 年份（markdown_path 未提供时可能需要）
+            quarter: 季度（markdown_path 未提供时可选）
+            base_filename: 基础文件名（markdown_path 未提供时可选）
+            markdown_path: Markdown 文件路径（推荐使用）
+            
+        Returns:
+            chunks.json 文件路径
+        """
+        # 优先使用 markdown_path（新方式）
+        if markdown_path:
+            # 从 markdown_path 提取目录，生成 chunks.json 路径
+            markdown_dir = "/".join(markdown_path.split("/")[:-1])  # 去掉文件名，保留目录
+            return f"{markdown_dir}/chunks.json"
+        
+        # 向后兼容：使用传统参数方式
+        if base_filename is None:
+            if doc_type == DocType.IPO_PROSPECTUS:
+                base_filename = f"{stock_code}_IPO"
+            elif quarter is not None:
+                base_filename = f"{stock_code}_{year}_Q{quarter}"
+            else:
+                base_filename = f"{stock_code}_{year}"
+        
+        filename = f"{base_filename}_chunks.json"
+        
+        # IPO 文档不需要 year 和 quarter
+        if doc_type == DocType.IPO_PROSPECTUS:
+            components = [
+                DataLayer.SILVER.value,
+                "text_cleaned",
+                market.value,
+                doc_type.value,
+                stock_code,
+                filename
+            ]
+            return "/".join(components)
+        else:
+            # 常规文档需要 year
+            if year is None:
+                raise ValueError(f"year is required for doc_type {doc_type}")
+            return self.get_silver_path(
+                market=market,
+                doc_type=doc_type,
+                stock_code=stock_code,
+                year=year,
+                quarter=quarter,
+                filename=filename,
+                subdir="text_cleaned"
+            )
+
     def parse_bronze_path(self, path: str) -> dict:
         """
         解析 Bronze 层路径，提取元数据

@@ -193,17 +193,6 @@
 ## 🚀 快速开始
 
 
-### 单文档处理
-
-```bash
-python chunk_by_rules.py
-```
-
-程序会生成：
-- `structure.json` / `structure.txt` - 目录结构
-- `chunks.json` / `chunks.md` - 分块结果
-
-
 ### Python API
 
 ```python

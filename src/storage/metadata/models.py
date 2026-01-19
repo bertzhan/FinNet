@@ -117,17 +117,22 @@ class ParsedDocument(Base):
     middle_json_path = Column(String(500), nullable=True)      # Middle JSON 文件路径（可选）
     model_json_path = Column(String(500), nullable=True)       # Model JSON 文件路径（可选）
     image_folder_path = Column(String(500), nullable=True)     # 图片文件夹路径（可选）
+    structure_json_path = Column(String(500), nullable=True)   # structure.json 文件路径（可选）
+    chunks_json_path = Column(String(500), nullable=True)       # chunks.json 文件路径（可选）
     
     # ==================== 哈希值字段 ====================
     content_json_hash = Column(String(64), nullable=False, index=True)      # JSON 文件哈希
     markdown_hash = Column(String(64), nullable=True)                      # Markdown 文件哈希
     source_document_hash = Column(String(64), nullable=False, index=True)  # 源 PDF 哈希
+    structure_json_hash = Column(String(64), nullable=True, index=True)    # structure.json 文件哈希
+    chunks_json_hash = Column(String(64), nullable=True, index=True)       # chunks.json 文件哈希
     
     # ==================== 解析结果统计 ====================
     text_length = Column(Integer, default=0)                   # 文本长度（字符数）
     tables_count = Column(Integer, default=0)                  # 表格数量
     images_count = Column(Integer, default=0)                   # 图片数量
     pages_count = Column(Integer, default=0)                    # 页数
+    chunks_count = Column(Integer, default=0)                   # 分块数量
     
     # ==================== 解析器信息 ====================
     parser_type = Column(String(50), nullable=False)            # mineru/docling
@@ -141,6 +146,7 @@ class ParsedDocument(Base):
     # ==================== 时间戳 ====================
     parsed_at = Column(DateTime, nullable=False, default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
+    chunked_at = Column(DateTime, nullable=True)               # 分块时间
     
     # ==================== 状态 ====================
     status = Column(String(50), default='active')              # active/archived
@@ -265,13 +271,27 @@ class DocumentChunk(Base):
     chunk_index = Column(Integer, nullable=False)
     chunk_text = Column(Text, nullable=False)
     chunk_size = Column(Integer, nullable=False)
+    
+    # 结构化分块字段
+    title = Column(String(500), nullable=True)                # 分块标题
+    title_level = Column(Integer, nullable=True)              # 标题层级（1-5）
+    heading_index = Column(Integer, nullable=True)            # 标题索引（在文档结构中的索引位置）
+    parent_chunk_id = Column(UUID(as_uuid=True), nullable=True)  # 父分块ID（用于构建层级关系）
+    start_line = Column(Integer, nullable=True)               # 在原始文档中的起始行号
+    end_line = Column(Integer, nullable=True)                 # 在原始文档中的结束行号
+    is_table = Column(Boolean, default=False)                 # 是否是表格分块
+    
+    # 向量化相关字段
     vector_id = Column(String(200))
     embedding_model = Column(String(100))
     vectorized_at = Column(DateTime)
+    
+    # 额外元数据
     extra_metadata = Column(JSON, default={})
     
     __table_args__ = (
         Index('idx_document_chunk', 'document_id', 'chunk_index'),
+        Index('idx_parent_chunk', 'parent_chunk_id'),
         UniqueConstraint('document_id', 'chunk_index', name='uq_doc_chunk'),
     )
 

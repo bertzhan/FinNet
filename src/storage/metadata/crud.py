@@ -247,17 +247,34 @@ def create_document_chunk(
     chunk_index: int,
     chunk_text: str,
     chunk_size: int,
+    title: Optional[str] = None,
+    title_level: Optional[int] = None,
+    heading_index: Optional[int] = None,
+    parent_chunk_id: Optional[Union[uuid.UUID, str]] = None,
+    start_line: Optional[int] = None,
+    end_line: Optional[int] = None,
+    is_table: bool = False,
     vector_id: Optional[str] = None,
     embedding_model: Optional[str] = None,
     metadata: Optional[Dict] = None
 ) -> DocumentChunk:
     """创建文档分块"""
     document_id = _to_uuid(document_id)
+    if parent_chunk_id:
+        parent_chunk_id = _to_uuid(parent_chunk_id)
+    
     chunk = DocumentChunk(
         document_id=document_id,
         chunk_index=chunk_index,
         chunk_text=chunk_text,
         chunk_size=chunk_size,
+        title=title,
+        title_level=title_level,
+        heading_index=heading_index,
+        parent_chunk_id=parent_chunk_id,
+        start_line=start_line,
+        end_line=end_line,
+        is_table=is_table,
         vector_id=vector_id,
         embedding_model=embedding_model,
         extra_metadata=metadata or {}
@@ -277,13 +294,95 @@ def get_document_chunks(session: Session, document_id: Union[uuid.UUID, str]) ->
     ).order_by(DocumentChunk.chunk_index).all()
 
 
+def create_document_chunks_batch(
+    session: Session,
+    chunks_data: List[Dict]
+) -> List[DocumentChunk]:
+    """
+    批量创建文档分块
+    
+    Args:
+        session: 数据库会话
+        chunks_data: 分块数据列表，每个字典包含：
+            - document_id: 文档ID
+            - chunk_index: 分块索引
+            - chunk_text: 分块文本
+            - chunk_size: 分块大小
+            - title: 分块标题（可选）
+            - title_level: 标题层级（可选）
+            - heading_index: 标题索引（可选）
+            - parent_chunk_id: 父分块ID（可选）
+            - start_line: 起始行号（可选）
+            - end_line: 结束行号（可选）
+            - is_table: 是否是表格（可选，默认 False）
+            - metadata: 额外元数据（可选）
+    
+    Returns:
+        创建的分块列表
+    """
+    chunks = []
+    for chunk_data in chunks_data:
+        document_id = _to_uuid(chunk_data['document_id'])
+        parent_chunk_id = _to_uuid(chunk_data.get('parent_chunk_id')) if chunk_data.get('parent_chunk_id') else None
+        
+        chunk = DocumentChunk(
+            document_id=document_id,
+            chunk_index=chunk_data['chunk_index'],
+            chunk_text=chunk_data['chunk_text'],
+            chunk_size=chunk_data['chunk_size'],
+            title=chunk_data.get('title'),
+            title_level=chunk_data.get('title_level'),
+            heading_index=chunk_data.get('heading_index'),
+            parent_chunk_id=parent_chunk_id,
+            start_line=chunk_data.get('start_line'),
+            end_line=chunk_data.get('end_line'),
+            is_table=chunk_data.get('is_table', False),
+            extra_metadata=chunk_data.get('metadata', {})
+        )
+        chunks.append(chunk)
+        session.add(chunk)
+    
+    session.flush()
+    logger.info(f"批量创建 {len(chunks)} 个文档分块")
+    return chunks
+
+
+def delete_document_chunks(
+    session: Session,
+    document_id: Union[uuid.UUID, str]
+) -> int:
+    """
+    删除文档的所有分块
+    
+    Args:
+        session: 数据库会话
+        document_id: 文档ID
+    
+    Returns:
+        删除的分块数量
+    """
+    document_id = _to_uuid(document_id)
+    chunks = session.query(DocumentChunk).filter(
+        DocumentChunk.document_id == document_id
+    ).all()
+    
+    count = len(chunks)
+    for chunk in chunks:
+        session.delete(chunk)
+    
+    session.flush()
+    logger.info(f"删除文档 {document_id} 的 {count} 个分块")
+    return count
+
+
 def update_chunk_vector_id(
     session: Session,
-    chunk_id: int,
+    chunk_id: Union[uuid.UUID, str],
     vector_id: str,
     embedding_model: str
 ) -> bool:
     """更新分块的向量 ID"""
+    chunk_id = _to_uuid(chunk_id)
     chunk = session.query(DocumentChunk).filter(DocumentChunk.id == chunk_id).first()
     if not chunk:
         return False
@@ -293,6 +392,57 @@ def update_chunk_vector_id(
     chunk.vectorized_at = datetime.now()
     session.flush()
     return True
+
+
+def update_parsed_document_chunk_info(
+    session: Session,
+    parsed_document_id: Union[uuid.UUID, str],
+    structure_json_path: Optional[str] = None,
+    chunks_json_path: Optional[str] = None,
+    structure_json_hash: Optional[str] = None,
+    chunks_json_hash: Optional[str] = None,
+    chunks_count: Optional[int] = None
+) -> Optional[ParsedDocument]:
+    """
+    更新 ParsedDocument 的分块相关字段
+    
+    Args:
+        session: 数据库会话
+        parsed_document_id: ParsedDocument ID
+        structure_json_path: structure.json 文件路径
+        chunks_json_path: chunks.json 文件路径
+        structure_json_hash: structure.json 文件哈希
+        chunks_json_hash: chunks.json 文件哈希
+        chunks_count: 分块数量
+    
+    Returns:
+        更新后的 ParsedDocument 对象，如果不存在则返回 None
+    """
+    parsed_document_id = _to_uuid(parsed_document_id)
+    parsed_doc = session.query(ParsedDocument).filter(
+        ParsedDocument.id == parsed_document_id
+    ).first()
+    
+    if not parsed_doc:
+        logger.warning(f"ParsedDocument 不存在: {parsed_document_id}")
+        return None
+    
+    if structure_json_path is not None:
+        parsed_doc.structure_json_path = structure_json_path
+    if chunks_json_path is not None:
+        parsed_doc.chunks_json_path = chunks_json_path
+    if structure_json_hash is not None:
+        parsed_doc.structure_json_hash = structure_json_hash
+    if chunks_json_hash is not None:
+        parsed_doc.chunks_json_hash = chunks_json_hash
+    if chunks_count is not None:
+        parsed_doc.chunks_count = chunks_count
+    
+    parsed_doc.chunked_at = datetime.now()
+    session.flush()
+    
+    logger.debug(f"更新 ParsedDocument 分块信息: {parsed_document_id}")
+    return parsed_doc
 
 
 # ==================== CrawlTask CRUD ====================
