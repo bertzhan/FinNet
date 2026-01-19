@@ -12,13 +12,17 @@ from .jobs import (
     crawl_a_share_reports_job,
     crawl_a_share_ipo_job,
     parse_pdf_job,
+    chunk_documents_job,
     daily_crawl_reports_schedule,
     daily_crawl_ipo_schedule,
     hourly_parse_schedule,
     daily_parse_schedule,
+    hourly_chunk_schedule,
+    daily_chunk_schedule,
     manual_trigger_reports_sensor,
     manual_trigger_ipo_sensor,
     manual_trigger_parse_sensor,
+    manual_trigger_chunk_sensor,
 )
 
 # 创建 Definitions 对象（Dagster 1.5+ 推荐方式）
@@ -28,17 +32,21 @@ defs = Definitions(
         crawl_a_share_reports_job,
         crawl_a_share_ipo_job,
         parse_pdf_job,
+        chunk_documents_job,
     ],
     schedules=[
         daily_crawl_reports_schedule,
         daily_crawl_ipo_schedule,
         hourly_parse_schedule,
         daily_parse_schedule,
+        hourly_chunk_schedule,
+        daily_chunk_schedule,
     ],
     sensors=[
         manual_trigger_reports_sensor,
         manual_trigger_ipo_sensor,
         manual_trigger_parse_sensor,
+        manual_trigger_chunk_sensor,
     ],
 )
 
@@ -48,11 +56,15 @@ __all__ = [
     "crawl_a_share_reports_job",
     "crawl_a_share_ipo_job",
     "parse_pdf_job",
+    "chunk_documents_job",
     "daily_crawl_reports_schedule",
     "daily_crawl_ipo_schedule",
     "hourly_parse_schedule",
     "daily_parse_schedule",
+    "hourly_chunk_schedule",
+    "daily_chunk_schedule",
     "manual_trigger_reports_sensor",
     "manual_trigger_ipo_sensor",
     "manual_trigger_parse_sensor",
+    "manual_trigger_chunk_sensor",
 ]

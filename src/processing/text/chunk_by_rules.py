@@ -9,7 +9,7 @@ import json
 import re
 from typing import List, Dict, Any, Optional
 from pathlib import Path
-from title_level_detector import TitleLevelDetector
+from src.processing.text.title_level_detector import TitleLevelDetector
 
 
 class StructureGenerator:
@@ -31,6 +31,7 @@ class StructureGenerator:
     def extract_headings(self) -> List[Dict[str, Any]]:
         """
         从document.md中提取所有标题
+        不仅通过 # 号识别，也通过文本开头是否满足序号pattern来判断
         
         Returns:
             标题列表，每个标题包含：level, title, line_number
@@ -42,7 +43,10 @@ class StructureGenerator:
         
         for line_num, line in enumerate(lines, 1):
             line = line.strip()
-            # 匹配Markdown标题（# 开头）
+            if not line:  # 跳过空行
+                continue
+            
+            # 方式1：匹配Markdown标题（# 开头）
             match = re.match(r'^(#+)\s+(.+)$', line)
             if match:
                 markdown_level = len(match.group(1))  # #的数量表示Markdown层级
@@ -50,7 +54,24 @@ class StructureGenerator:
                 self.headings.append({
                     'markdown_level': markdown_level,
                     'title': title,
-                    'line_number': line_num
+                    'line_number': line_num,
+                    'is_markdown': True
+                })
+                continue
+            
+            # 方式2：检查文本开头是否满足标题格式pattern
+            # 使用TitleLevelDetector的patterns来检查
+            base_level, pattern_name = self.detector.detect_by_format(line)
+            if base_level > 0:
+                # 如果detect_by_format返回level > 0，说明匹配了某个pattern，认为是标题
+                # detect_by_format已经处理了长度检查（匹配pattern时允许更长的标题）
+                self.headings.append({
+                    'markdown_level': None,  # 非Markdown格式
+                    'title': line,
+                    'line_number': line_num,
+                    'is_markdown': False,
+                    'detected_level': base_level,
+                    'pattern_name': pattern_name
                 })
         
         print(f"✓ 已提取 {len(self.headings)} 个标题")
@@ -484,7 +505,7 @@ def main():
     """主函数"""
     # 文件路径
     base_dir = Path(__file__).parent
-    document_path = base_dir / 'document.md'
+    document_path = base_dir / 'document1.md'
     structure_path = base_dir / 'structure.json'
     
     # 第一步：生成 structure.json
