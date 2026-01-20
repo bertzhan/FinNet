@@ -110,6 +110,10 @@ class CrawlerConfig(BaseSettings):
 
 class EmbeddingConfig(BaseSettings):
     """Embedding 向量化配置（plan.md 4.3.3）"""
+    # 模式选择：local（本地模型）或 api（API 调用）
+    EMBEDDING_MODE: str = os.getenv("EMBEDDING_MODE", "local")  # local or api
+    
+    # 本地模型配置
     EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "bge-large-zh-v1.5")
     EMBEDDING_DIM: int = int(os.getenv("EMBEDDING_DIM", "1024"))
     EMBEDDING_BATCH_SIZE: int = int(os.getenv("EMBEDDING_BATCH_SIZE", "32"))
@@ -124,6 +128,13 @@ class EmbeddingConfig(BaseSettings):
         "BCE_MODEL_PATH",
         "maidalun1020/bce-embedding-base_v1"
     )
+    
+    # API 配置（OpenAI 兼容接口）
+    EMBEDDING_API_URL: Optional[str] = os.getenv("EMBEDDING_API_URL")  # API 地址，如 https://api.openai.com/v1/embeddings
+    EMBEDDING_API_KEY: Optional[str] = os.getenv("EMBEDDING_API_KEY")  # API Key
+    EMBEDDING_API_MODEL: Optional[str] = os.getenv("EMBEDDING_API_MODEL", "text-embedding-ada-002")  # API 模型名称
+    EMBEDDING_API_TIMEOUT: int = int(os.getenv("EMBEDDING_API_TIMEOUT", "30"))  # API 超时时间（秒）
+    EMBEDDING_API_MAX_RETRIES: int = int(os.getenv("EMBEDDING_API_MAX_RETRIES", "3"))  # 最大重试次数
 
     class Config:
         env_file = ".env"

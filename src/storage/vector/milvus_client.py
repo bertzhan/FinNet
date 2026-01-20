@@ -102,10 +102,11 @@ class MilvusClient(LoggerMixin):
                 return Collection(collection_name)
 
             # 定义 Schema
+            # 注意：document_id 和 chunk_id 使用 VARCHAR 存储 UUID 字符串
             fields = [
                 FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
-                FieldSchema(name="document_id", dtype=DataType.INT64),
-                FieldSchema(name="chunk_id", dtype=DataType.INT64),
+                FieldSchema(name="document_id", dtype=DataType.VARCHAR, max_length=36),  # UUID字符串
+                FieldSchema(name="chunk_id", dtype=DataType.VARCHAR, max_length=36),    # UUID字符串
                 FieldSchema(name="stock_code", dtype=DataType.VARCHAR, max_length=20),
                 FieldSchema(name="year", dtype=DataType.INT32),
                 FieldSchema(name="quarter", dtype=DataType.INT32),
@@ -167,8 +168,8 @@ class MilvusClient(LoggerMixin):
         self,
         collection_name: str,
         embeddings: List[List[float]],
-        document_ids: List[int],
-        chunk_ids: List[int],
+        document_ids: List[str],
+        chunk_ids: List[str],
         stock_codes: List[str],
         years: List[int],
         quarters: List[int]
@@ -179,22 +180,22 @@ class MilvusClient(LoggerMixin):
         Args:
             collection_name: Collection 名称
             embeddings: 向量列表
-            document_ids: 文档 ID 列表
-            chunk_ids: 分块 ID 列表
+            document_ids: 文档 ID 列表（UUID 字符串）
+            chunk_ids: 分块 ID 列表（UUID 字符串）
             stock_codes: 股票代码列表
             years: 年份列表
             quarters: 季度列表
 
         Returns:
-            插入的向量 ID 列表
+            插入的向量 ID 列表（Milvus 主键）
 
         Example:
             >>> client = MilvusClient()
             >>> ids = client.insert_vectors(
             ...     "financial_documents",
             ...     embeddings=[[0.1]*1024, [0.2]*1024],
-            ...     document_ids=[1, 1],
-            ...     chunk_ids=[1, 2],
+            ...     document_ids=["550e8400-e29b-41d4-a716-446655440000", "550e8400-e29b-41d4-a716-446655440000"],
+            ...     chunk_ids=["660e8400-e29b-41d4-a716-446655440001", "660e8400-e29b-41d4-a716-446655440002"],
             ...     stock_codes=["000001", "000001"],
             ...     years=[2023, 2023],
             ...     quarters=[3, 3]

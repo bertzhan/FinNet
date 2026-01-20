@@ -57,12 +57,30 @@ from .chunk_jobs import (
     manual_trigger_chunk_sensor,
 )
 
+from .vectorize_jobs import (
+    # Jobs
+    vectorize_documents_job,
+    
+    # Ops
+    scan_unvectorized_chunks_op,
+    vectorize_chunks_op,
+    validate_vectorize_results_op,
+    
+    # Schedules
+    hourly_vectorize_schedule,
+    daily_vectorize_schedule,
+    
+    # Sensors
+    manual_trigger_vectorize_sensor,
+)
+
 __all__ = [
     # Jobs
     "crawl_a_share_reports_job",
     "crawl_a_share_ipo_job",
     "parse_pdf_job",
     "chunk_documents_job",
+    "vectorize_documents_job",
     
     # Ops
     "crawl_a_share_reports_op",
@@ -74,6 +92,9 @@ __all__ = [
     "scan_parsed_documents_op",
     "chunk_documents_op",
     "validate_chunk_results_op",
+    "scan_unvectorized_chunks_op",
+    "vectorize_chunks_op",
+    "validate_vectorize_results_op",
     
     # Schedules
     "daily_crawl_reports_schedule",
@@ -82,10 +103,13 @@ __all__ = [
     "daily_parse_schedule",
     "hourly_chunk_schedule",
     "daily_chunk_schedule",
+    "hourly_vectorize_schedule",
+    "daily_vectorize_schedule",
     
     # Sensors
     "manual_trigger_reports_sensor",
     "manual_trigger_ipo_sensor",
     "manual_trigger_parse_sensor",
     "manual_trigger_chunk_sensor",
+    "manual_trigger_vectorize_sensor",
 ]

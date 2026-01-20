@@ -20,5 +20,8 @@ pymilvus>=2.3.0  # Milvus 向量数据库
 dagster>=1.5.0
 dagster-webserver>=1.5.0
 
+# AI/ML 依赖
+sentence-transformers>=2.2.0  # Embedding模型（BGE/BCE）
+
 # 其他工具
 python-dotenv>=1.0.0  # 环境变量管理
