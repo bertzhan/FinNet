@@ -130,7 +130,7 @@ class EmbeddingConfig(BaseSettings):
     )
     
     # API 配置（OpenAI 兼容接口）
-    EMBEDDING_API_URL: Optional[str] = os.getenv("EMBEDDING_API_URL")  # API 地址，如 https://api.openai.com/v1/embeddings
+    EMBEDDING_API_URL: Optional[str] = os.getenv("EMBEDDING_API_URL")  # API 地址
     EMBEDDING_API_KEY: Optional[str] = os.getenv("EMBEDDING_API_KEY")  # API Key
     EMBEDDING_API_MODEL: Optional[str] = os.getenv("EMBEDDING_API_MODEL", "text-embedding-ada-002")  # API 模型名称
     EMBEDDING_API_TIMEOUT: int = int(os.getenv("EMBEDDING_API_TIMEOUT", "30"))  # API 超时时间（秒）
@@ -151,8 +151,8 @@ class LLMConfig(BaseSettings):
 
     # 云端 LLM 配置（备用）
     CLOUD_LLM_ENABLED: bool = os.getenv("CLOUD_LLM_ENABLED", "false").lower() == "true"
-    CLOUD_LLM_PROVIDER: str = os.getenv("CLOUD_LLM_PROVIDER", "openai")  # openai, dashscope, deepseek
     CLOUD_LLM_API_KEY: Optional[str] = os.getenv("CLOUD_LLM_API_KEY")
+    CLOUD_LLM_API_BASE: Optional[str] = os.getenv("CLOUD_LLM_API_BASE") 
     CLOUD_LLM_MODEL: str = os.getenv("CLOUD_LLM_MODEL", "gpt-4")
 
     class Config:
@@ -200,6 +200,11 @@ class APIConfig(BaseSettings):
     # CORS 配置
     CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "*")
 
+    # LibreChat 集成配置
+    LIBRECHAT_ENABLED: bool = os.getenv("LIBRECHAT_ENABLED", "true").lower() == "true"
+    LIBRECHAT_MODEL_NAME: str = os.getenv("LIBRECHAT_MODEL_NAME", "finnet-rag")
+    LIBRECHAT_API_KEY: Optional[str] = os.getenv("LIBRECHAT_API_KEY")  # 可选：API 密钥验证
+
     class Config:
         env_file = ".env"
         case_sensitive = True
@@ -208,6 +213,7 @@ class APIConfig(BaseSettings):
 
 # 全局配置实例
 common_config = CommonConfig()
+llm_config = LLMConfig()
 minio_config = MinIOConfig()
 postgres_config = PostgreSQLConfig()
 milvus_config = MilvusConfig()

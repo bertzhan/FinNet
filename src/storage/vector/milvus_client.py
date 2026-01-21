@@ -269,8 +269,18 @@ class MilvusClient(LoggerMixin):
                 raise ValueError(f"Collection 不存在: {collection_name}")
 
             # 加载 Collection 到内存（如果未加载）
-            if not utility.loading_progress(collection_name):
-                collection.load()
+            try:
+                progress = utility.loading_progress(collection_name)
+                if not progress:
+                    collection.load()
+            except MilvusException as e:
+                # 如果 collection 未加载，loading_progress 会抛出异常
+                # 此时需要加载 collection
+                if e.code == 101:  # collection not loaded
+                    self.logger.info(f"Collection 未加载，正在加载: {collection_name}")
+                    collection.load()
+                else:
+                    raise
 
             # 搜索参数
             search_params = {
