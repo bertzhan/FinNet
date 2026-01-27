@@ -48,7 +48,9 @@ def init_database():
             'documents', 'document_chunks', 'crawl_tasks', 'parse_tasks', 
             'validation_logs', 'quarantine_records', 'embedding_tasks',
             # 新增表（Silver 层）
-            'parsed_documents', 'images', 'image_annotations'
+            'parsed_documents', 'images', 'image_annotations',
+            # 元数据表
+            'listed_companies'
         ]
         
         missing_tables = []
@@ -88,7 +90,9 @@ def init_database():
             'documents', 'document_chunks', 'crawl_tasks', 'parse_tasks', 
             'validation_logs', 'quarantine_records', 'embedding_tasks',
             # 新增表（Silver 层）
-            'parsed_documents', 'images', 'image_annotations'
+            'parsed_documents', 'images', 'image_annotations',
+            # 元数据表
+            'listed_companies'
         ]
         for table in required_tables:
             if pg_client.table_exists(table):

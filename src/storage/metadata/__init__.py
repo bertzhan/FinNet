@@ -16,7 +16,8 @@ from .models import (
     EmbeddingTask,
     ParsedDocument,
     Image,
-    ImageAnnotation
+    ImageAnnotation,
+    ListedCompany
 )
 from . import crud
 from .quarantine_manager import QuarantineManager, get_quarantine_manager
@@ -37,6 +38,7 @@ __all__ = [
     'ParsedDocument',
     'Image',
     'ImageAnnotation',
+    'ListedCompany',
     # CRUD
     'crud',
     # 隔离管理器
