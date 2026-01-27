@@ -9,12 +9,15 @@ pydantic>=2.0.0
 requests>=2.28.0
 beautifulsoup4>=4.11.0
 tqdm>=4.64.0
+akshare>=1.12.0  # A股数据获取
 
 # 存储层依赖
 minio>=7.0.0  # MinIO 对象存储
 psycopg2-binary>=2.9.0  # PostgreSQL
 sqlalchemy>=2.0.0  # ORM
 pymilvus>=2.3.0  # Milvus 向量数据库
+neo4j>=5.0.0  # Neo4j 图数据库
+elasticsearch>=8.0.0,<9.0.0  # Elasticsearch 全文搜索引擎（兼容 Elasticsearch 8.x 服务器）
 
 # 调度系统
 dagster>=1.5.0
