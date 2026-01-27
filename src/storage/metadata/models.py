@@ -43,7 +43,9 @@ class Document(Base):
     created_at = Column(DateTime, nullable=False, default=func.now())
     crawled_at = Column(DateTime)
     parsed_at = Column(DateTime)
+    chunked_at = Column(DateTime)
     vectorized_at = Column(DateTime)
+    graphed_at = Column(DateTime)
     updated_at = Column(DateTime, onupdate=func.now())
     publish_date = Column(DateTime, nullable=True, index=True)  # 文档发布日期
 
@@ -409,4 +411,27 @@ class EmbeddingTask(Base):
     
     __table_args__ = (
         Index('idx_doc_embedding', 'document_id', 'status'),
+    )
+
+
+class ListedCompany(Base):
+    """
+    A股上市公司表
+    存储A股上市公司的代码和名称信息
+    """
+    __tablename__ = 'listed_companies'
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    
+    # 基本信息
+    code = Column(String(20), nullable=False, unique=True, index=True)  # 股票代码（如：000001）
+    name = Column(String(200), nullable=False)  # 公司名称
+    
+    # 时间戳
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+    
+    # 索引
+    __table_args__ = (
+        Index('idx_code', 'code'),
     )

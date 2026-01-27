@@ -13,7 +13,7 @@ from sqlalchemy import and_, or_, desc, func
 from src.storage.metadata.models import (
     Document, DocumentChunk, CrawlTask, ParseTask,
     ValidationLog, QuarantineRecord, EmbeddingTask,
-    ParsedDocument, Image, ImageAnnotation
+    ParsedDocument, Image, ImageAnnotation, ListedCompany
 )
 from src.common.constants import DocumentStatus
 from src.common.logger import get_logger
@@ -132,6 +132,50 @@ def get_document_by_id(session: Session, document_id: Union[uuid.UUID, str]) -> 
 def get_document_by_path(session: Session, minio_object_path: str) -> Optional[Document]:
     """获取文档（按 MinIO 路径）"""
     return session.query(Document).filter(Document.minio_object_path == minio_object_path).first()
+
+
+def get_document_by_task(
+    session: Session,
+    stock_code: str,
+    market: str,
+    doc_type: str,
+    year: Optional[int] = None,
+    quarter: Optional[int] = None
+) -> Optional[Document]:
+    """
+    根据任务信息查询文档（用于去重检查）
+    
+    Args:
+        session: 数据库会话
+        stock_code: 股票代码
+        market: 市场类型
+        doc_type: 文档类型
+        year: 年份（IPO类型可能为None）
+        quarter: 季度（IPO类型可能为None）
+        
+    Returns:
+        Document 对象，如果不存在则返回 None
+    """
+    query = session.query(Document).filter(
+        Document.stock_code == stock_code,
+        Document.market == market,
+        Document.doc_type == doc_type
+    )
+    
+    # IPO 类型：只根据 stock_code、market、doc_type 查询
+    # 因为 IPO 的 year 和 quarter 可能不确定，或者数据库中存储的值不一致
+    if doc_type == 'ipo_prospectus':
+        # IPO 类型不需要 year 和 quarter，直接返回第一个匹配的
+        # 按创建时间倒序，返回最新的
+        return query.order_by(Document.created_at.desc()).first()
+    
+    # 定期报告：需要精确匹配 year 和 quarter
+    if year is not None:
+        query = query.filter(Document.year == year)
+    if quarter is not None:
+        query = query.filter(Document.quarter == quarter)
+    
+    return query.first()
 
 
 def get_documents_by_status(
@@ -989,3 +1033,88 @@ def update_image_annotation_status(
     annotation.updated_at = datetime.now()
     session.flush()
     return True
+
+
+# ==================== ListedCompany CRUD ====================
+
+def upsert_listed_company(
+    session: Session,
+    code: str,
+    name: str
+) -> ListedCompany:
+    """
+    插入或更新上市公司信息
+    
+    Args:
+        session: 数据库会话
+        code: 股票代码
+        name: 公司名称
+        
+    Returns:
+        ListedCompany 对象
+        
+    Example:
+        >>> with get_postgres_client().get_session() as session:
+        ...     company = upsert_listed_company(session, "000001", "平安银行")
+        ...     print(company.code)
+    """
+    # 查找是否已存在
+    company = session.query(ListedCompany).filter(ListedCompany.code == code).first()
+    
+    if company:
+        # 更新现有记录
+        company.name = name
+        company.updated_at = datetime.now()
+        logger.debug(f"更新上市公司: {code} - {name}")
+    else:
+        # 创建新记录
+        company = ListedCompany(
+            code=code,
+            name=name
+        )
+        session.add(company)
+        logger.debug(f"新增上市公司: {code} - {name}")
+    
+    session.flush()
+    return company
+
+
+def get_listed_company_by_code(
+    session: Session,
+    code: str
+) -> Optional[ListedCompany]:
+    """
+    根据股票代码获取上市公司信息
+    
+    Args:
+        session: 数据库会话
+        code: 股票代码
+        
+    Returns:
+        ListedCompany 对象，如果不存在则返回 None
+    """
+    return session.query(ListedCompany).filter(ListedCompany.code == code).first()
+
+
+def get_all_listed_companies(
+    session: Session,
+    limit: Optional[int] = None,
+    offset: Optional[int] = None
+) -> List[ListedCompany]:
+    """
+    获取所有上市公司列表
+    
+    Args:
+        session: 数据库会话
+        limit: 限制返回数量
+        offset: 偏移量
+        
+    Returns:
+        ListedCompany 对象列表
+    """
+    query = session.query(ListedCompany).order_by(ListedCompany.code)
+    if offset:
+        query = query.offset(offset)
+    if limit:
+        query = query.limit(limit)
+    return query.all()

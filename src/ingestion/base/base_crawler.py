@@ -203,6 +203,7 @@ class BaseCrawler(ABC, LoggerMixin):
         执行单个爬取任务
 
         完整流程：
+        0. 检查数据库是否已存在（避免重复爬取）
         1. 下载文件到本地
         2. 计算文件哈希
         3. 上传到 MinIO（如果启用）
@@ -218,6 +219,46 @@ class BaseCrawler(ABC, LoggerMixin):
             self.logger.info(f"开始爬取: {task.stock_code} IPO招股说明书")
         else:
             self.logger.info(f"开始爬取: {task.stock_code} {task.year} Q{task.quarter}")
+
+        # 0. 检查数据库是否已存在（避免重复爬取）
+        if self.enable_postgres and self.pg_client:
+            try:
+                with self.pg_client.get_session() as session:
+                    existing_doc = crud.get_document_by_task(
+                        session=session,
+                        stock_code=task.stock_code,
+                        market=task.market.value,
+                        doc_type=task.doc_type.value,
+                        year=task.year,
+                        quarter=task.quarter
+                    )
+                    
+                    if existing_doc:
+                        # 文档已存在，跳过下载
+                        if task.doc_type == DocType.IPO_PROSPECTUS:
+                            self.logger.info(
+                                f"✅ 文档已存在，跳过下载: {task.stock_code} IPO招股说明书 "
+                                f"(id={existing_doc.id}, path={existing_doc.minio_object_path})"
+                            )
+                        else:
+                            self.logger.info(
+                                f"✅ 文档已存在，跳过下载: {task.stock_code} {task.year} Q{task.quarter} "
+                                f"(id={existing_doc.id}, path={existing_doc.minio_object_path})"
+                            )
+                        
+                        # 返回已存在的文档信息
+                        return CrawlResult(
+                            task=task,
+                            success=True,
+                            minio_object_path=existing_doc.minio_object_path,
+                            document_id=existing_doc.id,
+                            file_size=existing_doc.file_size,
+                            file_hash=existing_doc.file_hash,
+                            metadata=task.metadata
+                        )
+            except Exception as e:
+                # 检查失败不影响爬取流程，记录警告后继续
+                self.logger.warning(f"⚠️ 检查数据库时发生异常，继续爬取: {e}")
 
         # 1. 下载文件
         success, local_file_path, error_message = self._download_file(task)

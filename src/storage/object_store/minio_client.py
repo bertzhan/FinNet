@@ -118,8 +118,18 @@ class MinIOClient(LoggerMixin):
 
             # 上传文件
             if file_path:
-                # 从文件路径上传
-                file_size = Path(file_path).stat().st_size
+                # 检查文件是否存在
+                file_path_obj = Path(file_path)
+                if not file_path_obj.exists():
+                    self.logger.error(f"❌ 文件不存在，无法上传: {file_path}")
+                    return False
+                
+                # 检查文件大小
+                file_size = file_path_obj.stat().st_size
+                if file_size == 0:
+                    self.logger.error(f"❌ 文件大小为0，无法上传: {file_path}")
+                    return False
+                
                 self.logger.info(f"开始上传到 MinIO bucket '{self.bucket}': {object_name} ({file_size} bytes)")
                 self.client.fput_object(
                     self.bucket,

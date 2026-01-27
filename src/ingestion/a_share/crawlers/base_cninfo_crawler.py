@@ -73,6 +73,53 @@ class CninfoBaseCrawler(BaseCrawler):
                 logger.error(f"导入失败: {relative_path} / {absolute_path}: {e}")
                 raise
 
+    def _is_file_stable(self, file_path: str, check_interval: float = 0.5, stability_checks: int = 2) -> bool:
+        """
+        检查文件是否稳定（下载完成）
+        
+        通过连续检查文件大小和修改时间，确保文件不再变化
+        
+        Args:
+            file_path: 文件路径
+            check_interval: 检查间隔（秒）
+            stability_checks: 需要连续多少次检查大小相同才认为稳定
+            
+        Returns:
+            文件是否稳定
+        """
+        try:
+            import time
+            if not os.path.exists(file_path):
+                return False
+            
+            last_size = None
+            last_mtime = None
+            stable_count = 0
+            
+            for _ in range(stability_checks + 1):  # 多检查一次确保稳定
+                current_size = os.path.getsize(file_path)
+                current_mtime = os.path.getmtime(file_path)
+                
+                if last_size is not None and last_mtime is not None:
+                    if current_size == last_size and current_mtime == last_mtime:
+                        stable_count += 1
+                        if stable_count >= stability_checks:
+                            return True
+                    else:
+                        # 文件还在变化，重置计数
+                        stable_count = 0
+                
+                last_size = current_size
+                last_mtime = current_mtime
+                
+                if _ < stability_checks:  # 最后一次不需要等待
+                    time.sleep(check_interval)
+            
+            return False
+        except Exception as e:
+            self.logger.warning(f"检查文件稳定性时出错: {file_path} - {e}")
+            return False
+
     def _process_downloaded_file(
         self, 
         file_path: str, 
@@ -90,6 +137,25 @@ class CninfoBaseCrawler(BaseCrawler):
         Returns:
             爬取结果
         """
+        # 验证文件存在
+        if not os.path.exists(file_path):
+            self.logger.error(f"❌ 文件不存在: {file_path}")
+            return CrawlResult(
+                task=task,
+                success=False,
+                error_message=f"文件不存在: {file_path}"
+            )
+        
+        file_size_precheck = os.path.getsize(file_path)
+        if file_size_precheck == 0:
+            self.logger.error(f"❌ 文件大小为0: {file_path}")
+            return CrawlResult(
+                task=task,
+                success=False,
+                error_message=f"文件大小为0: {file_path}"
+            )
+        
+        self.logger.debug(f"处理文件: {file_path} (大小: {file_size_precheck} bytes)")
         # 读取metadata文件（如果存在），将URL等信息添加到task.metadata
         metadata_file = file_path.replace('.pdf', '.meta.json').replace('.html', '.meta.json').replace('.htm', '.meta.json')
         if os.path.exists(metadata_file):
@@ -167,7 +233,25 @@ class CninfoBaseCrawler(BaseCrawler):
             self.logger.error(f"❌ MinIO 客户端未初始化，无法上传: {minio_object_path}")
         else:
             try:
-                self.logger.info(f"开始上传到 MinIO: {minio_object_path}")
+                # 验证文件存在且有效
+                if not os.path.exists(file_path):
+                    self.logger.error(f"❌ 文件不存在，无法上传: {file_path}")
+                    return CrawlResult(
+                        task=task,
+                        success=False,
+                        error_message=f"文件不存在: {file_path}"
+                    )
+                
+                file_size_check = os.path.getsize(file_path)
+                if file_size_check == 0:
+                    self.logger.error(f"❌ 文件大小为0，无法上传: {file_path}")
+                    return CrawlResult(
+                        task=task,
+                        success=False,
+                        error_message=f"文件大小为0: {file_path}"
+                    )
+                
+                self.logger.info(f"开始上传到 MinIO: {minio_object_path} (文件大小: {file_size_check} bytes)")
                 # 统一metadata格式：只保留source_url和publish_date
                 minio_metadata = self._prepare_minio_metadata(task)
                 upload_success = self.minio_client.upload_file(
@@ -180,8 +264,18 @@ class CninfoBaseCrawler(BaseCrawler):
                     self.logger.info(f"✅ MinIO 上传成功: {minio_object_path}")
                 else:
                     self.logger.error(f"❌ MinIO 上传失败（返回 False）: {minio_object_path}")
+                    return CrawlResult(
+                        task=task,
+                        success=False,
+                        error_message=f"MinIO上传失败: {minio_object_path}"
+                    )
             except Exception as e:
                 self.logger.error(f"❌ MinIO 上传异常: {e}", exc_info=True)
+                return CrawlResult(
+                    task=task,
+                    success=False,
+                    error_message=f"MinIO上传异常: {str(e)}"
+                )
 
         # 记录到 PostgreSQL
         document_id = None
