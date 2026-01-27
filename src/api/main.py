@@ -5,7 +5,7 @@ FastAPI 主应用
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from src.api.routes import qa, openai
+from src.api.routes import qa, openai, retrieval
 from src.common.config import api_config
 from src.common.logger import get_logger
 
@@ -30,6 +30,7 @@ app.add_middleware(
 # 注册路由
 app.include_router(qa.router)
 app.include_router(openai.router)  # OpenAI 兼容接口（用于 LibreChat）
+app.include_router(retrieval.router)  # 检索接口（向量检索、全文检索、图检索）
 
 
 @app.get("/")

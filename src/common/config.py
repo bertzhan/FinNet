@@ -6,7 +6,7 @@
 
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 from pydantic_settings import BaseSettings
 
 
@@ -90,6 +90,87 @@ class NebulaGraphConfig(BaseSettings):
         env_file = ".env"
         case_sensitive = True
         extra = "ignore"  # 忽略额外字段
+
+
+class Neo4jConfig(BaseSettings):
+    """Neo4j 图数据库配置"""
+    NEO4J_URI: str = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+    NEO4J_USER: str = os.getenv("NEO4J_USER", "neo4j")
+    NEO4J_PASSWORD: str = os.getenv("NEO4J_PASSWORD", "finnet123456")
+    NEO4J_DATABASE: str = os.getenv("NEO4J_DATABASE", "neo4j")
+
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
+        extra = "ignore"  # 忽略额外字段
+
+
+class ElasticsearchConfig(BaseSettings):
+    """Elasticsearch 全文搜索引擎配置（plan.md 4.1.5）"""
+    ELASTICSEARCH_HOSTS: str = "http://localhost:9200"
+    ELASTICSEARCH_USER: Optional[str] = None
+    ELASTICSEARCH_PASSWORD: Optional[str] = None
+    ELASTICSEARCH_INDEX_PREFIX: str = "finnet"
+    ELASTICSEARCH_USE_SSL: bool = False
+    ELASTICSEARCH_VERIFY_CERTS: bool = True
+    ELASTICSEARCH_CA_CERTS: Optional[str] = None
+    
+    def __init__(self, **kwargs):
+        """初始化配置，优先从环境变量读取，如果无法读取 .env 文件则使用默认值"""
+        # 先尝试从环境变量读取（不依赖 .env 文件）
+        env_hosts = os.getenv("ELASTICSEARCH_HOSTS")
+        if env_hosts:
+            kwargs.setdefault("ELASTICSEARCH_HOSTS", env_hosts)
+        
+        env_user = os.getenv("ELASTICSEARCH_USER")
+        if env_user:
+            kwargs.setdefault("ELASTICSEARCH_USER", env_user)
+        
+        env_password = os.getenv("ELASTICSEARCH_PASSWORD")
+        if env_password:
+            kwargs.setdefault("ELASTICSEARCH_PASSWORD", env_password)
+        
+        env_prefix = os.getenv("ELASTICSEARCH_INDEX_PREFIX")
+        if env_prefix:
+            kwargs.setdefault("ELASTICSEARCH_INDEX_PREFIX", env_prefix)
+        
+        env_use_ssl = os.getenv("ELASTICSEARCH_USE_SSL")
+        if env_use_ssl:
+            kwargs.setdefault("ELASTICSEARCH_USE_SSL", env_use_ssl.lower() == "true")
+        
+        env_verify_certs = os.getenv("ELASTICSEARCH_VERIFY_CERTS")
+        if env_verify_certs:
+            kwargs.setdefault("ELASTICSEARCH_VERIFY_CERTS", env_verify_certs.lower() == "true")
+        
+        env_ca_certs = os.getenv("ELASTICSEARCH_CA_CERTS")
+        if env_ca_certs:
+            kwargs.setdefault("ELASTICSEARCH_CA_CERTS", env_ca_certs)
+        
+        super().__init__(**kwargs)
+    
+    class Config:
+        # 不读取 .env 文件，直接从环境变量读取（避免权限问题）
+        env_file = None
+        case_sensitive = True
+        extra = "ignore"  # 忽略额外字段
+
+    @property
+    def hosts_list(self) -> List[str]:
+        """将逗号分隔的主机字符串转换为列表，确保包含完整的 URL"""
+        hosts = []
+        for host in self.ELASTICSEARCH_HOSTS.split(","):
+            host = host.strip()
+            # Elasticsearch 8.x 需要完整的 URL（包含 scheme）
+            # 如果没有 scheme，默认添加 http://
+            if not host.startswith("http://") and not host.startswith("https://"):
+                # 如果包含端口号，添加 http://
+                if ":" in host:
+                    host = f"http://{host}"
+                else:
+                    # 如果没有端口号，默认添加 :9200
+                    host = f"http://{host}:9200"
+            hosts.append(host)
+        return hosts
 
 
 class CrawlerConfig(BaseSettings):
@@ -212,15 +293,82 @@ class APIConfig(BaseSettings):
 
 
 # 全局配置实例
-common_config = CommonConfig()
-llm_config = LLMConfig()
-minio_config = MinIOConfig()
-postgres_config = PostgreSQLConfig()
-milvus_config = MilvusConfig()
-nebula_config = NebulaGraphConfig()
-crawler_config = CrawlerConfig()
-embedding_config = EmbeddingConfig()
-llm_config = LLMConfig()
-pdf_parser_config = PDFParserConfig()
-dagster_config = DagsterConfig()
-api_config = APIConfig()
+# 使用 try-except 处理 .env 文件权限问题
+def _init_config(config_class, *args, **kwargs):
+    """初始化配置，如果无法读取 .env 文件则使用默认值"""
+    try:
+        return config_class(*args, **kwargs)
+    except (PermissionError, FileNotFoundError, OSError) as e:
+        # 如果无法读取 .env 文件，使用默认值（不读取 .env 文件）
+        import warnings
+        warnings.warn(f"无法读取 .env 文件，使用默认配置: {e}")
+        # 创建一个新的配置类，不读取 .env 文件
+        class ConfigWithoutEnvFile(config_class):
+            class Config:
+                env_file = None  # 不读取 .env 文件
+                case_sensitive = True
+                extra = "ignore"
+        return ConfigWithoutEnvFile(*args, **kwargs)
+
+try:
+    common_config = CommonConfig()
+except (PermissionError, FileNotFoundError, OSError):
+    common_config = _init_config(CommonConfig)
+
+try:
+    llm_config = LLMConfig()
+except (PermissionError, FileNotFoundError, OSError):
+    llm_config = _init_config(LLMConfig)
+
+try:
+    minio_config = MinIOConfig()
+except (PermissionError, FileNotFoundError, OSError):
+    minio_config = _init_config(MinIOConfig)
+
+try:
+    postgres_config = PostgreSQLConfig()
+except (PermissionError, FileNotFoundError, OSError):
+    postgres_config = _init_config(PostgreSQLConfig)
+
+try:
+    milvus_config = MilvusConfig()
+except (PermissionError, FileNotFoundError, OSError):
+    milvus_config = _init_config(MilvusConfig)
+
+try:
+    nebula_config = NebulaGraphConfig()
+except (PermissionError, FileNotFoundError, OSError):
+    nebula_config = _init_config(NebulaGraphConfig)
+
+try:
+    neo4j_config = Neo4jConfig()
+except (PermissionError, FileNotFoundError, OSError):
+    neo4j_config = _init_config(Neo4jConfig)
+
+# ElasticsearchConfig 已经配置为不读取 .env 文件
+elasticsearch_config = ElasticsearchConfig()
+
+try:
+    crawler_config = CrawlerConfig()
+except (PermissionError, FileNotFoundError, OSError):
+    crawler_config = _init_config(CrawlerConfig)
+
+try:
+    embedding_config = EmbeddingConfig()
+except (PermissionError, FileNotFoundError, OSError):
+    embedding_config = _init_config(EmbeddingConfig)
+
+try:
+    pdf_parser_config = PDFParserConfig()
+except (PermissionError, FileNotFoundError, OSError):
+    pdf_parser_config = _init_config(PDFParserConfig)
+
+try:
+    dagster_config = DagsterConfig()
+except (PermissionError, FileNotFoundError, OSError):
+    dagster_config = _init_config(DagsterConfig)
+
+try:
+    api_config = APIConfig()
+except (PermissionError, FileNotFoundError, OSError):
+    api_config = _init_config(APIConfig)

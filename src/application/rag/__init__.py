@@ -5,11 +5,13 @@ RAG 模块
 """
 
 from src.application.rag.retriever import Retriever, RetrievalResult
+from src.application.rag.elasticsearch_retriever import ElasticsearchRetriever
 from src.application.rag.context_builder import ContextBuilder
 from src.application.rag.rag_pipeline import RAGPipeline, RAGResponse, Source
 
 __all__ = [
     "Retriever",
+    "ElasticsearchRetriever",
     "RetrievalResult",
     "ContextBuilder",
     "RAGPipeline",

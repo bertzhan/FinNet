@@ -184,6 +184,21 @@ class TextChunker(LoggerMixin):
                     chunks_count=len(chunks)
                 )
 
+            # 11. 更新 Document 的 chunked_at 字段
+            chunked_at = datetime.now()
+            with self.pg_client.get_session() as session:
+                # 确保 document_id 是 UUID 类型
+                document_id_uuid = uuid.UUID(str(document_id)) if isinstance(document_id, str) else document_id
+                updated_count = session.query(Document).filter(
+                    Document.id == document_id_uuid
+                ).update(
+                    {Document.chunked_at: chunked_at},
+                    synchronize_session=False
+                )
+                session.commit()
+                if updated_count > 0:
+                    self.logger.debug(f"更新文档 chunked_at: document_id={document_id}")
+
             duration = (datetime.now() - start_time).total_seconds()
             self.logger.info(
                 f"✅ 文档分块完成: document_id={document_id}, "
