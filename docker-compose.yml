@@ -105,6 +105,90 @@ services:
     networks:
       - finnet-network
 
+  # Neo4j 图数据库
+  neo4j:
+    image: neo4j:5.15-community
+    container_name: finnet-neo4j
+    ports:
+      - "7474:7474"  # HTTP端口（Web界面）
+      - "7687:7687"  # Bolt端口（数据库连接）
+    environment:
+      NEO4J_AUTH: ${NEO4J_AUTH:-neo4j/finnet123456}
+      NEO4J_dbms_memory_heap_initial__size: 512m
+      NEO4J_dbms_memory_heap_max__size: 2G
+      NEO4J_dbms_memory_pagecache_size: 1G
+      # APOC 插件配置（如需要，可手动安装 APOC 插件）
+      # NEO4J_PLUGINS: '["apoc"]'
+      # NEO4J_dbms_security_procedures_unrestricted: apoc.*
+      # NEO4J_dbms_security_procedures_allowlist: apoc.*
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_import:/var/lib/neo4j/import
+      - neo4j_plugins:/plugins
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:7474 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - finnet-network
+
+  # Elasticsearch 全文搜索引擎
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: finnet-elasticsearch
+    platform: linux/amd64  # 兼容 ARM64 (Apple Silicon) 通过 Rosetta 2 模拟
+    ports:
+      - "9200:9200"  # HTTP API端口
+      - "9300:9300"  # 节点间通信端口
+    environment:
+      # 单节点模式配置
+      - discovery.type=single-node
+      # 内存配置
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      # 安全配置（禁用安全特性，便于开发）
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      # 允许从主机访问
+      - network.host=0.0.0.0
+      # 注意：CORS 配置已移除，因为 Elasticsearch 8.x 在生成 overrides.yml 时
+      # 无法正确处理 http.cors.allow-origin=* 中的 * 字符
+      # 如果需要 CORS，可以通过配置文件或 API 动态配置
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+      - elasticsearch_plugins:/usr/share/elasticsearch/plugins
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    networks:
+      - finnet-network
+
+  # Kibana（可选，用于 Elasticsearch 可视化管理）
+  # kibana:
+  #   image: docker.elastic.co/kibana/kibana:8.11.0
+  #   container_name: finnet-kibana
+  #   ports:
+  #     - "5601:5601"
+  #   environment:
+  #     ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+  #     xpack.security.enabled: "false"
+  #   depends_on:
+  #     - elasticsearch
+  #   networks:
+  #     - finnet-network
+
 volumes:
   minio_data:
     driver: local
@@ -115,6 +199,18 @@ volumes:
   minio_milvus_data:
     driver: local
   milvus_data:
+    driver: local
+  neo4j_data:
+    driver: local
+  neo4j_logs:
+    driver: local
+  neo4j_import:
+    driver: local
+  neo4j_plugins:
+    driver: local
+  elasticsearch_data:
+    driver: local
+  elasticsearch_plugins:
     driver: local
 
 networks:
