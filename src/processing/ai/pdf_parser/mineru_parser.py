@@ -155,11 +155,26 @@ class MinerUParser(LoggerMixin):
                 raise Exception("PDF 下载失败")
 
             # 4. 调用 MinerU 解析（支持页面范围）
-            parse_result = self._parse_with_mineru(
-                temp_pdf_path,
-                start_page_id=start_page_id,
-                end_page_id=end_page_id
-            )
+            try:
+                parse_result = self._parse_with_mineru(
+                    temp_pdf_path,
+                    start_page_id=start_page_id,
+                    end_page_id=end_page_id
+                )
+            except KeyboardInterrupt:
+                # 用户手动中断
+                self.logger.warning("⚠️ PDF 解析被用户中断")
+                self._update_parse_task_failed(parse_task_id, "解析被用户中断")
+                raise
+            except Exception as e:
+                # 检查是否是中断异常
+                error_type = type(e).__name__
+                if "Interrupt" in error_type or "Interrupted" in error_type:
+                    self.logger.warning(f"⚠️ PDF 解析被中断: {error_type}")
+                    self._update_parse_task_failed(parse_task_id, f"解析被中断: {error_type}")
+                    raise
+                # 其他异常继续处理
+                raise
             
             if not parse_result.get("success"):
                 error_msg = parse_result.get("error_message", "解析失败")
@@ -342,13 +357,36 @@ class MinerUParser(LoggerMixin):
             
             # 发送 POST 请求
             # 设置较长的超时时间，因为 PDF 解析可能需要较长时间
-            # 对于大文件（>5MB），可能需要更长时间，设置为 30 分钟
-            timeout_seconds = 1800  # 30 分钟超时
-            response = requests.post(
+            # 连接超时：30秒（建立连接的时间）
+            # 读取超时：3600秒（60分钟，处理大文件时需要更长时间）
+            connect_timeout = 30  # 连接超时：30秒
+            read_timeout = 1200   # 读取超时：20分钟
+            timeout = (connect_timeout, read_timeout)  # requests支持tuple格式：(connect_timeout, read_timeout)
+            
+            self.logger.info(f"API 请求超时设置: 连接超时={connect_timeout}秒, 读取超时={read_timeout//60}分钟")
+            
+            # 创建带重试机制的 Session
+            session = requests.Session()
+            from requests.adapters import HTTPAdapter
+            from urllib3.util.retry import Retry
+            
+            # 配置重试策略
+            retry_strategy = Retry(
+                total=3,  # 最多重试3次
+                status_forcelist=[429, 500, 502, 503, 504],  # 这些状态码会重试
+                allowed_methods=["POST"],
+                backoff_factor=2,  # 重试延迟：2秒、4秒、8秒
+                raise_on_status=False
+            )
+            adapter = HTTPAdapter(max_retries=retry_strategy)
+            session.mount("http://", adapter)
+            session.mount("https://", adapter)
+            
+            response = session.post(
                 url,
                 files=files,
                 data=data,
-                timeout=timeout_seconds,
+                timeout=timeout,
                 headers={
                     "Accept": "application/json"
                 }
@@ -377,20 +415,64 @@ class MinerUParser(LoggerMixin):
                 "success": False,
                 "error_message": "requests 库未安装"
             }
-        except requests.exceptions.Timeout:
-            timeout_seconds = 1800
-            self.logger.error(f"API 请求超时（超过 {timeout_seconds // 60} 分钟）")
+        except requests.exceptions.ConnectTimeout:
+            self.logger.error(f"API 连接超时（超过30秒），无法连接到服务器: {self.api_base}")
             return {
                 "success": False,
-                "error_message": f"API 请求超时（超过 {timeout_seconds // 60} 分钟），PDF 解析可能需要更长时间"
+                "error_message": f"API 连接超时，无法连接到服务器 {self.api_base}。请检查网络连接或代理设置。"
+            }
+        except requests.exceptions.ReadTimeout:
+            read_timeout_minutes = 60
+            self.logger.error(f"API 读取超时（超过 {read_timeout_minutes} 分钟），PDF 解析可能需要更长时间")
+            return {
+                "success": False,
+                "error_message": f"API 读取超时（超过 {read_timeout_minutes} 分钟），PDF 文件可能过大或服务器处理较慢。建议稍后重试或联系管理员。"
+            }
+        except requests.exceptions.Timeout:
+            self.logger.error(f"API 请求超时（连接或读取超时）")
+            return {
+                "success": False,
+                "error_message": "API 请求超时，可能是网络连接问题或服务器响应过慢。请检查网络连接后重试。"
+            }
+        except requests.exceptions.ProxyError as e:
+            self.logger.error(f"API 代理错误: {e}")
+            return {
+                "success": False,
+                "error_message": f"代理连接失败: {str(e)}。请检查代理设置或尝试不使用代理。"
+            }
+        except requests.exceptions.ConnectionError as e:
+            self.logger.error(f"API 连接错误: {e}")
+            return {
+                "success": False,
+                "error_message": f"无法连接到 API 服务器 {self.api_base}: {str(e)}。请检查网络连接和服务器状态。"
             }
         except requests.exceptions.HTTPError as e:
-            self.logger.error(f"API HTTP 错误: {e.response.status_code} - {e.response.text}")
+            status_code = e.response.status_code if e.response else "未知"
+            error_text = e.response.text[:200] if e.response else str(e)
+            self.logger.error(f"API HTTP 错误: {status_code} - {error_text}")
             return {
                 "success": False,
-                "error_message": f"API HTTP 错误: {e.response.status_code} - {e.response.text[:200]}"
+                "error_message": f"API HTTP 错误: {status_code} - {error_text}"
             }
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f"API 请求异常: {e}", exc_info=True)
+            return {
+                "success": False,
+                "error_message": f"API 请求失败: {str(e)}"
+            }
+        except KeyboardInterrupt:
+            # 用户手动中断（Ctrl+C）
+            self.logger.warning("⚠️ API 请求被用户中断")
+            # 重新抛出，让上层处理
+            raise
         except Exception as e:
+            # 检查是否是中断异常（DagsterExecutionInterruptedError 等）
+            error_type = type(e).__name__
+            if "Interrupt" in error_type or "Interrupted" in error_type:
+                self.logger.warning(f"⚠️ API 请求被中断: {error_type}")
+                # 重新抛出，让上层处理
+                raise
+            
             self.logger.error(f"MinerU API 调用失败: {e}", exc_info=True)
             return {
                 "success": False,
@@ -1223,7 +1305,9 @@ class MinerUParser(LoggerMixin):
                 )
             except Exception as e:
                 self.logger.error(f"创建 ParsedDocument 记录失败: {e}", exc_info=True)
-                # 不中断流程，继续执行
+                # 如果创建数据库记录失败，返回 None 表示保存失败
+                # 这样可以避免文档状态被错误地标记为 parsed
+                return None
             
             # 6. 清理临时目录（如果存在）
             temp_extract_dir = parse_result.get("temp_extract_dir") or parse_result.get("metadata", {}).get("temp_extract_dir")
@@ -1406,8 +1490,9 @@ class MinerUParser(LoggerMixin):
                 
                 # 5. 创建 ParsedDocument 记录
                 if not content_json_path:
-                    self.logger.warning("未找到 content_list.json 文件，跳过创建 ParsedDocument 记录")
-                    return
+                    error_msg = "未找到 content_list.json 文件，无法创建 ParsedDocument 记录"
+                    self.logger.error(error_msg)
+                    raise Exception(error_msg)
                 
                 parsed_doc = crud.create_parsed_document(
                     session=session,

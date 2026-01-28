@@ -247,9 +247,83 @@ def format_file_size(size_bytes: int) -> str:
     return f"{size_bytes:.2f} PB"
 
 
+def extract_text_from_table(table_html: str, remove_numbers: bool = True) -> str:
+    """
+    从表格HTML中提取文本内容
+    
+    移除HTML标签，保留表格中的文本内容，用于向量化。
+    可选择性地移除数字内容。
+    
+    Args:
+        table_html: 包含表格HTML的文本
+        remove_numbers: 是否移除数字（默认True，移除纯数字和带单位的数字）
+        
+    Returns:
+        提取的纯文本内容（已移除数字）
+        
+    Example:
+        >>> html = "<table><tr><td>收入</td><td>1000万元</td><td>2024年</td></tr></table>"
+        >>> extract_text_from_table(html)
+        "收入"
+        >>> extract_text_from_table(html, remove_numbers=False)
+        "收入 1000万元 2024年"
+    """
+    if not table_html:
+        return ""
+    
+    # 移除HTML标签，保留文本内容
+    # 使用正则表达式移除所有HTML标签
+    text = re.sub(r'<[^>]+>', ' ', table_html)
+    
+    # 如果启用数字移除，剔除数字内容
+    if remove_numbers:
+        # 移除带单位的数字（如：1000万元、50%、2024年、1.5倍等）
+        # 匹配数字+常见单位/符号，包括：
+        # - 货币单位：元、万元、亿元、美元等
+        # - 百分比：%（需要和数字一起移除）
+        # - 时间单位：年、月、日、季度、期等（但保留地址中的门牌号，如"625号"）
+        # - 其他单位：倍、次、个、项等
+        # 先移除带单位的数字，避免重复匹配
+        # 注意：不匹配地址中的门牌号（如"625号"），因为门牌号对语义搜索有意义
+        text = re.sub(r'\d+[.,]?\d*\s*[万千亿]?[元美元]?%?[年月日季度期倍次个项]', '', text)
+        
+        # 移除百分比（如：38.63%、-6.92%等）
+        text = re.sub(r'[+-]?\d+\.?\d*%', '', text)
+        
+        # 移除大额数字（通常用于财务数据，如：426,576,751.08）
+        # 匹配包含千分位分隔符的数字（通常是财务数据）
+        text = re.sub(r'\d{1,3}(?:,\d{3})+(?:\.\d+)?', '', text)
+        
+        # 移除纯数字（连续的数字，可能包含小数点）
+        # 例如：1000, 1.5, 1000.00, -100, +50
+        # 但保留短数字（可能是门牌号、年份等有意义的信息）
+        # 只移除较长的数字（通常是无意义的财务数据）
+        text = re.sub(r'[+-]?\d{4,}(?:\.\d+)?', '', text)  # 移除4位及以上的数字
+        text = re.sub(r'[+-]?\d+\.\d{2,}', '', text)  # 移除带小数点的数字（通常是金额）
+        
+        # 清理残留的逗号、连字符、百分比符号等
+        text = re.sub(r'\s*[,，]\s*', ' ', text)  # 移除逗号
+        text = re.sub(r'\s*-\s*-', '', text)  # 移除双连字符
+        text = re.sub(r'\s*%\s*', ' ', text)  # 移除单独的百分比符号
+    
+    # 清理多余空白：多个空格/换行符合并为一个空格
+    text = re.sub(r'\s+', ' ', text)
+    
+    # 移除首尾空白
+    text = text.strip()
+    
+    return text
+
+
 def clean_text(text: str) -> str:
     """
-    清洗文本（移除多余空白、特殊字符）
+    清洗文本，但保留单个换行符
+    
+    清理规则：
+    - 将多个连续空格合并为单个空格（行内）
+    - 将多个连续换行符（3个以上）合并为2个
+    - 保留单个换行符
+    - 移除首尾空白
 
     Args:
         text: 原始文本
@@ -258,16 +332,33 @@ def clean_text(text: str) -> str:
         清洗后的文本
 
     Example:
-        >>> clean_text("  这是  一段   文本\\n\\n")
-        '这是 一段 文本'
+        >>> clean_text("  这是  一段   文本\\n\\n\\n另一段")
+        '这是 一段 文本\\n另一段'
     """
-    # 移除多余空白
-    text = re.sub(r'\s+', ' ', text)
-
+    if not text:
+        return text
+    
+    # 先处理换行符：将2个以上连续换行符合并为1个
+    text = re.sub(r'\n{2,}', '\n', text)
+    
+    # 按行处理，清理每行内的多余空格
+    lines = text.split('\n')
+    cleaned_lines = []
+    
+    for line in lines:
+        # 清理行内多余空格（多个连续空格合并为单个空格）
+        cleaned_line = re.sub(r' +', ' ', line)
+        # 移除行首尾空白
+        cleaned_line = cleaned_line.strip()
+        cleaned_lines.append(cleaned_line)
+    
+    # 重新组合，保留换行符
+    result = '\n'.join(cleaned_lines)
+    
     # 移除首尾空白
-    text = text.strip()
-
-    return text
+    result = result.strip()
+    
+    return result
 
 
 def truncate_text(text: str, max_length: int = 100, suffix: str = "...") -> str:

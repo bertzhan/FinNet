@@ -298,11 +298,15 @@ def create_document_chunk(
     start_line: Optional[int] = None,
     end_line: Optional[int] = None,
     is_table: bool = False,
-    vector_id: Optional[str] = None,
     embedding_model: Optional[str] = None,
     metadata: Optional[Dict] = None
 ) -> DocumentChunk:
-    """创建文档分块"""
+    """
+    创建文档分块
+    
+    注意：向量化状态通过 vectorized_at 字段判断。
+    vector_id 字段已移除，因为 Milvus 使用 chunk_id 作为主键。
+    """
     document_id = _to_uuid(document_id)
     if parent_chunk_id:
         parent_chunk_id = _to_uuid(parent_chunk_id)
@@ -319,7 +323,6 @@ def create_document_chunk(
         start_line=start_line,
         end_line=end_line,
         is_table=is_table,
-        vector_id=vector_id,
         embedding_model=embedding_model,
         extra_metadata=metadata or {}
     )
@@ -419,23 +422,42 @@ def delete_document_chunks(
     return count
 
 
+def update_chunk_embedding(
+    session: Session,
+    chunk_id: Union[uuid.UUID, str],
+    embedding_model: str
+) -> bool:
+    """
+    更新分块的向量化信息
+    
+    注意：不再更新 vector_id，因为 Milvus 使用 chunk_id 作为主键
+    使用 vectorized_at 字段来判断是否已向量化
+    """
+    chunk_id = _to_uuid(chunk_id)
+    chunk = session.query(DocumentChunk).filter(DocumentChunk.id == chunk_id).first()
+    if not chunk:
+        return False
+
+    chunk.embedding_model = embedding_model
+    chunk.vectorized_at = datetime.now()
+    session.flush()
+    return True
+
+
+# 保留旧函数名以向后兼容（已废弃）
 def update_chunk_vector_id(
     session: Session,
     chunk_id: Union[uuid.UUID, str],
     vector_id: str,
     embedding_model: str
 ) -> bool:
-    """更新分块的向量 ID"""
-    chunk_id = _to_uuid(chunk_id)
-    chunk = session.query(DocumentChunk).filter(DocumentChunk.id == chunk_id).first()
-    if not chunk:
-        return False
-
-    chunk.vector_id = vector_id
-    chunk.embedding_model = embedding_model
-    chunk.vectorized_at = datetime.now()
-    session.flush()
-    return True
+    """
+    更新分块的向量 ID（已废弃）
+    
+    注意：此函数已废弃，请使用 update_chunk_embedding
+    vector_id 参数将被忽略，因为 Milvus 使用 chunk_id 作为主键
+    """
+    return update_chunk_embedding(session, chunk_id, embedding_model)
 
 
 def update_parsed_document_chunk_info(
@@ -1045,9 +1067,11 @@ def upsert_listed_company(
     """
     插入或更新上市公司信息
     
+    注意：code 是主键，如果已存在会自动更新，不存在则创建
+    
     Args:
         session: 数据库会话
-        code: 股票代码
+        code: 股票代码（主键）
         name: 公司名称
         
     Returns:
@@ -1058,8 +1082,8 @@ def upsert_listed_company(
         ...     company = upsert_listed_company(session, "000001", "平安银行")
         ...     print(company.code)
     """
-    # 查找是否已存在
-    company = session.query(ListedCompany).filter(ListedCompany.code == code).first()
+    # 使用主键查询（更高效）
+    company = session.get(ListedCompany, code)
     
     if company:
         # 更新现有记录

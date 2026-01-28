@@ -64,15 +64,15 @@ def update_listed_companies_op(context) -> Dict:
     
     try:
         # 使用 akshare 获取A股上市公司列表
-        logger.info("正在从 akshare 获取A股上市公司数据...")
+        logger.info("正在获取A股上市公司数据...")
         stock_df = ak.stock_info_a_code_name()
         
         # 检查数据格式
         if stock_df is None or stock_df.empty:
-            logger.error("从 akshare 获取的数据为空")
+            logger.error("获取的数据为空")
             return {
                 "success": False,
-                "error": "从 akshare 获取的数据为空",
+                "error": "获取的数据为空",
                 "total": 0,
                 "inserted": 0,
                 "updated": 0,
@@ -103,7 +103,7 @@ def update_listed_companies_op(context) -> Dict:
         stock_df = stock_df[(stock_df['code'] != '') & (stock_df['name'] != '')]
         
         total_count = len(stock_df)
-        logger.info(f"从 akshare 获取到 {total_count} 家上市公司")
+        logger.info(f"获取到 {total_count} 家上市公司")
         
         # 获取数据库客户端
         pg_client = get_postgres_client()
@@ -192,7 +192,7 @@ def update_listed_companies_job():
     A股上市公司列表更新作业
     
     完整流程：
-    1. 从 akshare 获取最新的A股上市公司列表
+    1. 获取最新的A股上市公司列表
     2. 更新到数据库的 listed_companies 表
     """
     update_listed_companies_op()

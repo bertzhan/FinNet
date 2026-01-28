@@ -173,11 +173,16 @@ class Neo4jClient(LoggerMixin):
         db = database or self.database
 
         constraints_and_indexes = [
+            # Company 节点约束和索引（根节点）
+            "CREATE CONSTRAINT company_code IF NOT EXISTS FOR (c:Company) REQUIRE c.code IS UNIQUE",
+            "CREATE INDEX company_name IF NOT EXISTS FOR (c:Company) ON (c.name)",
+            
             # Document 节点约束和索引
             "CREATE CONSTRAINT document_id IF NOT EXISTS FOR (d:Document) REQUIRE d.id IS UNIQUE",
             "CREATE INDEX document_stock_code IF NOT EXISTS FOR (d:Document) ON (d.stock_code)",
             "CREATE INDEX document_doc_type IF NOT EXISTS FOR (d:Document) ON (d.doc_type)",
             "CREATE INDEX document_year IF NOT EXISTS FOR (d:Document) ON (d.year)",
+            "CREATE INDEX document_quarter IF NOT EXISTS FOR (d:Document) ON (d.quarter)",
             
             # Chunk 节点约束和索引
             "CREATE CONSTRAINT chunk_id IF NOT EXISTS FOR (c:Chunk) REQUIRE c.id IS UNIQUE",
@@ -207,15 +212,17 @@ class Neo4jClient(LoggerMixin):
         self,
         label: str,
         properties: Dict[str, Any],
-        database: Optional[str] = None
+        database: Optional[str] = None,
+        primary_key: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         创建或更新节点（MERGE）
 
         Args:
-            label: 节点标签（如 "Document", "Chunk"）
+            label: 节点标签（如 "Document", "Chunk", "Company"）
             properties: 节点属性字典
             database: 数据库名称（默认使用配置的数据库）
+            primary_key: 主键字段名（默认 "id"，Company 节点使用 "code"）
 
         Returns:
             创建的节点信息
@@ -226,15 +233,27 @@ class Neo4jClient(LoggerMixin):
             ...     "Document",
             ...     {"id": "123", "stock_code": "000001", "company_name": "平安银行"}
             ... )
+            >>> company = client.merge_node(
+            ...     "Company",
+            ...     {"code": "000001", "name": "平安银行"},
+            ...     primary_key="code"
+            ... )
         """
         db = database or self.database
+        
+        # 确定主键字段（Company 使用 code，其他使用 id）
+        if primary_key is None:
+            primary_key = "code" if label == "Company" else "id"
+        
+        if primary_key not in properties:
+            raise ValueError(f"节点属性中缺少主键字段: {primary_key}")
 
         # 构建属性字符串
         props_str = ", ".join([f"n.{k} = ${k}" for k in properties.keys()])
         set_str = ", ".join([f"n.{k} = ${k}" for k in properties.keys()])
 
         query = f"""
-        MERGE (n:{label} {{id: $id}})
+        MERGE (n:{label} {{{primary_key}: ${primary_key}}})
         ON CREATE SET {props_str}
         ON MATCH SET {set_str}
         RETURN n
@@ -246,7 +265,7 @@ class Neo4jClient(LoggerMixin):
                 return results[0].get('n', {})
             return {}
         except Exception as e:
-            self.logger.error(f"创建节点失败: {e}, label={label}, id={properties.get('id')}")
+            self.logger.error(f"创建节点失败: {e}, label={label}, {primary_key}={properties.get(primary_key)}")
             raise
 
     def batch_merge_nodes(
@@ -330,10 +349,10 @@ class Neo4jClient(LoggerMixin):
 
         Args:
             from_label: 起始节点标签
-            from_id: 起始节点 ID
+            from_id: 起始节点 ID（Company 节点使用 code，其他使用 id）
             to_label: 目标节点标签
-            to_id: 目标节点 ID
-            relationship_type: 关系类型（如 "CONTAINS", "HAS_PARENT"）
+            to_id: 目标节点 ID（Company 节点使用 code，其他使用 id）
+            relationship_type: 关系类型（如 "HAS_DOCUMENT", "BELONGS_TO", "HAS_CHILD"）
             properties: 关系属性（可选）
             database: 数据库名称（默认使用配置的数据库）
 
@@ -343,17 +362,21 @@ class Neo4jClient(LoggerMixin):
         Example:
             >>> client = Neo4jClient()
             >>> success = client.create_relationship(
+            ...     "Company", "000001",
             ...     "Document", "doc123",
-            ...     "Chunk", "chunk456",
-            ...     "CONTAINS"
+            ...     "HAS_DOCUMENT"
             ... )
         """
         db = database or self.database
         properties = properties or {}
 
+        # 确定主键字段（Company 使用 code，其他使用 id）
+        from_key = "code" if from_label == "Company" else "id"
+        to_key = "code" if to_label == "Company" else "id"
+
         query = f"""
-        MATCH (a:{from_label} {{id: $from_id}})
-        MATCH (b:{to_label} {{id: $to_id}})
+        MATCH (a:{from_label} {{{from_key}: $from_id}})
+        MATCH (b:{to_label} {{{to_key}: $to_id}})
         MERGE (a)-[r:{relationship_type}]->(b)
         """
         

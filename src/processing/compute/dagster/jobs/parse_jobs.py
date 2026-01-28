@@ -334,7 +334,19 @@ def parse_documents_op(context, scan_result: Dict) -> Dict:
                     "error": error_msg
                 })
                 
+        except KeyboardInterrupt:
+            # 用户手动中断（Ctrl+C）
+            logger.warning(f"⚠️ 解析被用户中断: document_id={document_id}")
+            # 重新抛出异常，让 Dagster 知道任务被中断
+            raise
         except Exception as e:
+            # 检查是否是 Dagster 中断异常（DagsterExecutionInterruptedError 等）
+            error_type = type(e).__name__
+            if "Interrupt" in error_type or "Interrupted" in error_type:
+                logger.warning(f"⚠️ 解析被中断: document_id={document_id}, error_type={error_type}")
+                # 重新抛出异常，让 Dagster 知道任务被中断
+                raise
+            
             failed_count += 1
             error_msg = str(e)
             logger.error(f"❌ 解析异常: document_id={document_id}, error={error_msg}", exc_info=True)

@@ -103,6 +103,10 @@ def scan_chunked_documents_op(context) -> Dict:
                 DocumentChunk.chunk_text != ""
             )
             
+            # 如果不是强制重新索引，只查询未索引到 ES 的分块
+            if not force_reindex:
+                query = query.filter(DocumentChunk.es_indexed_at.is_(None))
+            
             # 应用市场过滤
             if market_filter:
                 query = query.filter(Document.market == market_filter)
@@ -312,6 +316,34 @@ def index_chunks_to_elasticsearch_op(context, scan_result: Dict) -> Dict:
         es_client.refresh_index(index_name)
     except Exception as e:
         logger.warning(f"刷新索引失败: {e}")
+    
+    # 更新成功索引的分块的 es_indexed_at 字段
+    if indexed_count > 0:
+        try:
+            pg_client = get_postgres_client()
+            # 收集成功索引的 chunk_id（排除失败的）
+            failed_set = set(failed_chunks)
+            success_chunk_ids = [
+                chunk["chunk_id"] for chunk in chunks
+                if chunk["chunk_id"] not in failed_set
+            ]
+            
+            if success_chunk_ids:
+                with pg_client.get_session() as session:
+                    from sqlalchemy import update
+                    import uuid
+                    
+                    # 批量更新 es_indexed_at 字段
+                    stmt = update(DocumentChunk).where(
+                        DocumentChunk.id.in_([uuid.UUID(cid) for cid in success_chunk_ids])
+                    ).values(es_indexed_at=datetime.now())
+                    
+                    session.execute(stmt)
+                    session.commit()
+                    
+                logger.info(f"已更新 {len(success_chunk_ids)} 个分块的 es_indexed_at 字段")
+        except Exception as e:
+            logger.error(f"更新 es_indexed_at 字段失败: {e}", exc_info=True)
     
     logger.info(
         f"索引完成: 成功={indexed_count}, 失败={failed_count}, 跳过={skipped_count}"

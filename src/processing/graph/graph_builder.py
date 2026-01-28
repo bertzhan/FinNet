@@ -55,8 +55,10 @@ class GraphBuilder(LoggerMixin):
         """
         self.logger.info(f"开始构建图结构，文档数量: {len(document_ids)}")
 
+        total_companies = 0
         total_documents = 0
         total_chunks = 0
+        total_company_document_edges = 0
         total_contains_edges = 0
         total_parent_edges = 0
         failed_documents = []
@@ -79,7 +81,33 @@ class GraphBuilder(LoggerMixin):
                         DocumentChunk.document_id.in_(batch_doc_ids)
                     ).all()
 
-                    # 构建文档节点
+                    # 1. 构建 Company 节点（根节点）
+                    company_nodes = []
+                    company_codes = set()
+                    for doc in documents:
+                        if doc.stock_code not in company_codes:
+                            company_props = {
+                                'code': doc.stock_code,  # 使用 code 作为主键
+                                'name': doc.company_name,
+                            }
+                            company_nodes.append(company_props)
+                            company_codes.add(doc.stock_code)
+
+                    # 批量创建 Company 节点
+                    if company_nodes:
+                        # 使用自定义查询创建 Company 节点（因为主键是 code 而不是 id）
+                        for company in company_nodes:
+                            query = """
+                            MERGE (c:Company {code: $code})
+                            ON CREATE SET c.name = $name
+                            ON MATCH SET c.name = $name
+                            RETURN c
+                            """
+                            self.neo4j_client.execute_write(query, parameters=company)
+                        total_companies += len(company_nodes)
+                        self.logger.debug(f"创建/更新 {len(company_nodes)} 个 Company 节点")
+
+                    # 2. 构建文档节点
                     document_nodes = []
                     for doc in documents:
                         node_props = {
@@ -101,6 +129,27 @@ class GraphBuilder(LoggerMixin):
                             batch_size=50
                         )
                         total_documents += created
+
+                    # 3. 创建 Company -> Document 关系
+                    company_document_relationships = []
+                    for doc in documents:
+                        rel = {
+                            'from_label': 'Company',
+                            'from_id': doc.stock_code,  # Company 的主键是 code
+                            'to_label': 'Document',
+                            'to_id': str(doc.id),
+                            'relationship_type': 'HAS_DOCUMENT',
+                        }
+                        company_document_relationships.append(rel)
+
+                    # 批量创建 Company -> Document 关系
+                    if company_document_relationships:
+                        created = self.neo4j_client.batch_create_relationships(
+                            company_document_relationships,
+                            batch_size=100
+                        )
+                        total_company_document_edges += created
+                        self.logger.debug(f"创建 {created} 个 Company -> Document 关系")
 
                     # 构建分块节点
                     chunk_nodes = []
@@ -201,17 +250,19 @@ class GraphBuilder(LoggerMixin):
 
         result = {
             'success': len(failed_documents) == 0,
+            'companies_processed': total_companies,
             'documents_processed': total_documents,
             'chunks_created': total_chunks,
+            'has_document_edges_created': total_company_document_edges,
             'belongs_to_edges_created': total_contains_edges,
             'has_child_edges_created': total_parent_edges,
             'failed_documents': failed_documents,
         }
 
         self.logger.info(
-            f"图构建完成: 文档={total_documents}, 分块={total_chunks}, "
-            f"BELONGS_TO边={total_contains_edges}, HAS_CHILD边={total_parent_edges}, "
-            f"失败={len(failed_documents)}"
+            f"图构建完成: 公司={total_companies}, 文档={total_documents}, 分块={total_chunks}, "
+            f"HAS_DOCUMENT边={total_company_document_edges}, BELONGS_TO边={total_contains_edges}, "
+            f"HAS_CHILD边={total_parent_edges}, 失败={len(failed_documents)}"
         )
 
         return result
@@ -361,16 +412,20 @@ class GraphBuilder(LoggerMixin):
         Returns:
             统计信息字典
         """
+        company_count = self.neo4j_client.get_node_count('Company')
         document_count = self.neo4j_client.get_node_count('Document')
         chunk_count = self.neo4j_client.get_node_count('Chunk')
+        has_document_count = self.neo4j_client.get_relationship_count('HAS_DOCUMENT')
         belongs_to_count = self.neo4j_client.get_relationship_count('BELONGS_TO')
         has_child_count = self.neo4j_client.get_relationship_count('HAS_CHILD')
 
         return {
+            'company_nodes': company_count,
             'document_nodes': document_count,
             'chunk_nodes': chunk_count,
+            'has_document_edges': has_document_count,
             'belongs_to_edges': belongs_to_count,
             'has_child_edges': has_child_count,
-            'total_nodes': document_count + chunk_count,
-            'total_edges': belongs_to_count + has_child_count,
+            'total_nodes': company_count + document_count + chunk_count,
+            'total_edges': has_document_count + belongs_to_count + has_child_count,
         }

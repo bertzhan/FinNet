@@ -627,7 +627,64 @@ def download_pdf_resilient(session: requests.Session, url: str, path: str,
                 f.write(head or b"")
                 for chunk in r.iter_content(8192):
                     if chunk: f.write(chunk)
-            return True, "ok"
+            
+            # 验证文件完整性
+            try:
+                file_size = os.path.getsize(path)
+                
+                # 1. 检查文件大小是否合理（至少 1KB）
+                if file_size < 1024:
+                    logging.warning(f"文件太小（{file_size} bytes），可能下载不完整: {path}")
+                    os.remove(path)  # 删除不完整的文件
+                    last_err = f"文件太小（{file_size} bytes），可能下载不完整"
+                    time.sleep(RETRY_BACKOFF)
+                    continue
+                
+                # 2. 检查 Content-Length（如果存在）
+                if 'Content-Length' in r.headers:
+                    expected_size = int(r.headers['Content-Length'])
+                    if file_size != expected_size:
+                        logging.warning(
+                            f"文件大小不匹配：期望 {expected_size} bytes，实际 {file_size} bytes: {path}"
+                        )
+                        os.remove(path)  # 删除不完整的文件
+                        last_err = f"文件大小不匹配：期望 {expected_size} bytes，实际 {file_size} bytes"
+                        time.sleep(RETRY_BACKOFF)
+                        continue
+                
+                # 3. 验证 PDF 文件完整性（检查是否以 %%EOF 结尾）
+                try:
+                    with open(path, 'rb') as f:
+                        # 读取最后 1KB 来查找 %%EOF
+                        f.seek(max(0, file_size - 1024), os.SEEK_SET)
+                        tail = f.read()
+                        if b'%%EOF' not in tail:
+                            logging.warning(f"PDF 文件不完整（缺少 %%EOF 标记）: {path}")
+                            os.remove(path)  # 删除不完整的文件
+                            last_err = "PDF 文件不完整（缺少 %%EOF 标记）"
+                            time.sleep(RETRY_BACKOFF)
+                            continue
+                except Exception as e:
+                    logging.warning(f"PDF 完整性验证失败: {e}, 文件: {path}")
+                    os.remove(path)  # 删除可能损坏的文件
+                    last_err = f"PDF 完整性验证失败: {e}"
+                    time.sleep(RETRY_BACKOFF)
+                    continue
+                
+                # 所有验证通过
+                logging.debug(f"文件下载完成并验证通过: {path} ({file_size} bytes)")
+                return True, "ok"
+                
+            except Exception as e:
+                logging.error(f"文件完整性验证异常: {e}, 文件: {path}")
+                if os.path.exists(path):
+                    try:
+                        os.remove(path)  # 删除可能损坏的文件
+                    except:
+                        pass
+                last_err = f"文件完整性验证异常: {e}"
+                time.sleep(RETRY_BACKOFF)
+                continue
         except RequestException as e:
             last_err = str(e)
             time.sleep(RETRY_BACKOFF)

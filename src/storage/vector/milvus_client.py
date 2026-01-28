@@ -102,12 +102,13 @@ class MilvusClient(LoggerMixin):
                 return Collection(collection_name)
 
             # 定义 Schema
-            # 注意：document_id 和 chunk_id 使用 VARCHAR 存储 UUID 字符串
+            # 注意：使用 chunk_id 作为主键，这样重新向量化时会自动覆盖旧向量
             fields = [
-                FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
+                FieldSchema(name="chunk_id", dtype=DataType.VARCHAR, max_length=36, is_primary=True),  # 主键：chunk UUID
                 FieldSchema(name="document_id", dtype=DataType.VARCHAR, max_length=36),  # UUID字符串
-                FieldSchema(name="chunk_id", dtype=DataType.VARCHAR, max_length=36),    # UUID字符串
-                FieldSchema(name="stock_code", dtype=DataType.VARCHAR, max_length=20),
+                FieldSchema(name="stock_code", dtype=DataType.VARCHAR, max_length=18),
+                FieldSchema(name="company_name", dtype=DataType.VARCHAR, max_length=18),  # 公司名称
+                FieldSchema(name="doc_type", dtype=DataType.VARCHAR, max_length=18),       # 文档类型
                 FieldSchema(name="year", dtype=DataType.INT32),
                 FieldSchema(name="quarter", dtype=DataType.INT32),
                 FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=dimension)
@@ -171,23 +172,30 @@ class MilvusClient(LoggerMixin):
         document_ids: List[str],
         chunk_ids: List[str],
         stock_codes: List[str],
+        company_names: List[str],
+        doc_types: List[str],
         years: List[int],
         quarters: List[int]
-    ) -> List[int]:
+    ) -> List[str]:
         """
-        插入向量
+        插入向量（如果 chunk_id 已存在，会自动覆盖旧向量）
 
         Args:
             collection_name: Collection 名称
             embeddings: 向量列表
             document_ids: 文档 ID 列表（UUID 字符串）
-            chunk_ids: 分块 ID 列表（UUID 字符串）
+            chunk_ids: 分块 ID 列表（UUID 字符串，作为主键）
             stock_codes: 股票代码列表
+            company_names: 公司名称列表
+            doc_types: 文档类型列表（如 annual_reports, quarterly_reports）
             years: 年份列表
             quarters: 季度列表
 
         Returns:
-            插入的向量 ID 列表（Milvus 主键）
+            插入的 chunk_id 列表（主键列表）
+            
+        Note:
+            由于 chunk_id 是主键，相同 chunk_id 的向量会被自动覆盖（upsert 行为）
 
         Example:
             >>> client = MilvusClient()
@@ -197,6 +205,8 @@ class MilvusClient(LoggerMixin):
             ...     document_ids=["550e8400-e29b-41d4-a716-446655440000", "550e8400-e29b-41d4-a716-446655440000"],
             ...     chunk_ids=["660e8400-e29b-41d4-a716-446655440001", "660e8400-e29b-41d4-a716-446655440002"],
             ...     stock_codes=["000001", "000001"],
+            ...     company_names=["平安银行", "平安银行"],
+            ...     doc_types=["annual_reports", "annual_reports"],
             ...     years=[2023, 2023],
             ...     quarters=[3, 3]
             ... )
@@ -206,24 +216,28 @@ class MilvusClient(LoggerMixin):
             if collection is None:
                 raise ValueError(f"Collection 不存在: {collection_name}")
 
-            # 构建数据
+            # 构建数据（chunk_id 是主键，必须放在第一位）
+            # 顺序必须与 Schema 定义的字段顺序一致
             data = [
+                chunk_ids,       # 主键
                 document_ids,
-                chunk_ids,
                 stock_codes,
+                company_names,
+                doc_types,
                 years,
                 quarters,
                 embeddings
             ]
 
-            # 插入数据
+            # 插入数据（如果 chunk_id 已存在，会自动覆盖旧向量）
             mr = collection.insert(data)
 
             # 刷新 Collection（确保数据持久化）
             collection.flush()
 
             self.logger.info(f"插入向量成功: {collection_name}, count={len(embeddings)}")
-            return mr.primary_keys
+            # 返回 chunk_ids（主键列表）
+            return chunk_ids
 
         except MilvusException as e:
             self.logger.error(f"插入向量失败: {e}")
@@ -295,7 +309,7 @@ class MilvusClient(LoggerMixin):
                 param=search_params,
                 limit=top_k,
                 expr=expr,
-                output_fields=output_fields or ["document_id", "chunk_id", "stock_code", "year", "quarter"]
+                output_fields=output_fields or ["document_id", "chunk_id", "stock_code", "company_name", "doc_type", "year", "quarter"]
             )
 
             # 格式化结果

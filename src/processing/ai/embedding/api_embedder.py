@@ -324,6 +324,11 @@ class APIEmbedder(LoggerMixin):
                         f"使用逐个调用模式处理剩余 {len(remaining_texts)} 个文本"
                         f"（已处理 {processed_count} 个）"
                     )
+                    
+                    # 记录失败的文本索引和错误信息
+                    failed_indices = []
+                    failed_errors = []
+                    
                     for i, text in enumerate(remaining_texts, processed_count + 1):
                         try:
                             embeddings = self._call_api([text])
@@ -332,20 +337,43 @@ class APIEmbedder(LoggerMixin):
                                 if i % 10 == 0:
                                     self.logger.debug(f"已处理 {i}/{len(valid_texts)} 个文本")
                             else:
-                                # 返回空向量，抛出异常
-                                raise ValueError(f"文本 {i} 返回空向量")
+                                # 返回空向量，记录失败但继续处理
+                                error_msg = f"文本 {i} 返回空向量"
+                                self.logger.warning(f"⚠️  {error_msg}，插入零向量并继续处理")
+                                all_embeddings.append([0.0] * self.dimension)
+                                failed_indices.append(i)
+                                failed_errors.append(error_msg)
                         except Exception as e:
-                            # 如果任何文本失败，抛出异常让整个批次失败
-                            # 这样 Vectorizer 可以正确处理失败的分块
-                            self.logger.error(f"文本 {i} 向量化失败: {e}")
-                            raise ValueError(
-                                f"逐个调用模式中文本 {i} 向量化失败: {e}。"
-                                f"已成功处理 {len(all_embeddings)} 个文本。"
-                            ) from e
+                            # ✅ 改进：记录错误但继续处理，不抛出异常
+                            error_msg = str(e)
+                            self.logger.error(
+                                f"文本 {i} 向量化失败: {e}，插入零向量并继续处理"
+                            )
+                            # 打印失败的文本内容（前200字符）
+                            text_preview = text[:200] if text else ""
+                            self.logger.error(
+                                f"  失败文本内容（前200字符）:\n"
+                                f"  {text_preview}\n"
+                                f"  {'...' if len(text or '') > 200 else ''}"
+                            )
+                            # 插入零向量，保持列表长度一致
+                            all_embeddings.append([0.0] * self.dimension)
+                            failed_indices.append(i)
+                            failed_errors.append(error_msg)
                         
                         # 避免请求过快
                         if i < len(valid_texts):
                             time.sleep(0.05)  # 短暂延迟
+                    
+                    # 如果有失败，记录警告但不抛出异常
+                    if failed_indices:
+                        self.logger.warning(
+                            f"⚠️  逐个调用模式中，{len(failed_indices)} 个文本失败，"
+                            f"已插入零向量。失败索引: {failed_indices}"
+                        )
+                        self.logger.warning(
+                            f"失败文本索引和错误: {list(zip(failed_indices, failed_errors))}"
+                        )
             
             self.logger.debug(
                 f"所有批次完成: 收集到 {len(all_embeddings)} 个向量, "

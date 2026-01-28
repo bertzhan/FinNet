@@ -168,11 +168,11 @@ class TextChunker(LoggerMixin):
                 with self.pg_client.get_session() as session:
                     crud.delete_document_chunks(session, document_id)
 
-            # 9. 保存分块到数据库
+            # 9. 保存分块到数据库（返回实际保存的数量）
             with self.pg_client.get_session() as session:
-                self._save_chunks_to_db(session, chunks, document_id)
+                actual_chunks_count = self._save_chunks_to_db(session, chunks, document_id)
 
-            # 10. 更新 ParsedDocument 记录
+            # 10. 更新 ParsedDocument 记录（使用实际保存的chunk数量）
             with self.pg_client.get_session() as session:
                 crud.update_parsed_document_chunk_info(
                     session=session,
@@ -181,7 +181,7 @@ class TextChunker(LoggerMixin):
                     chunks_json_path=chunks_path,
                     structure_json_hash=structure_hash,
                     chunks_json_hash=chunks_hash,
-                    chunks_count=len(chunks)
+                    chunks_count=actual_chunks_count
                 )
 
             # 11. 更新 Document 的 chunked_at 字段
@@ -202,7 +202,7 @@ class TextChunker(LoggerMixin):
             duration = (datetime.now() - start_time).total_seconds()
             self.logger.info(
                 f"✅ 文档分块完成: document_id={document_id}, "
-                f"chunks_count={len(chunks)}, duration={duration:.2f}s"
+                f"chunks_count={actual_chunks_count} (原始: {len(chunks)}), duration={duration:.2f}s"
             )
 
             return {
@@ -210,7 +210,7 @@ class TextChunker(LoggerMixin):
                 "parsed_document_id": parsed_doc_id,
                 "structure_path": structure_path,
                 "chunks_path": chunks_path,
-                "chunks_count": len(chunks),
+                "chunks_count": actual_chunks_count,  # 使用实际保存的数量
                 "duration": duration
             }
 
@@ -532,7 +532,7 @@ class TextChunker(LoggerMixin):
         session,
         chunks: List[Dict[str, Any]],
         document_id: Union[uuid.UUID, str]
-    ) -> None:
+    ) -> int:
         """
         保存分块到数据库
 
@@ -541,15 +541,43 @@ class TextChunker(LoggerMixin):
             chunks: 分块列表
             document_id: 文档ID
         """
+        skipped_count = 0
+        
+        # 第一遍：过滤空chunk并构建有效chunk列表
+        valid_chunks = []
+        original_to_valid_index = {}  # 原始索引 -> 有效索引的映射
+        
+        for i, chunk in enumerate(chunks):
+            content = chunk.get("content", "")
+            if not content or not content.strip():
+                skipped_count += 1
+                self.logger.warning(
+                    f"跳过空chunk: document_id={document_id}, "
+                    f"chunk_id={chunk.get('chunk_id')}, title={chunk.get('title')}"
+                )
+                continue
+            
+            # 记录原始索引到有效索引的映射
+            valid_index = len(valid_chunks)
+            original_to_valid_index[i] = valid_index
+            valid_chunks.append((valid_index, chunk))
+        
+        if skipped_count > 0:
+            self.logger.info(f"跳过了 {skipped_count} 个空chunk，剩余 {len(valid_chunks)} 个有效chunk")
+        
+        if not valid_chunks:
+            self.logger.warning(f"没有有效chunk可保存: document_id={document_id}")
+            return
+        
+        # 第二遍：构建chunks_data，使用连续的有效索引
         chunks_data = []
-        parent_chunk_map = {}  # 用于映射 chunk_id 到实际的数据库 ID
-
-        for chunk in chunks:
+        for valid_index, chunk in valid_chunks:
+            content = chunk.get("content", "")
             chunk_data = {
                 "document_id": document_id,
-                "chunk_index": chunk.get("chunk_index", chunk.get("chunk_id", 0)) - 1,  # 转换为 0-based
-                "chunk_text": chunk.get("content", ""),
-                "chunk_size": len(chunk.get("content", "")),
+                "chunk_index": valid_index,  # 使用连续的有效索引（0-based）
+                "chunk_text": content,
+                "chunk_size": len(content),
                 "title": chunk.get("title"),
                 "title_level": chunk.get("title_level"),
                 "heading_index": chunk.get("heading_index"),
@@ -565,17 +593,37 @@ class TextChunker(LoggerMixin):
         # 批量创建分块
         created_chunks = crud.create_document_chunks_batch(session, chunks_data)
 
-        # 更新父分块关系
-        for i, chunk in enumerate(chunks):
+        # 第三遍：更新父分块关系（使用映射后的索引）
+        for valid_index, chunk in valid_chunks:
             parent_id = chunk.get("parent_id")
-            if parent_id and i < len(created_chunks):
-                # 查找父分块
-                parent_index = parent_id - 1  # 转换为 0-based
-                if 0 <= parent_index < len(created_chunks):
-                    created_chunks[i].parent_chunk_id = created_chunks[parent_index].id
-                    session.flush()
+            if parent_id:
+                # parent_id 是原始chunk_id（1-based），需要转换为原始索引（0-based）
+                original_parent_index = parent_id - 1
+                
+                # 查找父chunk的有效索引
+                if original_parent_index in original_to_valid_index:
+                    valid_parent_index = original_to_valid_index[original_parent_index]
+                    
+                    # 使用有效索引查找父chunk
+                    if 0 <= valid_parent_index < len(created_chunks):
+                        created_chunks[valid_index].parent_chunk_id = created_chunks[valid_parent_index].id
+                    else:
+                        self.logger.warning(
+                            f"父chunk索引超出范围: document_id={document_id}, "
+                            f"chunk_index={valid_index}, parent_index={valid_parent_index}"
+                        )
+                else:
+                    # 父chunk被跳过了（可能是空chunk）
+                    self.logger.warning(
+                        f"父chunk被跳过（可能是空chunk）: document_id={document_id}, "
+                        f"chunk_index={valid_index}, parent_id={parent_id}"
+                    )
 
+        session.flush()
         self.logger.info(f"✅ 已保存 {len(created_chunks)} 个分块到数据库")
+        
+        # 返回实际保存的chunk数量
+        return len(created_chunks)
 
     def _count_headings(self, structure: List[Dict[str, Any]]) -> int:
         """

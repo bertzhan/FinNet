@@ -52,8 +52,8 @@ VECTORIZE_CONFIG_SCHEMA = {
     ),
     "limit": Field(
         int,
-        default_value=1000,
-        description="本次作业最多处理的分块数量（1-10000）"
+        is_required=False,
+        description="本次作业最多处理的分块数量（1-10000），None 或不设置表示处理全部未向量化的分块"
     ),
     "force_revectorize": Field(
         bool,
@@ -70,7 +70,7 @@ def scan_unvectorized_chunks_op(context) -> Dict:
     """
     扫描未向量化的文档分块
     
-    查找 vector_id IS NULL 的分块
+    查找 vectorized_at IS NULL 的分块
     
     Returns:
         包含待向量化分块列表的字典
@@ -79,17 +79,24 @@ def scan_unvectorized_chunks_op(context) -> Dict:
     logger = get_dagster_logger()
     
     batch_size = config.get("batch_size", 32)
-    limit = config.get("limit", 1000)
+    limit = config.get("limit")  # None 表示处理全部
     market_filter = config.get("market")
     doc_type_filter = config.get("doc_type")
     force_revectorize = config.get("force_revectorize", False)
     
     logger.info(f"开始扫描待向量化分块...")
-    logger.info(
-        f"配置: batch_size={batch_size}, limit={limit}, "
-        f"market={market_filter}, doc_type={doc_type_filter}, "
-        f"force_revectorize={force_revectorize}"
-    )
+    if limit is not None:
+        logger.info(
+            f"配置: batch_size={batch_size}, limit={limit}, "
+            f"market={market_filter}, doc_type={doc_type_filter}, "
+            f"force_revectorize={force_revectorize}"
+        )
+    else:
+        logger.info(
+            f"配置: batch_size={batch_size}, limit=无限制（处理全部）, "
+            f"market={market_filter}, doc_type={doc_type_filter}, "
+            f"force_revectorize={force_revectorize}"
+        )
     
     pg_client = get_postgres_client()
     
@@ -102,10 +109,13 @@ def scan_unvectorized_chunks_op(context) -> Dict:
             
             # 应用过滤条件
             if not force_revectorize:
-                query = query.filter(DocumentChunk.vector_id.is_(None))
-                logger.info("过滤条件: 只扫描未向量化的分块 (vector_id IS NULL)")
+                query = query.filter(DocumentChunk.vectorized_at.is_(None))
+                logger.info("过滤条件: 只扫描未向量化的分块 (vectorized_at IS NULL)")
             else:
                 logger.info("⚠️ force_revectorize=True: 将扫描所有分块（包括已向量化的）")
+            
+            # 注意：不再过滤表格分块，而是在向量化时提取表格文本内容
+            # 表格分块会在vectorizer中提取文本后再向量化
             
             # 应用市场过滤
             if market_filter:
@@ -115,10 +125,23 @@ def scan_unvectorized_chunks_op(context) -> Dict:
             if doc_type_filter:
                 query = query.filter(Document.doc_type == doc_type_filter)
             
-            # 限制数量并执行查询
-            chunks = query.limit(limit).all()
+            # 限制数量并执行查询（包含表格分块，将在向量化时提取文本）
+            if limit is not None:
+                chunks = query.limit(limit).all()
+            else:
+                # limit 为 None 时，处理全部未向量化的分块
+                chunks = query.all()
             
-            logger.info(f"找到 {len(chunks)} 个待向量化的分块")
+            # 统计表格分块数量（用于日志）
+            table_chunks_count = sum(1 for chunk in chunks if chunk.is_table)
+            
+            if table_chunks_count > 0:
+                logger.info(
+                    f"找到 {len(chunks)} 个待向量化的分块（其中 {table_chunks_count} 个包含表格，"
+                    f"将在向量化时提取文本内容）"
+                )
+            else:
+                logger.info(f"找到 {len(chunks)} 个待向量化的分块")
             
             # 将分块列表转换为字典格式（便于 Dagster 传递）
             chunk_list = []
@@ -138,7 +161,7 @@ def scan_unvectorized_chunks_op(context) -> Dict:
                     "doc_type": doc.doc_type,
                     "year": doc.year,
                     "quarter": doc.quarter,
-                    "vector_id": chunk.vector_id,
+                    "vectorized_at": chunk.vectorized_at.isoformat() if chunk.vectorized_at else None,
                 })
             
             # 按批次分组
@@ -252,9 +275,50 @@ def vectorize_chunks_op(context, scan_result: Dict) -> Dict:
         
         if failed_chunks:
             logger.warning(f"失败的分块数量: {len(failed_chunks)}")
-            # 只记录前10个失败的分块
-            for chunk_id in failed_chunks[:10]:
-                logger.warning(f"  - 失败分块: {chunk_id}")
+            logger.warning("=" * 80)
+            logger.warning("失败分块详细信息（包含 chunk_text）:")
+            logger.warning("=" * 80)
+            
+            # 从数据库查询失败分块的详细信息（包括chunk_text）
+            from src.storage.metadata.postgres_client import get_postgres_client
+            from src.storage.metadata.models import DocumentChunk, Document
+            import uuid as uuid_lib
+            
+            pg_client = get_postgres_client()
+            try:
+                with pg_client.get_session() as session:
+                    # 打印所有失败的分块（不只是前10个）
+                    for i, chunk_id in enumerate(failed_chunks, 1):
+                        try:
+                            chunk = session.query(DocumentChunk).filter(
+                                DocumentChunk.id == uuid_lib.UUID(chunk_id)
+                            ).first()
+                            
+                            if chunk:
+                                chunk_text_preview = chunk.chunk_text[:200] if chunk.chunk_text else ""
+                                doc = session.query(Document).filter(
+                                    Document.id == chunk.document_id
+                                ).first()
+                                
+                                logger.warning(
+                                    f"\n失败分块 {i}/{len(failed_chunks)}:\n"
+                                    f"  Chunk ID: {chunk_id}\n"
+                                    f"  Document ID: {chunk.document_id}\n"
+                                    f"  股票代码: {doc.stock_code if doc else 'N/A'}\n"
+                                    f"  公司名称: {doc.company_name if doc else 'N/A'}\n"
+                                    f"  Chunk Index: {chunk.chunk_index}\n"
+                                    f"  Chunk Text (前200字符):\n"
+                                    f"  {chunk_text_preview}\n"
+                                    f"  {'...' if len(chunk.chunk_text or '') > 200 else ''}"
+                                )
+                            else:
+                                logger.warning(f"失败分块 {i}: Chunk ID {chunk_id} 不存在")
+                        except Exception as e:
+                            logger.error(f"查询失败分块 {chunk_id} 信息异常: {e}")
+            except Exception as e:
+                logger.error(f"查询失败分块信息异常: {e}", exc_info=True)
+            
+            logger.warning("=" * 80)
         
         return {
             "success": True,
@@ -353,7 +417,7 @@ def validate_vectorize_results_op(context, vectorize_results: Dict) -> Dict:
             "scan_unvectorized_chunks_op": {
                 "config": {
                     "batch_size": 32,
-                    "limit": 1000,
+                    # limit 不设置表示处理全部未向量化的分块
                     # market 和 doc_type 是可选的，不设置表示所有类型
                 }
             },
@@ -371,14 +435,14 @@ def vectorize_documents_job():
     向量化作业
 
     完整流程：
-    1. 扫描未向量化分块（vector_id IS NULL）
+    1. 扫描未向量化分块（vectorized_at IS NULL）
     2. 批量执行向量化（调用 Vectorizer）
     3. 验证向量化结果
 
     默认配置：
     - scan_unvectorized_chunks_op:
         - batch_size: 32 (每批处理32个分块)
-        - limit: 1000 (最多处理1000个分块)
+        - limit: 不设置 (处理全部未向量化的分块)
     - vectorize_chunks_op:
         - force_revectorize: False (不强制重新向量化)
     """

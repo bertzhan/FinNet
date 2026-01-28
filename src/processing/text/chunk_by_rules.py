@@ -10,6 +10,7 @@ import re
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 from src.processing.text.title_level_detector import TitleLevelDetector
+from src.common.utils import clean_text
 
 
 class StructureGenerator:
@@ -331,6 +332,120 @@ class ChunkGenerator:
         
         return index_to_level
     
+    def _split_long_chunk(
+        self,
+        content: str,
+        title: str,
+        title_level: int,
+        start_line: int,
+        end_line: int,
+        parent_id: Optional[int],
+        heading_index: int,
+        is_table: bool,
+        max_length: int = 500
+    ) -> List[Dict[str, Any]]:
+        """
+        将长chunk按换行符分割成多个接近max_length的子块
+        
+        Args:
+            content: 原始内容
+            title: 标题
+            title_level: 标题层级
+            start_line: 起始行号
+            end_line: 结束行号
+            parent_id: 父chunk ID
+            heading_index: 标题索引
+            is_table: 是否包含表格
+            max_length: 最大长度（默认500）
+        
+        Returns:
+            分割后的chunk列表（平级）
+        """
+        sub_chunks = []
+        
+        # 按换行符分割内容
+        lines = content.split('\n')
+        
+        if not lines:
+            return sub_chunks
+        
+        # 按行分组，尽量让每个子块接近max_length（目标：90%的max_length）
+        target_length = int(max_length * 0.9)  # 目标长度：90%的max_length
+        current_chunk_lines = []
+        current_chunk_length = 0  # 当前chunk的字符数（不包括换行符）
+        chunk_index = 1
+        
+        for line in lines:
+            line_length = len(line)
+            # 计算添加这一行后的总长度（包括换行符）
+            # 如果当前chunk不为空，n行之间有n-1个换行符
+            if current_chunk_lines:
+                # 计算完整内容的长度：已有内容 + 换行符 + 新行
+                temp_lines = current_chunk_lines + [line]
+                new_length = len('\n'.join(temp_lines))
+            else:
+                new_length = line_length
+            
+            # 如果添加当前行会超过max_length，且当前chunk不为空，则创建新chunk
+            if new_length > max_length and current_chunk_lines:
+                # 创建当前chunk
+                chunk_content = '\n'.join(current_chunk_lines)
+                chunk_id = len(self.chunks) + len(sub_chunks) + 1
+                
+                # 添加序号（Part 1、Part 2...）
+                sub_title = f"{title} (Part {chunk_index})"
+                
+                sub_chunk = {
+                    'chunk_id': chunk_id,
+                    'title': sub_title,
+                    'title_level': title_level,
+                    'content': chunk_content,
+                    'start_line': start_line,  # 保持原始起始行号
+                    'end_line': end_line,  # 保持原始结束行号
+                    'parent_id': parent_id,  # 平级，使用相同的parent_id
+                    'heading_index': heading_index,
+                    'is_table': is_table
+                }
+                
+                sub_chunks.append(sub_chunk)
+                
+                # 重置当前chunk
+                current_chunk_lines = [line]
+                current_chunk_length = line_length
+                chunk_index += 1
+            else:
+                # 添加到当前chunk
+                current_chunk_lines.append(line)
+                current_chunk_length += line_length
+        
+        # 添加最后一个chunk
+        if current_chunk_lines:
+            chunk_content = '\n'.join(current_chunk_lines)
+            chunk_id = len(self.chunks) + len(sub_chunks) + 1
+            
+            # 如果只有一个子块，不添加序号；否则添加序号
+            if len(sub_chunks) == 0:
+                # 如果分割后只有一个chunk，说明分割逻辑有问题，但为了安全还是创建
+                sub_title = title
+            else:
+                sub_title = f"{title} (Part {chunk_index})"
+            
+            sub_chunk = {
+                'chunk_id': chunk_id,
+                'title': sub_title,
+                'title_level': title_level,
+                'content': chunk_content,
+                'start_line': start_line,
+                'end_line': end_line,
+                'parent_id': parent_id,
+                'heading_index': heading_index,
+                'is_table': is_table
+            }
+            
+            sub_chunks.append(sub_chunk)
+        
+        return sub_chunks
+    
     def chunk_by_structure(self) -> List[Dict[str, Any]]:
         """
         根据加载的目录结构对document.md进行分块
@@ -393,35 +508,102 @@ class ChunkGenerator:
             # 检查是否包含表格
             is_table = '<table>' in content
             
-            # 如果内容只包含表格，将表格单独提取
+            # 如果内容包含表格，处理所有表格
             if is_table and not content.strip().startswith('#'):
-                table_match = re.search(r'<table>.*?</table>', content, re.DOTALL)
-                if table_match:
-                    table_html = table_match.group(0)
-                    if len(table_html) > len(content) * 0.8:
-                        content = table_html
+                # 查找所有表格
+                table_matches = list(re.finditer(r'<table>.*?</table>', content, re.DOTALL))
+                
+                if table_matches:
+                    # 计算所有表格的总长度
+                    total_table_length = sum(len(match.group(0)) for match in table_matches)
+                    
+                    if total_table_length > len(content) * 0.8:
+                        # 表格内容占80%以上：只保留所有表格，去除首尾空白
+                        table_htmls = [match.group(0) for match in table_matches]
+                        content = '\n'.join(table_htmls).strip()
+                    else:
+                        # 混合内容：清理非表格部分，保留所有表格
+                        # 按位置分割内容：表格和表格之间的文本
+                        parts = []
+                        last_end = 0
+                        
+                        for match in table_matches:
+                            # 表格前的文本
+                            before_table = content[last_end:match.start()].strip()
+                            if before_table:
+                                parts.append(clean_text(before_table))
+                            
+                            # 表格本身
+                            parts.append(match.group(0))
+                            
+                            last_end = match.end()
+                        
+                        # 最后一个表格后的文本
+                        after_last_table = content[last_end:].strip()
+                        if after_last_table:
+                            parts.append(clean_text(after_last_table))
+                        
+                        # 重新组合（使用换行符连接，保留结构）
+                        content = '\n'.join(parts)
+                else:
+                    # 包含表格标记但未匹配到完整表格，进行常规清理（保留换行）
+                    content = clean_text(content)
+            else:
+                # 非表格内容：应用文本清理（保留换行）
+                content = clean_text(content)
             
-            # 创建块
-            chunk_id = len(self.chunks) + 1
-            chunk = {
-                'chunk_id': chunk_id,
-                'title': node['title'],
-                'title_level': current_level,
-                'content': content,
-                'start_line': start_line,
-                'end_line': end_line - 1,
-                'parent_id': parent_id,
-                'heading_index': heading_index,
-                'is_table': is_table
-            }
+            # 检查长度，如果超过500则分割
+            MAX_CHUNK_LENGTH = 500
             
-            chunks.append(chunk)
-            self.chunks.append(chunk)
-            
-            # 处理子节点
-            for child in node.get('children', []):
-                child_chunks = process_node(child, parent_id=chunk_id)
-                chunks.extend(child_chunks)
+            if len(content) <= MAX_CHUNK_LENGTH:
+                # 长度不超过限制，直接创建块
+                chunk_id = len(self.chunks) + 1
+                chunk = {
+                    'chunk_id': chunk_id,
+                    'title': node['title'],
+                    'title_level': current_level,
+                    'content': content,
+                    'start_line': start_line,
+                    'end_line': end_line - 1,
+                    'parent_id': parent_id,
+                    'heading_index': heading_index,
+                    'is_table': is_table
+                }
+                
+                chunks.append(chunk)
+                self.chunks.append(chunk)
+                
+                # 处理子节点（使用当前chunk_id作为parent_id）
+                for child in node.get('children', []):
+                    child_chunks = process_node(child, parent_id=chunk_id)
+                    chunks.extend(child_chunks)
+            else:
+                # 长度超过限制，按换行符分割成多个平级子块
+                sub_chunks = self._split_long_chunk(
+                    content=content,
+                    title=node['title'],
+                    title_level=current_level,
+                    start_line=start_line,
+                    end_line=end_line - 1,
+                    parent_id=parent_id,
+                    heading_index=heading_index,
+                    is_table=is_table,
+                    max_length=MAX_CHUNK_LENGTH
+                )
+                
+                # 添加所有子块
+                first_sub_chunk_id = None
+                for sub_chunk in sub_chunks:
+                    chunks.append(sub_chunk)
+                    self.chunks.append(sub_chunk)
+                    if first_sub_chunk_id is None:
+                        first_sub_chunk_id = sub_chunk['chunk_id']
+                
+                # 处理子节点（使用第一个子块的chunk_id作为parent_id）
+                if first_sub_chunk_id is not None:
+                    for child in node.get('children', []):
+                        child_chunks = process_node(child, parent_id=first_sub_chunk_id)
+                        chunks.extend(child_chunks)
             
             return chunks
         

@@ -284,9 +284,13 @@ class DocumentChunk(Base):
     is_table = Column(Boolean, default=False)                 # 是否是表格分块
     
     # 向量化相关字段
-    vector_id = Column(String(200))
-    embedding_model = Column(String(100))
-    vectorized_at = Column(DateTime)
+    # 注意：不再使用 vector_id，因为 Milvus 使用 chunk_id 作为主键
+    # 使用 vectorized_at 字段来判断是否已向量化
+    embedding_model = Column(String(100))  # 使用的向量化模型（如 "openai/text-embedding-3-large"）
+    vectorized_at = Column(DateTime)       # 向量化时间戳（NULL 表示未向量化）
+    
+    # Elasticsearch 索引相关字段
+    es_indexed_at = Column(DateTime)       # ES 索引时间戳（NULL 表示未索引）
     
     # 额外元数据
     extra_metadata = Column(JSON, default={})
@@ -418,20 +422,15 @@ class ListedCompany(Base):
     """
     A股上市公司表
     存储A股上市公司的代码和名称信息
+    
+    注意：使用 code（股票代码）作为主键，确保不会出现重复的公司记录
     """
     __tablename__ = 'listed_companies'
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    
     # 基本信息
-    code = Column(String(20), nullable=False, unique=True, index=True)  # 股票代码（如：000001）
-    name = Column(String(200), nullable=False)  # 公司名称
+    code = Column(String(20), primary_key=True)  # 股票代码（如：000001），主键
+    name = Column(String(200), nullable=False)   # 公司名称
     
     # 时间戳
     created_at = Column(DateTime, nullable=False, default=func.now())
     updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
-    
-    # 索引
-    __table_args__ = (
-        Index('idx_code', 'code'),
-    )
