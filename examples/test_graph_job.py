@@ -18,7 +18,7 @@ def import_modules():
     """延迟导入模块"""
     from dagster import build_op_context
     from src.processing.compute.dagster.jobs.graph_jobs import (
-        scan_vectorized_documents_op,
+        scan_chunked_documents_for_graph_op,
         build_graph_op,
         validate_graph_op,
         build_graph_job,
@@ -30,7 +30,7 @@ def import_modules():
     
     return (
         build_op_context,
-        scan_vectorized_documents_op,
+        scan_chunked_documents_for_graph_op,
         build_graph_op,
         validate_graph_op,
         build_graph_job,
@@ -43,13 +43,13 @@ def import_modules():
 
 
 def test_scan_vectorized_documents():
-    """测试扫描已向量化文档的 op"""
+    """测试扫描已分块文档的 op"""
     print("=" * 60)
-    print("测试: scan_vectorized_documents_op")
+    print("测试: scan_chunked_documents_for_graph_op")
     print("=" * 60)
     print()
     
-    build_op_context, scan_vectorized_documents_op, _, _, _, _, _, _, _, _ = import_modules()
+    build_op_context, scan_chunked_documents_for_graph_op, _, _, _, _, _, _, _, _ = import_modules()
     
     config = {
         "batch_size": 10,
@@ -60,7 +60,7 @@ def test_scan_vectorized_documents():
     context = build_op_context(config=config)
     
     try:
-        result = scan_vectorized_documents_op(context)
+        result = scan_chunked_documents_for_graph_op(context)
         
         print(f"✅ 扫描完成")
         print(f"   成功: {result.get('success')}")

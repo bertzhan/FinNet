@@ -424,13 +424,67 @@ class ListedCompany(Base):
     存储A股上市公司的代码和名称信息
     
     注意：使用 code（股票代码）作为主键，确保不会出现重复的公司记录
+    数据来源：akshare stock_individual_basic_info_xq 接口
     """
     __tablename__ = 'listed_companies'
 
-    # 基本信息
+    # ==================== 基本信息 ====================
     code = Column(String(20), primary_key=True)  # 股票代码（如：000001），主键
-    name = Column(String(200), nullable=False)   # 公司名称
+    name = Column(String(100), nullable=False)   # 公司简称（如：平安银行）
     
-    # 时间戳
+    # ==================== 公司名称信息 ====================
+    org_id = Column(String(100), nullable=True)  # 机构ID
+    org_name_cn = Column(String(100), nullable=True)  # 公司全称（中文）
+    org_short_name_cn = Column(String(100), nullable=True)  # 公司简称（中文）
+    org_name_en = Column(String(100), nullable=True)  # 公司全称（英文）
+    org_short_name_en = Column(String(100), nullable=True)  # 公司简称（英文）
+    pre_name_cn = Column(String(100), nullable=True)  # 曾用名
+    
+    # ==================== 业务信息 ====================
+    main_operation_business = Column(Text, nullable=True)  # 主营业务
+    operating_scope = Column(Text, nullable=True)  # 经营范围
+    org_cn_introduction = Column(Text, nullable=True)  # 公司简介
+    
+    # ==================== 联系信息 ====================
+    telephone = Column(String(100), nullable=True)  # 电话（可能包含多个号码）
+    postcode = Column(String(20), nullable=True)  # 邮编
+    fax = Column(String(50), nullable=True)  # 传真（可能包含多个号码）
+    email = Column(String(50), nullable=True)  # 邮箱
+    org_website = Column(String(100), nullable=True)  # 网站
+    reg_address_cn = Column(String(200), nullable=True)  # 注册地址（中文）
+    reg_address_en = Column(String(200), nullable=True)  # 注册地址（英文）
+    office_address_cn = Column(String(200), nullable=True)  # 办公地址（中文）
+    office_address_en = Column(String(200), nullable=True)  # 办公地址（英文）
+    
+    # ==================== 管理信息 ====================
+    legal_representative = Column(String(10), nullable=True)  # 法定代表人
+    general_manager = Column(String(10), nullable=True)  # 总经理
+    secretary = Column(String(10), nullable=True)  # 董事会秘书
+    chairman = Column(String(10), nullable=True)  # 董事长
+    executives_nums = Column(Integer, nullable=True)  # 高管人数
+    
+    # ==================== 地区信息 ====================
+    district_encode = Column(String(10), nullable=True)  # 地区编码
+    provincial_name = Column(String(10), nullable=True)  # 省份名称
+    actual_controller = Column(String(10), nullable=True)  # 实际控制人
+    classi_name = Column(String(10), nullable=True)  # 分类名称
+    
+    # ==================== 财务信息 ====================
+    established_date = Column(BigInteger, nullable=True)  # 成立日期（时间戳）
+    listed_date = Column(BigInteger, nullable=True)  # 上市日期（时间戳）
+    reg_asset = Column(Float, nullable=True)  # 注册资本
+    staff_num = Column(Integer, nullable=True)  # 员工人数
+    actual_issue_vol = Column(Float, nullable=True)  # 实际发行量
+    issue_price = Column(Float, nullable=True)  # 发行价格
+    actual_rc_net_amt = Column(Float, nullable=True)  # 实际募集资金净额
+    pe_after_issuing = Column(Float, nullable=True)  # 发行后市盈率
+    online_success_rate_of_issue = Column(Float, nullable=True)  # 网上发行中签率
+    
+    # ==================== 其他信息 ====================
+    currency_encode = Column(String(100), nullable=True)  # 货币编码
+    currency = Column(String(20), nullable=True)  # 货币
+    affiliate_industry = Column(JSON, nullable=True)  # 所属行业（JSON格式）
+    
+    # ==================== 时间戳 ====================
     created_at = Column(DateTime, nullable=False, default=func.now())
     updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())

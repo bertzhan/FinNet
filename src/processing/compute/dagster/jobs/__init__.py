@@ -81,7 +81,7 @@ from .graph_jobs import (
     build_graph_job,
     
     # Ops
-    scan_vectorized_documents_op,
+    scan_chunked_documents_for_graph_op,
     build_graph_op,
     validate_graph_op,
     
@@ -150,7 +150,7 @@ __all__ = [
     "scan_unvectorized_chunks_op",
     "vectorize_chunks_op",
     "validate_vectorize_results_op",
-    "scan_vectorized_documents_op",
+    "scan_chunked_documents_for_graph_op",
     "build_graph_op",
     "validate_graph_op",
     "scan_chunked_documents_op",

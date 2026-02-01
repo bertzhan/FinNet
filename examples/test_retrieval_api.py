@@ -228,6 +228,58 @@ def test_retrieval_health():
         return False
 
 
+def test_company_name_search():
+    """测试根据公司名称搜索股票代码接口"""
+    print("\n=== 测试根据公司名称搜索股票代码接口 ===")
+    
+    url = f"{BASE_URL}/api/v1/retrieval/company-name-search"
+    
+    # 测试用例1: 完整公司名称
+    payload = {
+        "company_name": "平安银行",
+        "top_k": 10
+    }
+    
+    try:
+        response = requests.post(url, json=payload)
+        response.raise_for_status()
+        result = response.json()
+        
+        print(f"✓ 公司名称搜索成功")
+        print(f"  查询公司名称: {result.get('company_name')}")
+        print(f"  最可能的股票代码: {result.get('stock_code', 'N/A')}")
+        print(f"  检索到的文档数: {result.get('total_documents', 0)}")
+        print(f"  检索耗时: {result.get('metadata', {}).get('retrieval_time', 0):.3f}s")
+        
+        if result.get('all_candidates'):
+            print(f"  所有候选股票代码:")
+            for candidate in result['all_candidates']:
+                print(f"    - {candidate.get('stock_code')}: {candidate.get('votes')} 票 "
+                      f"(置信度: {candidate.get('confidence', 0):.1%})")
+        
+        # 测试用例2: 部分公司名称（模糊匹配）
+        print(f"\n  测试部分公司名称匹配...")
+        payload2 = {
+            "company_name": "平安",
+            "top_k": 10
+        }
+        response2 = requests.post(url, json=payload2)
+        response2.raise_for_status()
+        result2 = response2.json()
+        
+        print(f"  ✓ 部分名称搜索成功")
+        print(f"    查询公司名称: {result2.get('company_name')}")
+        print(f"    最可能的股票代码: {result2.get('stock_code', 'N/A')}")
+        print(f"    检索到的文档数: {result2.get('total_documents', 0)}")
+        
+        return True
+    except Exception as e:
+        print(f"✗ 公司名称搜索失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
 def test_doc_type_filtering():
     """测试文档类型过滤"""
     print("\n=== 测试文档类型过滤 ===")
@@ -293,6 +345,9 @@ def main():
     
     # 测试文档类型过滤
     results.append(("文档类型过滤", test_doc_type_filtering()))
+    
+    # 测试公司名称搜索
+    results.append(("公司名称搜索", test_company_name_search()))
     
     # 汇总结果
     print("\n" + "=" * 60)

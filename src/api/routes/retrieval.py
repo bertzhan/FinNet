@@ -15,12 +15,19 @@ from src.api.schemas.retrieval import (
     HybridRetrievalRequest,
     RetrievalResponse,
     RetrievalResultResponse,
-    RetrievalHealthResponse
+    RetrievalHealthResponse,
+    CompanyNameSearchRequest,
+    CompanyNameSearchResponse,
+    StockCodeVoteResult,
+    SimpleStockCodeResponse
 )
 from src.application.rag.retriever import Retriever
 from src.application.rag.elasticsearch_retriever import ElasticsearchRetriever
 from src.application.rag.graph_retriever import GraphRetriever
 from src.application.rag.hybrid_retriever import HybridRetriever
+from src.processing.ai.embedding.embedder_factory import get_embedder_by_mode
+from src.storage.vector.milvus_client import get_milvus_client
+from src.common.constants import MilvusCollection
 from src.common.logger import get_logger
 
 router = APIRouter(prefix="/api/v1/retrieval", tags=["Retrieval"])
@@ -439,6 +446,139 @@ async def hybrid_retrieval(request: HybridRetrievalRequest) -> RetrievalResponse
             )
 
 
+@router.post("/company-name-search", response_model=SimpleStockCodeResponse)
+async def company_name_search(request: CompanyNameSearchRequest) -> SimpleStockCodeResponse:
+    """
+    根据公司名称搜索股票代码接口（基于 PostgreSQL listed_companies 表）
+
+    使用 PostgreSQL 数据库中的 listed_companies 表进行精确和模糊匹配搜索。
+    数据来源于 akshare，包含 A 股约 5000 家上市公司的信息。
+
+    搜索策略（按优先级）：
+    1. 精确匹配简称（name）
+    2. 精确匹配全称（full_name）
+    3. 简称包含查询词
+    4. 全称包含查询词
+    5. 查询词包含简称（用户输入全称的情况）
+    6. 曾用名匹配
+
+    优势：
+    - 数据准确：来自 akshare 的标准化公司名称
+    - 响应快速：简单字符串匹配，约 1-5ms
+    - 无额外依赖：仅需 PostgreSQL
+    - 支持全称、简称、曾用名多种匹配
+
+    Args:
+        request: 公司名称搜索请求
+
+    Returns:
+        股票代码（如果未找到则为 null）
+
+    Example:
+        POST /api/v1/retrieval/company-name-search
+        {
+            "company_name": "平安银行"
+        }
+        
+        响应:
+        {
+            "stock_code": "000001"
+        }
+    """
+    import time
+    
+    start_time = time.time()
+    try:
+        logger.info(f"收到公司名称搜索请求: company_name='{request.company_name}'")
+
+        # 预处理
+        company_name_query = request.company_name.strip()
+        
+        if not company_name_query:
+            logger.warning("公司名称为空")
+            return SimpleStockCodeResponse(stock_code=None)
+        
+        # 使用 PostgreSQL listed_companies 表搜索
+        from src.storage.metadata import get_postgres_client, crud
+        
+        pg_client = get_postgres_client()
+        
+        stock_code = None
+        matched_name = None
+        message = None
+        
+        with pg_client.get_session() as session:
+            # 使用统一的搜索函数
+            companies = crud.search_listed_company(session, company_name_query, max_candidates=30)
+            
+            if len(companies) == 1:
+                # 唯一匹配
+                stock_code = companies[0].code
+                matched_name = companies[0].name
+            elif len(companies) > 1:
+                # 多个匹配，构建包含主营业务信息的消息
+                message_parts = [f"找到 {len(companies)} 个可能的公司，请选择："]
+                for i, c in enumerate(companies, 1):
+                    company_info = f"{i}. {c.name} ({c.code})"
+                    if c.org_name_cn:
+                        company_info += f" - {c.org_name_cn}"
+                    message_parts.append(company_info)
+                    if c.main_operation_business:
+                        # 截断主营业务信息（如果太长）
+                        business = c.main_operation_business
+                        if len(business) > 100:
+                            business = business[:100] + "..."
+                        message_parts.append(f"   主营业务: {business}")
+                
+                message = "\n".join(message_parts)
+                logger.info(
+                    f"公司名称搜索找到多个匹配: query='{request.company_name}', "
+                    f"候选数量={len(companies)}"
+                )
+        
+        retrieval_time = time.time() - start_time
+        
+        if stock_code:
+            logger.info(
+                f"公司名称搜索成功: query='{request.company_name}', "
+                f"匹配公司={matched_name}, "
+                f"股票代码={stock_code}, "
+                f"耗时={retrieval_time:.3f}s"
+            )
+            return SimpleStockCodeResponse(
+                stock_code=stock_code,
+                message=message
+            )
+        else:
+            if message:
+                # 有多个候选但没有唯一结果
+                logger.info(
+                    f"公司名称搜索找到多个匹配: query='{request.company_name}', "
+                    f"耗时={retrieval_time:.3f}s"
+                )
+                return SimpleStockCodeResponse(
+                    stock_code=None,
+                    message=message
+                )
+            else:
+                # 完全没有匹配
+                logger.info(
+                    f"公司名称搜索未找到: query='{request.company_name}', "
+                    f"耗时={retrieval_time:.3f}s"
+                )
+                return SimpleStockCodeResponse(
+                    stock_code=None,
+                    message=None
+                )
+
+    except Exception as e:
+        logger.error(f"公司名称搜索失败: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"公司名称搜索过程中发生错误: {str(e)}"
+        )
+
+
 @router.get("/health", response_model=RetrievalHealthResponse)
 async def health() -> RetrievalHealthResponse:
     """
@@ -454,34 +594,49 @@ async def health() -> RetrievalHealthResponse:
         components = {}
         status_str = "healthy"
 
-        # 检查向量检索器
+        # 检查向量检索器（Milvus）
         try:
             vector_retriever = get_vector_retriever()
             if vector_retriever:
-                components["vector_retriever"] = "ok"
+                # 尝试连接 Milvus 检查实际连接状态
+                try:
+                    milvus_client = get_milvus_client()
+                    collections = milvus_client.list_collections()
+                    components["vector_retriever"] = f"ok (collections: {len(collections)})"
+                except Exception as e:
+                    components["vector_retriever"] = f"error: Milvus连接失败 - {str(e)[:50]}"
+                    status_str = "degraded"
         except Exception as e:
             logger.warning(f"向量检索器检查失败: {e}")
-            components["vector_retriever"] = f"error: {str(e)}"
+            components["vector_retriever"] = f"error: {str(e)[:50]}"
             status_str = "degraded"
 
-        # 检查全文检索器
+        # 检查全文检索器（Elasticsearch）
         try:
             fulltext_retriever = get_fulltext_retriever()
             if fulltext_retriever:
-                components["fulltext_retriever"] = "ok"
+                # 尝试连接 Elasticsearch 检查实际连接状态
+                try:
+                    es_client = fulltext_retriever.es_client
+                    health = es_client.client.cluster.health()
+                    es_status = health.get('status', 'unknown')
+                    components["fulltext_retriever"] = f"ok (status: {es_status})"
+                except Exception as e:
+                    components["fulltext_retriever"] = f"error: ES连接失败 - {str(e)[:50]}"
+                    status_str = "degraded"
         except Exception as e:
             logger.warning(f"全文检索器检查失败: {e}")
-            components["fulltext_retriever"] = f"error: {str(e)}"
+            components["fulltext_retriever"] = f"error: {str(e)[:50]}"
             status_str = "degraded"
 
-        # 检查图检索器
+        # 检查图检索器（Neo4j）
         try:
             graph_retriever = get_graph_retriever()
             if graph_retriever:
                 components["graph_retriever"] = "ok"
         except Exception as e:
             logger.warning(f"图检索器检查失败: {e}")
-            components["graph_retriever"] = f"error: {str(e)}"
+            components["graph_retriever"] = f"error: {str(e)[:50]}"
             status_str = "degraded"
 
         return RetrievalHealthResponse(

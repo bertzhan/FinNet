@@ -261,6 +261,81 @@ class RetrievalResponse(BaseModel):
         }
 
 
+class CompanyNameSearchRequest(BaseModel):
+    """根据公司名称搜索股票代码请求模型"""
+    company_name: str = Field(..., description="公司名称", min_length=1, max_length=200)
+    top_k: int = Field(10, ge=1, le=20, description="检索文档数量（用于投票，默认10）")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "company_name": "平安银行",
+                "top_k": 10
+            }
+        }
+
+
+class StockCodeVoteResult(BaseModel):
+    """股票代码投票结果"""
+    stock_code: str = Field(..., description="股票代码")
+    votes: int = Field(..., description="投票数（出现次数）")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="置信度（投票数/总文档数）")
+
+
+class CompanyNameSearchResponse(BaseModel):
+    """根据公司名称搜索股票代码响应模型"""
+    company_name: str = Field(..., description="查询的公司名称")
+    stock_code: Optional[str] = Field(None, description="最可能的股票代码（投票最多的）")
+    all_candidates: List[StockCodeVoteResult] = Field(
+        default_factory=list,
+        description="所有候选股票代码及其投票结果（按投票数降序）"
+    )
+    total_documents: int = Field(0, description="检索到的文档总数")
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="元数据（检索时间、检索到的文档列表等）"
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "company_name": "平安银行",
+                "stock_code": "000001",
+                "all_candidates": [
+                    {
+                        "stock_code": "000001",
+                        "votes": 8,
+                        "confidence": 0.8
+                    },
+                    {
+                        "stock_code": "600000",
+                        "votes": 2,
+                        "confidence": 0.2
+                    }
+                ],
+                "total_documents": 10,
+                "metadata": {
+                    "retrieval_time": 0.123,
+                    "top_k": 10
+                }
+            }
+        }
+
+
+class SimpleStockCodeResponse(BaseModel):
+    """简化的股票代码响应模型（只返回股票代码）"""
+    stock_code: Optional[str] = Field(None, description="股票代码（如果未找到则为 null）")
+    message: Optional[str] = Field(None, description="提示消息（如有多个匹配时显示，包含公司信息和主营业务）")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "stock_code": "000001",
+                "message": None
+            }
+        }
+
+
 class RetrievalHealthResponse(BaseModel):
     """检索服务健康检查响应"""
     status: str = Field(..., description="状态（healthy/degraded/unhealthy）")

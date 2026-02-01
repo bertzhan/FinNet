@@ -52,8 +52,8 @@ ELASTICSEARCH_CONFIG_SCHEMA = {
     ),
     "limit": Field(
         int,
-        default_value=1000,
-        description="本次作业最多处理的分块数量（1-10000）"
+        is_required=False,
+        description="本次作业最多处理的分块数量（不设置则处理全部）"
     ),
     "force_reindex": Field(
         bool,
@@ -79,14 +79,14 @@ def scan_chunked_documents_op(context) -> Dict:
     logger = get_dagster_logger()
     
     batch_size = config.get("batch_size", 100)
-    limit = config.get("limit", 1000)
+    limit = config.get("limit")  # 不设置默认值，None 表示处理全部
     market_filter = config.get("market")
     doc_type_filter = config.get("doc_type")
     force_reindex = config.get("force_reindex", False)
     
     logger.info(f"开始扫描待索引分块...")
     logger.info(
-        f"配置: batch_size={batch_size}, limit={limit}, "
+        f"配置: batch_size={batch_size}, limit={'全部' if limit is None else limit}, "
         f"market={market_filter}, doc_type={doc_type_filter}, "
         f"force_reindex={force_reindex}"
     )
@@ -115,8 +115,11 @@ def scan_chunked_documents_op(context) -> Dict:
             if doc_type_filter:
                 query = query.filter(Document.doc_type == doc_type_filter)
             
-            # 限制数量并执行查询
-            chunks = query.limit(limit).all()
+            # 限制数量并执行查询（如果 limit 为 None，则不限制）
+            if limit is not None:
+                chunks = query.limit(limit).all()
+            else:
+                chunks = query.all()
             
             logger.info(f"找到 {len(chunks)} 个已分块的分块")
             
@@ -441,8 +444,7 @@ def validate_elasticsearch_results_op(context, index_results: Dict) -> Dict:
             "scan_chunked_documents_op": {
                 "config": {
                     "batch_size": 100,
-                    "limit": 1000,
-                    # market 和 doc_type 是可选的，不设置表示所有类型
+                    # limit 不设置则处理全部，market 和 doc_type 是可选的，不设置表示所有类型
                 }
             },
             "index_chunks_to_elasticsearch_op": {
@@ -466,7 +468,7 @@ def elasticsearch_index_job():
     默认配置：
     - scan_chunked_documents_op:
         - batch_size: 100 (每批处理100个分块)
-        - limit: 1000 (最多处理1000个分块)
+        - limit: 不设置 (处理全部分块)
     - index_chunks_to_elasticsearch_op:
         - force_reindex: False (不强制重新索引)
     """

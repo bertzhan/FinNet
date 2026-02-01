@@ -1062,40 +1062,140 @@ def update_image_annotation_status(
 def upsert_listed_company(
     session: Session,
     code: str,
-    name: str
+    name: str,
+    # stock_individual_basic_info_xq 返回的所有字段
+    org_id: Optional[str] = None,
+    org_name_cn: Optional[str] = None,
+    org_short_name_cn: Optional[str] = None,
+    org_name_en: Optional[str] = None,
+    org_short_name_en: Optional[str] = None,
+    pre_name_cn: Optional[str] = None,
+    main_operation_business: Optional[str] = None,
+    operating_scope: Optional[str] = None,
+    org_cn_introduction: Optional[str] = None,
+    telephone: Optional[str] = None,
+    postcode: Optional[str] = None,
+    fax: Optional[str] = None,
+    email: Optional[str] = None,
+    org_website: Optional[str] = None,
+    reg_address_cn: Optional[str] = None,
+    reg_address_en: Optional[str] = None,
+    office_address_cn: Optional[str] = None,
+    office_address_en: Optional[str] = None,
+    legal_representative: Optional[str] = None,
+    general_manager: Optional[str] = None,
+    secretary: Optional[str] = None,
+    chairman: Optional[str] = None,
+    executives_nums: Optional[int] = None,
+    district_encode: Optional[str] = None,
+    provincial_name: Optional[str] = None,
+    actual_controller: Optional[str] = None,
+    classi_name: Optional[str] = None,
+    established_date: Optional[int] = None,
+    listed_date: Optional[int] = None,
+    reg_asset: Optional[float] = None,
+    staff_num: Optional[int] = None,
+    actual_issue_vol: Optional[float] = None,
+    issue_price: Optional[float] = None,
+    actual_rc_net_amt: Optional[float] = None,
+    pe_after_issuing: Optional[float] = None,
+    online_success_rate_of_issue: Optional[float] = None,
+    currency_encode: Optional[str] = None,
+    currency: Optional[str] = None,
+    affiliate_industry: Optional[Dict[str, Any]] = None,
 ) -> ListedCompany:
     """
     插入或更新上市公司信息
     
     注意：code 是主键，如果已存在会自动更新，不存在则创建
+    数据来源：akshare stock_individual_basic_info_xq 接口
     
     Args:
         session: 数据库会话
         code: 股票代码（主键）
-        name: 公司名称
+        name: 公司简称（如：平安银行）
+        ... 其他所有字段（来自 stock_individual_basic_info_xq）
         
     Returns:
         ListedCompany 对象
         
     Example:
         >>> with get_postgres_client().get_session() as session:
-        ...     company = upsert_listed_company(session, "000001", "平安银行")
+        ...     company = upsert_listed_company(
+        ...         session, "000001", "平安银行",
+        ...         org_name_cn="平安银行股份有限公司"
+        ...     )
         ...     print(company.code)
     """
+    # 清理 name 字段：去除所有空格（包括中间的空格）
+    if name:
+        name = name.replace(" ", "").replace("　", "")  # 去除半角和全角空格
+    
     # 使用主键查询（更高效）
     company = session.get(ListedCompany, code)
     
+    # 准备更新数据字典（只包含非 None 的值）
+    update_data = {
+        'name': name,
+        'updated_at': datetime.now()
+    }
+    
+    # 添加所有新字段
+    field_mapping = {
+        'org_id': org_id,
+        'org_name_cn': org_name_cn,
+        'org_short_name_cn': org_short_name_cn,
+        'org_name_en': org_name_en,
+        'org_short_name_en': org_short_name_en,
+        'pre_name_cn': pre_name_cn,
+        'main_operation_business': main_operation_business,
+        'operating_scope': operating_scope,
+        'org_cn_introduction': org_cn_introduction,
+        'telephone': telephone,
+        'postcode': postcode,
+        'fax': fax,
+        'email': email,
+        'org_website': org_website,
+        'reg_address_cn': reg_address_cn,
+        'reg_address_en': reg_address_en,
+        'office_address_cn': office_address_cn,
+        'office_address_en': office_address_en,
+        'legal_representative': legal_representative,
+        'general_manager': general_manager,
+        'secretary': secretary,
+        'chairman': chairman,
+        'executives_nums': executives_nums,
+        'district_encode': district_encode,
+        'provincial_name': provincial_name,
+        'actual_controller': actual_controller,
+        'classi_name': classi_name,
+        'established_date': established_date,
+        'listed_date': listed_date,
+        'reg_asset': reg_asset,
+        'staff_num': staff_num,
+        'actual_issue_vol': actual_issue_vol,
+        'issue_price': issue_price,
+        'actual_rc_net_amt': actual_rc_net_amt,
+        'pe_after_issuing': pe_after_issuing,
+        'online_success_rate_of_issue': online_success_rate_of_issue,
+        'currency_encode': currency_encode,
+        'currency': currency,
+        'affiliate_industry': affiliate_industry,
+    }
+    
+    # 只添加非 None 的字段
+    for key, value in field_mapping.items():
+        if value is not None:
+            update_data[key] = value
+    
     if company:
         # 更新现有记录
-        company.name = name
-        company.updated_at = datetime.now()
+        for key, value in update_data.items():
+            setattr(company, key, value)
         logger.debug(f"更新上市公司: {code} - {name}")
     else:
         # 创建新记录
-        company = ListedCompany(
-            code=code,
-            name=name
-        )
+        company = ListedCompany(code=code, **update_data)
         session.add(company)
         logger.debug(f"新增上市公司: {code} - {name}")
     
@@ -1142,3 +1242,212 @@ def get_all_listed_companies(
     if limit:
         query = query.limit(limit)
     return query.all()
+
+
+def _normalize_company_name(name: str) -> str:
+    """
+    规范化公司名称，用于匹配比较
+    
+    处理：
+    - 去除所有空格（包括全角空格）
+    - 去除末尾的 A/B/Ａ/Ｂ（股票后缀）
+    - 去除特殊字符如 * （退市标记）
+    - 去除常见企业后缀词（公司、集团、股份、有限公司等）
+    """
+    if not name:
+        return ""
+    # 去除空格
+    normalized = name.replace(" ", "").replace("　", "")
+    # 去除末尾的 A/B（半角和全角）
+    if normalized and normalized[-1] in "ABＡＢab":
+        normalized = normalized[:-1]
+    # 去除开头的 * （退市标记）
+    normalized = normalized.lstrip("*")
+    # 去除 ST、*ST 标记
+    for prefix in ["ST", "*ST"]:
+        if normalized.startswith(prefix):
+            normalized = normalized[len(prefix):]
+    
+    # 去除常见企业后缀词（按长度从长到短排序，避免部分匹配）
+    # 例如：先删除"股份有限公司"，再删除"有限公司"，再删除"公司"
+    company_suffixes = [
+        "股份有限公司",
+        "有限责任公司",
+        "有限公司",
+        "集团公司",
+        "集团股份",
+        "集团",
+        "股份公司",
+        "股份",
+        "公司",
+        "控股公司",
+        "控股集团",
+    ]
+    
+    for suffix in company_suffixes:
+        if normalized.endswith(suffix):
+            normalized = normalized[:-len(suffix)]
+            break  # 只删除一个后缀（最长匹配）
+    
+    return normalized
+
+
+def search_listed_company(
+    session: Session,
+    company_name: str,
+    max_candidates: int = 5
+) -> List[ListedCompany]:
+    """
+    根据公司名称搜索上市公司（支持模糊匹配）
+    
+    返回所有匹配的公司列表（按匹配优先级排序）：
+    - 列表长度为 1：唯一匹配，可直接使用
+    - 列表长度 > 1：多个候选，需要用户选择
+    - 列表为空：未找到匹配
+    
+    搜索策略（按优先级）：
+    1. 精确匹配（name, org_name_cn, org_short_name_cn, org_name_en, org_short_name_en）
+    2. 规范化后精确匹配（去除空格、ST标记、股票后缀等）
+    3. 名称包含查询词（如：查询"平安" -> 匹配"平安银行"）
+    4. 查询词包含名称（如：查询"深圳振业" -> 匹配"深振业"）
+    5. 曾用名匹配（pre_name_cn）
+    
+    特殊处理：
+    - 自动处理空格（如 "万  科Ａ" -> "万科"）
+    - 自动处理股票后缀（如 "深振业Ａ" -> "深振业"）
+    - 自动处理 ST 标记
+    
+    Args:
+        session: 数据库会话
+        company_name: 公司名称（可以是简称、全称、英文名或部分名称）
+        max_candidates: 最大返回候选数量（默认 30）
+        
+    Returns:
+        匹配的 ListedCompany 对象列表（按匹配优先级排序）
+        
+    Example:
+        >>> with get_postgres_client().get_session() as session:
+        ...     companies = search_listed_company(session, "平安银行")
+        ...     if len(companies) == 1:
+        ...         print(f"唯一匹配: {companies[0].code} - {companies[0].name}")
+        ...     elif len(companies) > 1:
+        ...         print(f"找到 {len(companies)} 个候选")
+        ...     else:
+        ...         print("未找到匹配")
+    """
+    # 预处理查询词
+    query_name = company_name.strip().replace(" ", "").replace("　", "")
+    query_normalized = _normalize_company_name(query_name)
+    
+    if not query_name:
+        return []
+    
+    candidates = []
+    seen_codes = set()  # 避免重复
+    
+    # 获取所有公司进行匹配（按 code 排序）
+    all_companies = session.query(ListedCompany).order_by(ListedCompany.code).all()
+    
+    # 1. 精确匹配（所有字段）
+    for company in all_companies:
+        if company.code in seen_codes:
+            continue
+        
+        fields_to_check = [
+            company.name,
+            company.org_name_cn,
+            company.org_short_name_cn,
+            company.org_name_en,
+            company.org_short_name_en,
+        ]
+        
+        for field_value in fields_to_check:
+            if field_value and field_value == query_name:
+                candidates.append(company)
+                seen_codes.add(company.code)
+                break
+    
+    # 2. 规范化后精确匹配
+    if len(candidates) < max_candidates:
+        for company in all_companies:
+            if company.code in seen_codes:
+                continue
+            
+            fields_to_check = [
+                company.name,
+                company.org_name_cn,
+                company.org_short_name_cn,
+                company.org_name_en,
+                company.org_short_name_en,
+            ]
+            
+            for field_value in fields_to_check:
+                if field_value:
+                    field_normalized = _normalize_company_name(field_value)
+                    if field_normalized == query_normalized:
+                        candidates.append(company)
+                        seen_codes.add(company.code)
+                        break
+    
+    # 3. 名称包含查询词
+    if len(candidates) < max_candidates:
+        for company in all_companies:
+            if company.code in seen_codes:
+                continue
+            
+            fields_to_check = [
+                company.name,
+                company.org_name_cn,
+                company.org_short_name_cn,
+                company.org_name_en,
+                company.org_short_name_en,
+            ]
+            
+            for field_value in fields_to_check:
+                if field_value:
+                    field_normalized = _normalize_company_name(field_value)
+                    if query_normalized in field_normalized:
+                        candidates.append(company)
+                        seen_codes.add(company.code)
+                        break
+    
+    # 4. 查询词包含名称
+    if len(candidates) < max_candidates:
+        for company in all_companies:
+            if company.code in seen_codes:
+                continue
+            
+            fields_to_check = [
+                company.name,
+                company.org_name_cn,
+                company.org_short_name_cn,
+                company.org_name_en,
+                company.org_short_name_en,
+            ]
+            
+            for field_value in fields_to_check:
+                if field_value:
+                    field_normalized = _normalize_company_name(field_value)
+                    if field_normalized and field_normalized in query_normalized:
+                        candidates.append(company)
+                        seen_codes.add(company.code)
+                        break
+    
+    # 5. 曾用名匹配
+    if len(candidates) < max_candidates:
+        for company in all_companies:
+            if company.code in seen_codes:
+                continue
+            
+            if company.pre_name_cn:
+                former_list = [n.strip() for n in company.pre_name_cn.split(',')]
+                for former in former_list:
+                    former_normalized = _normalize_company_name(former)
+                    if query_normalized == former_normalized or query_normalized in former_normalized or former_normalized in query_normalized:
+                        candidates.append(company)
+                        seen_codes.add(company.code)
+                        break
+    
+    result = candidates[:max_candidates]
+    logger.debug(f"公司搜索: {query_name} -> 找到 {len(result)} 个匹配")
+    return result

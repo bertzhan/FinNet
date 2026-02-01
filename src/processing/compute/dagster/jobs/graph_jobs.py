@@ -67,11 +67,12 @@ GRAPH_CONFIG_SCHEMA = {
 # ==================== Dagster Ops ====================
 
 @op(config_schema=GRAPH_CONFIG_SCHEMA)
-def scan_vectorized_documents_op(context) -> Dict:
+def scan_chunked_documents_for_graph_op(context) -> Dict:
     """
     扫描已分块但未建图的文档
     
     查找有 DocumentChunk 记录且尚未在 Neo4j 中建图的文档
+    注意：不依赖向量化状态，只要文档有分块即可建图
     
     Returns:
         包含待建图文档列表的字典
@@ -97,56 +98,128 @@ def scan_vectorized_documents_op(context) -> Dict:
     
     try:
         with pg_client.get_session() as session:
-            # 构建查询：查找有分块的文档（通过 JOIN DocumentChunk）
-            from sqlalchemy import distinct
-            query = session.query(distinct(Document.id)).join(
-                DocumentChunk, Document.id == DocumentChunk.document_id
-            )
+            # 构建查询：查找有分块的文档
+            # 使用 EXISTS 子查询，更可靠且性能更好
+            from sqlalchemy import exists
             
-            # 应用市场过滤
+            # 先统计总数（用于调试）
+            total_docs_query = session.query(Document)
             if market_filter:
-                query = query.filter(Document.market == market_filter)
-            
-            # 应用文档类型过滤
+                total_docs_query = total_docs_query.filter(Document.market == market_filter)
             if doc_type_filter:
-                query = query.filter(Document.doc_type == doc_type_filter)
+                total_docs_query = total_docs_query.filter(Document.doc_type == doc_type_filter)
+            total_docs_count = total_docs_query.count()
+            logger.info(f"数据库中符合条件的文档总数: {total_docs_count} (market={market_filter}, doc_type={doc_type_filter})")
             
-            # 限制数量并获取文档ID列表
-            document_ids = [row[0] for row in query.limit(limit).all()]
+            # 统计有分块的文档总数
+            chunked_docs_query = session.query(Document.id).filter(
+                exists().where(DocumentChunk.document_id == Document.id)
+            )
+            if market_filter:
+                chunked_docs_query = chunked_docs_query.filter(Document.market == market_filter)
+            if doc_type_filter:
+                chunked_docs_query = chunked_docs_query.filter(Document.doc_type == doc_type_filter)
+            chunked_docs_count = chunked_docs_query.count()
+            logger.info(f"有分块的文档总数: {chunked_docs_count}")
+            
+            # 统计分块总数（用于调试）
+            chunks_query = session.query(DocumentChunk).join(
+                Document, DocumentChunk.document_id == Document.id
+            )
+            if market_filter:
+                chunks_query = chunks_query.filter(Document.market == market_filter)
+            if doc_type_filter:
+                chunks_query = chunks_query.filter(Document.doc_type == doc_type_filter)
+            total_chunks_count = chunks_query.count()
+            logger.info(f"分块总数: {total_chunks_count}")
+            
+            # 获取所有符合条件的文档ID（不先应用 limit）
+            all_document_ids = [row[0] for row in chunked_docs_query.all()]
+            
+            logger.info(f"找到 {len(all_document_ids)} 个已分块的文档（过滤前）")
+            
+            # 验证：检查是否有文档ID丢失
+            if len(all_document_ids) != chunked_docs_count:
+                logger.warning(
+                    f"⚠️ 文档ID数量不一致: count()={chunked_docs_count}, "
+                    f"实际获取={len(all_document_ids)}"
+                )
+            
+            # 如果强制重建，跳过检查，直接使用所有文档
+            if force_rebuild:
+                document_ids_to_process = all_document_ids
+                logger.info("强制重建模式，跳过图中检查")
+            else:
+                # 批量检查哪些文档已在图中
+                logger.info(f"批量检查 {len(all_document_ids)} 个文档是否已在图中...")
+                
+                # 如果文档数量为0，直接返回
+                if not all_document_ids:
+                    logger.warning("⚠️ 没有找到已分块的文档，无法进行图构建")
+                    document_ids_to_process = []
+                else:
+                    exists_map = builder.batch_check_documents_in_graph(all_document_ids)
+                    
+                    # 调试：检查批量检查的结果
+                    logger.info(f"批量检查返回结果数量: {len(exists_map)}")
+                    if exists_map:
+                        # 统计已存在和不存在的情况
+                        existing_count = sum(1 for exists in exists_map.values() if exists)
+                        not_existing_count = len(exists_map) - existing_count
+                        logger.info(
+                            f"批量检查结果: 已在图中={existing_count}, "
+                            f"未在图中={not_existing_count}"
+                        )
+                        
+                        # 如果所有文档都在图中，记录前几个示例
+                        if existing_count == len(exists_map) and len(exists_map) > 0:
+                            sample_ids = list(all_document_ids[:3])
+                            logger.info(
+                                f"⚠️ 所有文档都在图中，示例文档ID: "
+                                f"{[str(doc_id) for doc_id in sample_ids]}"
+                            )
+                    
+                    # 过滤出未建图的文档
+                    document_ids_to_process = [
+                        doc_id for doc_id in all_document_ids 
+                        if not exists_map.get(doc_id, False)
+                    ]
+                    
+                    already_graphed_count = len(all_document_ids) - len(document_ids_to_process)
+                    logger.info(
+                        f"图中检查完成: 已在图中={already_graphed_count}, "
+                        f"待建图={len(document_ids_to_process)}"
+                    )
+                    
+                    # 如果待建图文档为0，记录详细信息
+                    if len(document_ids_to_process) == 0 and len(all_document_ids) > 0:
+                        logger.warning(
+                            f"⚠️ 所有 {len(all_document_ids)} 个文档都已建图，"
+                            f"没有待处理的文档"
+                        )
+            
+            # 应用 limit 限制（在过滤之后）
+            if limit and limit > 0:
+                document_ids_to_process = document_ids_to_process[:limit]
+                logger.info(f"应用 limit={limit}，最终处理 {len(document_ids_to_process)} 个文档")
             
             # 根据文档ID查询完整文档信息
             documents = session.query(Document).filter(
-                Document.id.in_(document_ids)
-            ).all() if document_ids else []
+                Document.id.in_(document_ids_to_process)
+            ).all() if document_ids_to_process else []
             
-            logger.info(f"找到 {len(documents)} 个已分块的文档")
-            
-            # 检查哪些文档尚未建图
+            # 构建文档列表
             document_list = []
             for doc in documents:
-                # 如果强制重建，跳过检查
-                if force_rebuild:
-                    document_list.append({
-                        "document_id": str(doc.id),
-                        "stock_code": doc.stock_code,
-                        "company_name": doc.company_name,
-                        "market": doc.market,
-                        "doc_type": doc.doc_type,
-                        "year": doc.year,
-                        "quarter": doc.quarter,
-                    })
-                else:
-                    # 检查文档是否已在图中
-                    if not builder.check_document_in_graph(doc.id):
-                        document_list.append({
-                            "document_id": str(doc.id),
-                            "stock_code": doc.stock_code,
-                            "company_name": doc.company_name,
-                            "market": doc.market,
-                            "doc_type": doc.doc_type,
-                            "year": doc.year,
-                            "quarter": doc.quarter,
-                        })
+                document_list.append({
+                    "document_id": str(doc.id),
+                    "stock_code": doc.stock_code,
+                    "company_name": doc.company_name,
+                    "market": doc.market,
+                    "doc_type": doc.doc_type,
+                    "year": doc.year,
+                    "quarter": doc.quarter,
+                })
             
             logger.info(f"找到 {len(document_list)} 个待建图文档")
             
@@ -194,7 +267,7 @@ def build_graph_op(context, scan_result: Dict) -> Dict:
     对扫描到的文档构建图结构
     
     Args:
-        scan_result: scan_vectorized_documents_op 的返回结果
+        scan_result: scan_chunked_documents_for_graph_op 的返回结果
         
     Returns:
         图构建结果统计
@@ -386,7 +459,7 @@ def validate_graph_op(context, build_results: Dict) -> Dict:
 @job(
     config={
         "ops": {
-            "scan_vectorized_documents_op": {
+            "scan_chunked_documents_for_graph_op": {
                 "config": {
                     "batch_size": 50,
                     "limit": 100,
@@ -412,13 +485,13 @@ def build_graph_job():
     3. 验证图构建结果
 
     默认配置：
-    - scan_vectorized_documents_op:
+    - scan_chunked_documents_for_graph_op:
         - batch_size: 50 (每批处理50个文档)
         - limit: 100 (最多处理100个文档)
     - build_graph_op:
         - force_rebuild: False (不强制重新构建)
     """
-    scan_result = scan_vectorized_documents_op()
+    scan_result = scan_chunked_documents_for_graph_op()
     build_results = build_graph_op(scan_result)
     validate_graph_op(build_results)
 

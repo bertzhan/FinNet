@@ -496,6 +496,69 @@ class Neo4jClient(LoggerMixin):
             self.logger.error(f"检查节点存在性失败: {e}, label={label}, id={node_id}")
             return False
 
+    def batch_check_nodes_exist(
+        self,
+        label: str,
+        node_ids: List[str],
+        database: Optional[str] = None
+    ) -> Dict[str, bool]:
+        """
+        批量检查节点是否存在
+
+        Args:
+            label: 节点标签
+            node_ids: 节点 ID 列表
+            database: 数据库名称（默认使用配置的数据库）
+
+        Returns:
+            字典，key 为节点 ID，value 为是否存在
+
+        Example:
+            >>> client = Neo4jClient()
+            >>> exists_map = client.batch_check_nodes_exist("Document", ["doc1", "doc2", "doc3"])
+            >>> print(exists_map["doc1"])  # True or False
+        """
+        db = database or self.database
+        
+        if not node_ids:
+            self.logger.warning("batch_check_nodes_exist: 节点ID列表为空")
+            return {}
+        
+        self.logger.debug(f"批量检查 {len(node_ids)} 个 {label} 节点是否存在")
+        
+        # 使用 IN 子句批量查询
+        query = f"MATCH (n:{label}) WHERE n.id IN $ids RETURN n.id as id"
+        
+        try:
+            results = self.execute_query(query, parameters={"ids": node_ids}, database=db)
+            
+            # 构建存在节点的集合
+            existing_ids = {result.get('id') for result in results if result.get('id')}
+            
+            # 返回所有节点的存在状态
+            result_map = {node_id: node_id in existing_ids for node_id in node_ids}
+            
+            # 调试信息
+            existing_count = sum(1 for exists in result_map.values() if exists)
+            self.logger.debug(
+                f"批量检查完成: 总数={len(result_map)}, "
+                f"已存在={existing_count}, 不存在={len(result_map) - existing_count}"
+            )
+            
+            return result_map
+        except Exception as e:
+            self.logger.error(
+                f"批量检查节点存在性失败: {e}, label={label}, "
+                f"node_ids_count={len(node_ids)}",
+                exc_info=True
+            )
+            # 如果批量查询失败，返回所有节点都不存在（保守策略）
+            # 这样会尝试重新构建图，而不是跳过
+            self.logger.warning(
+                f"批量检查失败，返回所有节点都不存在（保守策略）"
+            )
+            return {node_id: False for node_id in node_ids}
+
     def get_node_count(self, label: Optional[str] = None, database: Optional[str] = None) -> int:
         """
         获取节点数量

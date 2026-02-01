@@ -405,6 +405,47 @@ class GraphBuilder(LoggerMixin):
         """
         return self.neo4j_client.check_node_exists('Document', str(document_id))
 
+    def batch_check_documents_in_graph(self, document_ids: List[uuid.UUID]) -> Dict[uuid.UUID, bool]:
+        """
+        批量检查文档是否已在图中
+
+        Args:
+            document_ids: 文档 ID 列表
+
+        Returns:
+            字典，key 为文档 ID，value 为是否存在于图中
+        """
+        if not document_ids:
+            self.logger.warning("batch_check_documents_in_graph: 文档ID列表为空")
+            return {}
+        
+        self.logger.debug(f"批量检查 {len(document_ids)} 个文档是否已在图中")
+        
+        # 转换为字符串列表
+        doc_id_strs = [str(doc_id) for doc_id in document_ids]
+        
+        # 批量检查
+        exists_map = self.neo4j_client.batch_check_nodes_exist('Document', doc_id_strs)
+        
+        # 转换回 UUID key
+        result = {uuid.UUID(doc_id_str): exists for doc_id_str, exists in exists_map.items()}
+        
+        # 验证结果完整性
+        if len(result) != len(document_ids):
+            self.logger.warning(
+                f"批量检查结果不完整: 输入={len(document_ids)}, "
+                f"输出={len(result)}"
+            )
+        
+        # 统计存在和不存在的情况
+        existing_count = sum(1 for exists in result.values() if exists)
+        self.logger.debug(
+            f"批量检查完成: 总数={len(result)}, "
+            f"已在图中={existing_count}, 未在图中={len(result) - existing_count}"
+        )
+        
+        return result
+
     def get_graph_stats(self) -> Dict[str, Any]:
         """
         获取图统计信息
