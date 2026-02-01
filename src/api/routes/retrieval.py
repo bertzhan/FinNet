@@ -515,8 +515,8 @@ async def company_name_search(request: CompanyNameSearchRequest) -> SimpleStockC
                 # 唯一匹配
                 stock_code = companies[0].code
                 matched_name = companies[0].name
-            elif len(companies) > 1:
-                # 多个匹配，构建包含主营业务信息的消息
+            elif 1 < len(companies) <= 5:
+                # 少量候选（2-5个），显示列表让用户选择
                 message_parts = [f"找到 {len(companies)} 个可能的公司，请选择："]
                 for i, c in enumerate(companies, 1):
                     company_info = f"{i}. {c.name} ({c.code})"
@@ -524,15 +524,19 @@ async def company_name_search(request: CompanyNameSearchRequest) -> SimpleStockC
                         company_info += f" - {c.org_name_cn}"
                     message_parts.append(company_info)
                     if c.main_operation_business:
-                        # 截断主营业务信息（如果太长）
                         business = c.main_operation_business
-                        if len(business) > 100:
-                            business = business[:100] + "..."
                         message_parts.append(f"   主营业务: {business}")
                 
                 message = "\n".join(message_parts)
                 logger.info(
-                    f"公司名称搜索找到多个匹配: query='{request.company_name}', "
+                    f"公司名称搜索找到少量匹配: query='{request.company_name}', "
+                    f"候选数量={len(companies)}"
+                )
+            elif len(companies) > 5:
+                # 候选过多，提示用户进一步明确
+                message = f"找到 {len(companies)} 个可能的公司，匹配结果过多，请进一步明确公司名称。"
+                logger.info(
+                    f"公司名称搜索匹配过多: query='{request.company_name}', "
                     f"候选数量={len(companies)}"
                 )
         
