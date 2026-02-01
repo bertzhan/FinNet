@@ -264,13 +264,11 @@ class RetrievalResponse(BaseModel):
 class CompanyNameSearchRequest(BaseModel):
     """根据公司名称搜索股票代码请求模型"""
     company_name: str = Field(..., description="公司名称", min_length=1, max_length=200)
-    top_k: int = Field(10, ge=1, le=20, description="检索文档数量（用于投票，默认10）")
 
     class Config:
         json_schema_extra = {
             "example": {
-                "company_name": "平安银行",
-                "top_k": 10
+                "company_name": "平安银行"
             }
         }
 
@@ -354,6 +352,63 @@ class RetrievalHealthResponse(BaseModel):
                     "vector_retriever": "ok",
                     "fulltext_retriever": "ok",
                     "graph_retriever": "ok"
+                }
+            }
+        }
+
+
+class ChunkChildrenRequest(BaseModel):
+    """查询 chunk 子节点请求模型"""
+    chunk_id: str = Field(..., description="父分块 ID", min_length=1)
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "chunk_id": "123e4567-e89b-12d3-a456-426614174000"
+            }
+        }
+
+
+class ChunkChildResponse(BaseModel):
+    """子节点响应模型"""
+    chunk_id: str = Field(..., description="子分块 ID")
+    title: Optional[str] = Field(None, description="子分块标题")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "chunk_id": "123e4567-e89b-12d3-a456-426614174001",
+                "title": "第一章 公司基本情况"
+            }
+        }
+
+
+class ChunkChildrenResponse(BaseModel):
+    """查询 chunk 子节点响应模型"""
+    children: List[ChunkChildResponse] = Field(default_factory=list, description="子节点列表")
+    total: int = Field(0, description="子节点总数")
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="元数据（查询时间、父 chunk_id 等）"
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "children": [
+                    {
+                        "chunk_id": "123e4567-e89b-12d3-a456-426614174001",
+                        "title": "第一章 公司基本情况"
+                    },
+                    {
+                        "chunk_id": "123e4567-e89b-12d3-a456-426614174002",
+                        "title": "第二章 财务数据"
+                    }
+                ],
+                "total": 2,
+                "metadata": {
+                    "parent_chunk_id": "123e4567-e89b-12d3-a456-426614174000",
+                    "query_time": 0.012
                 }
             }
         }

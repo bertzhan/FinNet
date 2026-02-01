@@ -328,6 +328,69 @@ class GraphRetriever(LoggerMixin):
             self.logger.error(f"层级遍历失败: {e}", exc_info=True)
             return []
 
+    def get_children(self, chunk_id: str) -> List[Dict[str, Any]]:
+        """
+        获取给定 chunk_id 的所有直接子节点（children）
+
+        Args:
+            chunk_id: 父分块 ID
+
+        Returns:
+            子节点列表，每个元素包含 chunk_id 和 title
+            格式: [{"chunk_id": "...", "title": "..."}, ...]
+
+        Example:
+            >>> retriever = GraphRetriever()
+            >>> children = retriever.get_children("chunk-uuid-123")
+            >>> print(children)
+            [{"chunk_id": "child-uuid-1", "title": "第一章"}, ...]
+        """
+        if not chunk_id:
+            self.logger.warning("chunk_id 为空")
+            return []
+
+        # 查询直接子节点（只查询一层，不使用递归）
+        # 使用 COALESCE 处理 NULL 值，确保排序正确
+        # 注意：不使用 DISTINCT，因为每个关系应该只对应一个子节点
+        cypher = """
+        MATCH (parent:Chunk {id: $chunk_id})-[:HAS_CHILD]->(child:Chunk)
+        RETURN child.id as chunk_id, child.title as title, child.chunk_index as chunk_index
+        ORDER BY COALESCE(child.chunk_index, 999999) ASC
+        """
+
+        parameters = {"chunk_id": chunk_id}
+
+        try:
+            results = self.neo4j_client.execute_query(cypher, parameters)
+            children = []
+            for record in results:
+                chunk_id_str = str(record.get("chunk_id", ""))
+                title = record.get("title")
+                chunk_index = record.get("chunk_index")
+                if chunk_id_str:
+                    children.append({
+                        "chunk_id": chunk_id_str,
+                        "title": title if title else None
+                    })
+            
+            self.logger.info(
+                f"查询子节点完成: parent_chunk_id={chunk_id}, "
+                f"找到 {len(children)} 个子节点"
+            )
+            
+            # 如果结果数量较少，记录详细信息用于调试
+            if len(children) <= 5:
+                for i, child in enumerate(children, 1):
+                    self.logger.debug(
+                        f"  子节点 {i}: chunk_id={child['chunk_id']}, "
+                        f"title={child.get('title', 'N/A')}"
+                    )
+            
+            return children
+        except Exception as e:
+            self.logger.error(f"查询子节点失败: {e}", exc_info=True)
+            return []
+
     def _execute_cypher_query(
         self,
         cypher_query: str,

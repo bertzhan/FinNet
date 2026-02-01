@@ -467,53 +467,22 @@ Content-Type: application/json
 
 **响应格式**: 同向量检索
 
-### 3. 图检索
+### 3. 图检索 - 查询子节点
 
-基于 Neo4j 知识图谱的检索。
+基于 Neo4j 知识图谱，查询指定 chunk 的所有直接子节点（children）。
 
 **请求**
 
 ```http
-POST /api/v1/retrieval/graph
+POST /api/v1/retrieval/graph/children
 Content-Type: application/json
 ```
 
-**请求体（文档检索）**
+**请求体**
 
 ```json
 {
-  "query": "000001",
-  "query_type": "document",
-  "filters": {
-    "stock_code": "000001",
-    "year": 2023,
-    "doc_type": "annual_reports"
-  },
-  "top_k": 10
-}
-```
-
-**请求体（层级遍历）**
-
-```json
-{
-  "query": "document_id_123",
-  "query_type": "hierarchy",
-  "max_depth": 3,
-  "top_k": 20
-}
-```
-
-**请求体（Cypher 查询）**
-
-```json
-{
-  "query_type": "cypher",
-  "cypher_query": "MATCH (d:Document {stock_code: $stock_code}) RETURN d LIMIT 10",
-  "cypher_parameters": {
-    "stock_code": "000001"
-  },
-  "top_k": 10
+  "chunk_id": "123e4567-e89b-12d3-a456-426614174000"
 }
 ```
 
@@ -521,22 +490,41 @@ Content-Type: application/json
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| `query` | string | 否 | 查询文本或节点ID |
-| `query_type` | string | 是 | 查询类型：document/chunk/hierarchy/cypher |
-| `filters` | object | 否 | 过滤条件 |
-| `max_depth` | integer | 否 | 最大遍历深度（1-10，用于层级查询） |
-| `top_k` | integer | 否 | 返回数量（1-100，默认10） |
-| `cypher_query` | string | 否 | 自定义 Cypher 查询（query_type=cypher 时必填） |
-| `cypher_parameters` | object | 否 | Cypher 查询参数 |
+| `chunk_id` | string | 是 | 父分块 ID（UUID 格式） |
 
-**查询类型说明**
+**响应**
 
-- `document`: 文档检索，根据文档ID或股票代码查找相关文档
-- `chunk`: 分块检索，根据分块ID查找相关分块
-- `hierarchy`: 层级遍历，根据文档/分块ID遍历其层级结构
-- `cypher`: 自定义 Cypher 查询，支持复杂的图查询
+```json
+{
+  "children": [
+    {
+      "chunk_id": "123e4567-e89b-12d3-a456-426614174001",
+      "title": "第一章 公司基本情况"
+    },
+    {
+      "chunk_id": "123e4567-e89b-12d3-a456-426614174002",
+      "title": "第二章 财务数据"
+    }
+  ],
+  "total": 2,
+  "metadata": {
+    "parent_chunk_id": "123e4567-e89b-12d3-a456-426614174000",
+    "query_time": 0.012
+  }
+}
+```
 
-**响应格式**: 同向量检索
+**响应字段**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `children` | array | 子节点列表 |
+| `children[].chunk_id` | string | 子分块 ID |
+| `children[].title` | string | 子分块标题（可能为 null） |
+| `total` | integer | 子节点总数 |
+| `metadata` | object | 元数据 |
+| `metadata.parent_chunk_id` | string | 父分块 ID |
+| `metadata.query_time` | float | 查询耗时（秒） |
 
 ### 4. 混合检索
 
@@ -583,14 +571,14 @@ Content-Type: application/json
 
 **注意**: 如果某个检索方式失败，会自动降级到其他可用的检索方式。
 
-### 5. 根据公司名称搜索股票代码
+### 5. 根据公司名称搜索股票代码（company-code-search）
 
-根据公司名称使用 Elasticsearch 模糊搜索排名前十的文档，然后根据这些文档的 `stock_code` 进行投票决定最可能的股票代码。
+根据公司名称使用 PostgreSQL listed_companies 表进行精确和模糊匹配搜索，返回匹配的股票代码。
 
 **请求**
 
 ```http
-POST /api/v1/retrieval/company-name-search
+POST /api/v1/retrieval/company-code-search
 Content-Type: application/json
 ```
 
@@ -598,8 +586,7 @@ Content-Type: application/json
 
 ```json
 {
-  "company_name": "平安银行",
-  "top_k": 10
+  "company_name": "平安银行"
 }
 ```
 
@@ -608,13 +595,13 @@ Content-Type: application/json
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | `company_name` | string | 是 | 公司名称（1-200字符） |
-| `top_k` | integer | 否 | 检索文档数量，用于投票（1-20，默认10） |
 
 **响应**
 
 ```json
 {
-  "stock_code": "000001"
+  "stock_code": "000001",
+  "message": null
 }
 ```
 
@@ -622,25 +609,29 @@ Content-Type: application/json
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| `stock_code` | string/null | 股票代码（投票最多的，如果未找到则为 null） |
+| `stock_code` | string/null | 股票代码（如果唯一匹配则返回，否则为 null） |
+| `message` | string/null | 提示信息（如果有多个候选或未找到，包含候选列表或提示） |
 
 **工作原理**
 
-1. 使用 Elasticsearch 在公司名称字段中进行模糊搜索（支持精确匹配、前缀匹配、通配符匹配）
-2. 获取排名前 `top_k` 的文档
-3. 从这些文档中提取 `stock_code`
-4. 统计每个 `stock_code` 出现的次数（投票）
-5. 返回投票最多的 `stock_code` 作为最终的股票代码
+使用 PostgreSQL 数据库中的 `listed_companies` 表进行搜索，搜索策略（按优先级）：
+1. 精确匹配简称（name）
+2. 精确匹配全称（full_name）
+3. 简称包含查询词
+4. 全称包含查询词
+5. 查询词包含简称（用户输入全称的情况）
+6. 曾用名匹配
+
+如果找到唯一匹配，返回对应的股票代码；如果找到多个候选（2-5个），返回提示信息；如果候选过多（>5个），提示用户进一步明确。
 
 **示例**
 
 ```bash
 # 搜索"平安银行"的股票代码
-curl -X POST "http://localhost:8000/api/v1/retrieval/company-name-search" \
+curl -X POST "http://localhost:8000/api/v1/retrieval/company-code-search" \
   -H "Content-Type: application/json" \
   -d '{
-    "company_name": "平安银行",
-    "top_k": 10
+    "company_name": "平安银行"
   }'
 ```
 
@@ -780,23 +771,20 @@ results = vector_retrieval(
 for result in results["results"]:
     print(f"Score: {result['score']}, Text: {result['chunk_text'][:100]}...")
 
-# 3. 根据公司名称搜索股票代码
-def company_name_search(company_name, top_k=10):
-    url = f"{BASE_URL}/api/v1/retrieval/company-name-search"
+# 3. 根据公司名称搜索股票代码（company-code-search）
+def company_code_search(company_name):
+    url = f"{BASE_URL}/api/v1/retrieval/company-code-search"
     payload = {
-        "company_name": company_name,
-        "top_k": top_k
+        "company_name": company_name
     }
     response = requests.post(url, json=payload)
     return response.json()
 
 # 使用示例
-result = company_name_search("平安银行", top_k=10)
-print(f"公司名称: {result['company_name']}")
-print(f"最可能的股票代码: {result['stock_code']}")
-print(f"所有候选:")
-for candidate in result['all_candidates']:
-    print(f"  {candidate['stock_code']}: {candidate['votes']} 票 (置信度: {candidate['confidence']:.2%})")
+result = company_code_search("平安银行")
+print(f"股票代码: {result['stock_code']}")
+if result.get('message'):
+    print(f"提示信息: {result['message']}")
 
 # 4. OpenAI 兼容接口（非流式）
 def chat_completion(messages, model="finnet-rag", stream=False):
@@ -917,11 +905,10 @@ curl -X POST "http://localhost:8000/v1/chat/completions" \
   --no-buffer
 
 # 5. 根据公司名称搜索股票代码
-curl -X POST "http://localhost:8000/api/v1/retrieval/company-name-search" \
+curl -X POST "http://localhost:8000/api/v1/retrieval/company-code-search" \
   -H "Content-Type: application/json" \
   -d '{
-    "company_name": "平安银行",
-    "top_k": 10
+    "company_name": "平安银行"
   }'
 
 # 6. 健康检查
@@ -964,23 +951,26 @@ const result = await qaQuery(
 );
 console.log(result.answer);
 
-// 2. 根据公司名称搜索股票代码
-async function companyNameSearch(companyName, topK = 10) {
-  const response = await fetch(`${BASE_URL}/api/v1/retrieval/company-name-search`, {
+// 2. 根据公司名称搜索股票代码（company-code-search）
+async function companyCodeSearch(companyName) {
+  const response = await fetch(`${BASE_URL}/api/v1/retrieval/company-code-search`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
       company_name: companyName,
-      top_k: topK,
     }),
   });
   return await response.json();
 }
 
 // 使用示例
-const searchResult = await companyNameSearch("平安银行", 10);
+const searchResult = await companyCodeSearch("平安银行");
+console.log(`股票代码: ${searchResult.stock_code}`);
+if (searchResult.message) {
+  console.log(`提示信息: ${searchResult.message}`);
+}
 console.log(`公司名称: ${searchResult.company_name}`);
 console.log(`最可能的股票代码: ${searchResult.stock_code}`);
 searchResult.all_candidates.forEach((candidate) => {

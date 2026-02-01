@@ -11,7 +11,6 @@ from typing import Optional
 from src.api.schemas.retrieval import (
     VectorRetrievalRequest,
     FulltextRetrievalRequest,
-    GraphRetrievalRequest,
     HybridRetrievalRequest,
     RetrievalResponse,
     RetrievalResultResponse,
@@ -19,7 +18,10 @@ from src.api.schemas.retrieval import (
     CompanyNameSearchRequest,
     CompanyNameSearchResponse,
     StockCodeVoteResult,
-    SimpleStockCodeResponse
+    SimpleStockCodeResponse,
+    ChunkChildrenRequest,
+    ChunkChildrenResponse,
+    ChunkChildResponse
 )
 from src.application.rag.retriever import Retriever
 from src.application.rag.elasticsearch_retriever import ElasticsearchRetriever
@@ -239,74 +241,81 @@ async def fulltext_retrieval(request: FulltextRetrievalRequest) -> RetrievalResp
         )
 
 
-@router.post("/graph", response_model=RetrievalResponse)
-async def graph_retrieval(request: GraphRetrievalRequest) -> RetrievalResponse:
+@router.post("/graph/children", response_model=ChunkChildrenResponse)
+async def get_chunk_children(request: ChunkChildrenRequest) -> ChunkChildrenResponse:
     """
-    图检索接口
+    查询 chunk 的所有直接子节点（children）
 
     Args:
-        request: 图检索请求
+        request: 查询请求，包含 chunk_id
 
     Returns:
-        检索响应
+        子节点列表响应，包含 chunk_id 和 title
 
     Example:
-        POST /api/v1/retrieval/graph
+        POST /api/v1/retrieval/graph/children
         {
-            "query": "000001",
-            "query_type": "document",
-            "filters": {
-                "stock_code": "000001",
-                "year": 2023,
-                "doc_type": "annual_reports"
-            },
-            "top_k": 10
+            "chunk_id": "123e4567-e89b-12d3-a456-426614174000"
+        }
+
+        响应:
+        {
+            "children": [
+                {
+                    "chunk_id": "123e4567-e89b-12d3-a456-426614174001",
+                    "title": "第一章 公司基本情况"
+                },
+                {
+                    "chunk_id": "123e4567-e89b-12d3-a456-426614174002",
+                    "title": "第二章 财务数据"
+                }
+            ],
+            "total": 2,
+            "metadata": {
+                "parent_chunk_id": "123e4567-e89b-12d3-a456-426614174000",
+                "query_time": 0.012
+            }
         }
     """
     start_time = time.time()
     try:
-        logger.info(
-            f"收到图检索请求: query_type={request.query_type}, "
-            f"query='{request.query[:50] if request.query else 'None'}...', "
-            f"top_k={request.top_k}"
-        )
+        logger.info(f"收到查询子节点请求: chunk_id={request.chunk_id}")
 
-        # 获取检索器
+        # 获取图检索器
         retriever = get_graph_retriever()
 
-        # 转换过滤条件
-        filters = None
-        if request.filters:
-            filters = request.filters.dict(exclude_none=True)
-
-        # 执行检索
-        results = retriever.retrieve(
-            query=request.query,
-            query_type=request.query_type,
-            filters=filters,
-            max_depth=request.max_depth,
-            top_k=request.top_k,
-            cypher_query=request.cypher_query,
-            cypher_parameters=request.cypher_parameters
-        )
-
-        retrieval_time = time.time() - start_time
-        logger.info(f"图检索完成: 返回 {len(results)} 个结果, 耗时={retrieval_time:.3f}s")
+        # 查询子节点
+        children_data = retriever.get_children(request.chunk_id)
 
         # 转换为响应格式
-        return _convert_retrieval_results_to_response(
-            results=results,
-            retrieval_type=f"graph_{request.query_type}",
-            query=request.query or request.cypher_query or "",
-            top_k=request.top_k,
-            retrieval_time=retrieval_time
+        children_response = [
+            ChunkChildResponse(
+                chunk_id=child["chunk_id"],
+                title=child.get("title")
+            )
+            for child in children_data
+        ]
+
+        retrieval_time = time.time() - start_time
+        logger.info(
+            f"查询子节点完成: chunk_id={request.chunk_id}, "
+            f"返回 {len(children_response)} 个子节点, 耗时={retrieval_time:.3f}s"
+        )
+
+        return ChunkChildrenResponse(
+            children=children_response,
+            total=len(children_response),
+            metadata={
+                "parent_chunk_id": request.chunk_id,
+                "query_time": retrieval_time
+            }
         )
 
     except Exception as e:
-        logger.error(f"图检索失败: {e}", exc_info=True)
+        logger.error(f"查询子节点失败: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"图检索过程中发生错误: {str(e)}"
+            detail=f"查询子节点过程中发生错误: {str(e)}"
         )
 
 
@@ -446,13 +455,11 @@ async def hybrid_retrieval(request: HybridRetrievalRequest) -> RetrievalResponse
             )
 
 
-@router.post("/company-name-search", response_model=SimpleStockCodeResponse)
-async def company_name_search(request: CompanyNameSearchRequest) -> SimpleStockCodeResponse:
+@router.post("/company-code-search", response_model=SimpleStockCodeResponse)
+async def company_code_search(request: CompanyNameSearchRequest) -> SimpleStockCodeResponse:
     """
-    根据公司名称搜索股票代码接口（基于 PostgreSQL listed_companies 表）
-
-    使用 PostgreSQL 数据库中的 listed_companies 表进行精确和模糊匹配搜索。
-    数据来源于 akshare，包含 A 股约 5000 家上市公司的信息。
+    根据公司名称搜索股票代码接口
+    进行精确和模糊匹配搜索。
 
     搜索策略（按优先级）：
     1. 精确匹配简称（name）
@@ -463,33 +470,41 @@ async def company_name_search(request: CompanyNameSearchRequest) -> SimpleStockC
     6. 曾用名匹配
 
     优势：
-    - 数据准确：来自 akshare 的标准化公司名称
     - 响应快速：简单字符串匹配，约 1-5ms
     - 无额外依赖：仅需 PostgreSQL
     - 支持全称、简称、曾用名多种匹配
 
     Args:
-        request: 公司名称搜索请求
+        request: 公司名称搜索请求，包含公司名称（company_name）
 
     Returns:
-        股票代码（如果未找到则为 null）
+        股票代码搜索结果，包含：
+        - stock_code: 匹配的股票代码（如果唯一匹配）或 None
+        - message: 提示信息（如果有多个候选或未找到）
 
     Example:
-        POST /api/v1/retrieval/company-name-search
+        POST /api/v1/retrieval/company-code-search
         {
             "company_name": "平安银行"
         }
         
-        响应:
+        响应（唯一匹配）:
         {
-            "stock_code": "000001"
+            "stock_code": "000001",
+            "message": null
+        }
+        
+        响应（多个候选）:
+        {
+            "stock_code": null,
+            "message": "找到 3 个可能的公司，请选择：..."
         }
     """
     import time
     
     start_time = time.time()
     try:
-        logger.info(f"收到公司名称搜索请求: company_name='{request.company_name}'")
+        logger.info(f"收到公司代码搜索请求: company_name='{request.company_name}'")
 
         # 预处理
         company_name_query = request.company_name.strip()
@@ -529,14 +544,14 @@ async def company_name_search(request: CompanyNameSearchRequest) -> SimpleStockC
                 
                 message = "\n".join(message_parts)
                 logger.info(
-                    f"公司名称搜索找到少量匹配: query='{request.company_name}', "
+                    f"公司代码搜索找到少量匹配: query='{request.company_name}', "
                     f"候选数量={len(companies)}"
                 )
             elif len(companies) > 5:
                 # 候选过多，提示用户进一步明确
                 message = f"找到 {len(companies)} 个可能的公司，匹配结果过多，请进一步明确公司名称。"
                 logger.info(
-                    f"公司名称搜索匹配过多: query='{request.company_name}', "
+                    f"公司代码搜索匹配过多: query='{request.company_name}', "
                     f"候选数量={len(companies)}"
                 )
         
@@ -544,7 +559,7 @@ async def company_name_search(request: CompanyNameSearchRequest) -> SimpleStockC
         
         if stock_code:
             logger.info(
-                f"公司名称搜索成功: query='{request.company_name}', "
+                f"公司代码搜索成功: query='{request.company_name}', "
                 f"匹配公司={matched_name}, "
                 f"股票代码={stock_code}, "
                 f"耗时={retrieval_time:.3f}s"
@@ -557,7 +572,7 @@ async def company_name_search(request: CompanyNameSearchRequest) -> SimpleStockC
             if message:
                 # 有多个候选但没有唯一结果
                 logger.info(
-                    f"公司名称搜索找到多个匹配: query='{request.company_name}', "
+                    f"公司代码搜索找到多个匹配: query='{request.company_name}', "
                     f"耗时={retrieval_time:.3f}s"
                 )
                 return SimpleStockCodeResponse(
@@ -567,7 +582,7 @@ async def company_name_search(request: CompanyNameSearchRequest) -> SimpleStockC
             else:
                 # 完全没有匹配
                 logger.info(
-                    f"公司名称搜索未找到: query='{request.company_name}', "
+                    f"公司代码搜索未找到: query='{request.company_name}', "
                     f"耗时={retrieval_time:.3f}s"
                 )
                 return SimpleStockCodeResponse(
@@ -576,10 +591,10 @@ async def company_name_search(request: CompanyNameSearchRequest) -> SimpleStockC
                 )
 
     except Exception as e:
-        logger.error(f"公司名称搜索失败: {e}", exc_info=True)
+        logger.error(f"公司代码搜索失败: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"公司名称搜索过程中发生错误: {str(e)}"
+            detail=f"公司代码搜索过程中发生错误: {str(e)}"
         )
 
 

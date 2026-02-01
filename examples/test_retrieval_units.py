@@ -22,7 +22,7 @@ try:
         FilterParams,
         VectorRetrievalRequest,
         FulltextRetrievalRequest,
-        GraphRetrievalRequest,
+        # GraphRetrievalRequest,  # 已删除：图检索接口已移除
         HybridRetrievalRequest,
         RetrievalResultResponse,
         RetrievalResponse
@@ -51,14 +51,15 @@ try:
     )
     print(f"  ✓ VectorRetrievalRequest: query='{vector_req.query[:20]}...', top_k={vector_req.top_k}")
     
-    # 测试 GraphRetrievalRequest
-    graph_req = GraphRetrievalRequest(
-        query="000001",
-        query_type="document",
-        filters=filter1,
-        top_k=10
-    )
-    print(f"  ✓ GraphRetrievalRequest: query_type={graph_req.query_type}")
+    # 测试 GraphRetrievalRequest (已删除)
+    # 已删除：图检索接口已移除，替换为 /api/v1/retrieval/graph/children 接口
+    # graph_req = GraphRetrievalRequest(
+    #     query="000001",
+    #     query_type="document",
+    #     filters=filter1,
+    #     top_k=10
+    # )
+    # print(f"  ✓ GraphRetrievalRequest: query_type={graph_req.query_type}")
     
     # 测试 HybridRetrievalRequest
     hybrid_req = HybridRetrievalRequest(
@@ -210,7 +211,7 @@ try:
     expected_routes = [
         "/api/v1/retrieval/vector",
         "/api/v1/retrieval/fulltext",
-        "/api/v1/retrieval/graph",
+        "/api/v1/retrieval/graph/children",  # 已更新：图检索接口改为 children 接口
         "/api/v1/retrieval/hybrid",
         "/api/v1/retrieval/health"
     ]

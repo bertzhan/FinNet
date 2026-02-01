@@ -87,76 +87,14 @@ def test_fulltext_retrieval():
         return False
 
 
-def test_graph_retrieval_document():
-    """测试图检索接口（文档检索）"""
-    print("\n=== 测试图检索接口（文档检索） ===")
-    
-    url = f"{BASE_URL}/api/v1/retrieval/graph"
-    payload = {
-        "query": "300542",
-        "query_type": "document",
-        "filters": {
-            "stock_code": "300542",
-            "year": 2023,
-            "doc_type": "annual_reports"
-        },
-        "top_k": 10
-    }
-    
-    try:
-        response = requests.post(url, json=payload)
-        response.raise_for_status()
-        result = response.json()
-        
-        print(f"✓ 图检索（文档检索）成功")
-        print(f"  返回结果数: {result.get('total', 0)}")
-        print(f"  检索耗时: {result.get('metadata', {}).get('retrieval_time', 0):.3f}s")
-        
-        if result.get('results'):
-            print(f"  第一个结果:")
-            first_result = result['results'][0]
-            print(f"    - 分块ID: {first_result.get('chunk_id')[:20]}...")
-            print(f"    - 文本预览: {first_result.get('chunk_text', '')[:100]}...")
-        
-        return True
-    except Exception as e:
-        print(f"✗ 图检索失败: {e}")
-        return False
+# 已删除：图检索接口已移除，替换为 /api/v1/retrieval/graph/children 接口
+# def test_graph_retrieval_document():
+#     """测试图检索接口（文档检索）"""
+#     ...
 
-
-def test_graph_retrieval_cypher():
-    """测试图检索接口（自定义 Cypher 查询）"""
-    print("\n=== 测试图检索接口（自定义 Cypher 查询） ===")
-    
-    url = f"{BASE_URL}/api/v1/retrieval/graph"
-    payload = {
-        "query_type": "cypher",
-        "cypher_query": """
-        MATCH (d:Document {stock_code: $stock_code})<-[:BELONGS_TO]-(c:Chunk)
-        WHERE d.year = $year
-        RETURN c.id as chunk_id
-        LIMIT $limit
-        """,
-        "cypher_parameters": {
-            "stock_code": "300542",
-            "year": 2023,
-            "limit": 5
-        },
-        "top_k": 5
-    }
-    
-    try:
-        response = requests.post(url, json=payload)
-        response.raise_for_status()
-        result = response.json()
-        
-        print(f"✓ 图检索（Cypher 查询）成功")
-        print(f"  返回结果数: {result.get('total', 0)}")
-        
-        return True
-    except Exception as e:
-        print(f"✗ 图检索（Cypher 查询）失败: {e}")
-        return False
+# def test_graph_retrieval_cypher():
+#     """测试图检索接口（自定义 Cypher 查询）"""
+#     ...
 
 
 def test_hybrid_retrieval():
@@ -232,12 +170,11 @@ def test_company_name_search():
     """测试根据公司名称搜索股票代码接口"""
     print("\n=== 测试根据公司名称搜索股票代码接口 ===")
     
-    url = f"{BASE_URL}/api/v1/retrieval/company-name-search"
+    url = f"{BASE_URL}/api/v1/retrieval/company-code-search"
     
     # 测试用例1: 完整公司名称
     payload = {
-        "company_name": "平安银行",
-        "top_k": 10
+        "company_name": "平安银行"
     }
     
     try:
@@ -246,31 +183,25 @@ def test_company_name_search():
         result = response.json()
         
         print(f"✓ 公司名称搜索成功")
-        print(f"  查询公司名称: {result.get('company_name')}")
-        print(f"  最可能的股票代码: {result.get('stock_code', 'N/A')}")
-        print(f"  检索到的文档数: {result.get('total_documents', 0)}")
-        print(f"  检索耗时: {result.get('metadata', {}).get('retrieval_time', 0):.3f}s")
-        
-        if result.get('all_candidates'):
-            print(f"  所有候选股票代码:")
-            for candidate in result['all_candidates']:
-                print(f"    - {candidate.get('stock_code')}: {candidate.get('votes')} 票 "
-                      f"(置信度: {candidate.get('confidence', 0):.1%})")
+        print(f"  查询公司名称: 平安银行")
+        print(f"  股票代码: {result.get('stock_code', 'N/A')}")
+        if result.get('message'):
+            print(f"  提示信息: {result.get('message')}")
         
         # 测试用例2: 部分公司名称（模糊匹配）
         print(f"\n  测试部分公司名称匹配...")
         payload2 = {
-            "company_name": "平安",
-            "top_k": 10
+            "company_name": "平安"
         }
         response2 = requests.post(url, json=payload2)
         response2.raise_for_status()
         result2 = response2.json()
         
         print(f"  ✓ 部分名称搜索成功")
-        print(f"    查询公司名称: {result2.get('company_name')}")
-        print(f"    最可能的股票代码: {result2.get('stock_code', 'N/A')}")
-        print(f"    检索到的文档数: {result2.get('total_documents', 0)}")
+        print(f"    查询公司名称: 平安")
+        print(f"    股票代码: {result2.get('stock_code', 'N/A')}")
+        if result2.get('message'):
+            print(f"    提示信息: {result2.get('message')[:100]}...")
         
         return True
     except Exception as e:
@@ -339,8 +270,9 @@ def main():
     # 测试各种检索接口
     results.append(("向量检索", test_vector_retrieval()))
     results.append(("全文检索", test_fulltext_retrieval()))
-    results.append(("图检索（文档）", test_graph_retrieval_document()))
-    results.append(("图检索（Cypher）", test_graph_retrieval_cypher()))
+    # 已删除：图检索接口已移除
+    # results.append(("图检索（文档）", test_graph_retrieval_document()))
+    # results.append(("图检索（Cypher）", test_graph_retrieval_cypher()))
     results.append(("混合检索", test_hybrid_retrieval()))
     
     # 测试文档类型过滤

@@ -22,7 +22,7 @@ try:
         FilterParams,
         VectorRetrievalRequest,
         FulltextRetrievalRequest,
-        GraphRetrievalRequest,
+        # GraphRetrievalRequest,  # 已删除：图检索接口已移除
         HybridRetrievalRequest,
         RetrievalResultResponse,
         RetrievalResponse,
@@ -122,59 +122,15 @@ except Exception as e:
     print(f"  ✗ 测试失败: {e}")
     sys.exit(1)
 
-# 测试7: GraphRetrievalRequest
-print("\n测试7: GraphRetrievalRequest")
-print("-" * 80)
-
-try:
-    # 测试 document 类型
-    request1 = GraphRetrievalRequest(
-        query="000001",
-        query_type="document",
-        filters=filter1,
-        top_k=10
-    )
-    assert request1.query_type == "document"
-    print(f"  ✓ GraphRetrievalRequest (document) 创建成功")
-    
-    # 测试 hierarchy 类型
-    request2 = GraphRetrievalRequest(
-        query="chunk-uuid-here",
-        query_type="hierarchy",
-        max_depth=3,
-        top_k=20
-    )
-    assert request2.query_type == "hierarchy"
-    assert request2.max_depth == 3
-    print(f"  ✓ GraphRetrievalRequest (hierarchy) 创建成功")
-    
-    # 测试 cypher 类型
-    request3 = GraphRetrievalRequest(
-        query_type="cypher",
-        cypher_query="MATCH (d:Document) RETURN d LIMIT 10",
-        cypher_parameters={"limit": 10},
-        top_k=10
-    )
-    assert request3.query_type == "cypher"
-    assert request3.cypher_query is not None
-    print(f"  ✓ GraphRetrievalRequest (cypher) 创建成功")
-    
-    # 测试无效查询类型（应该抛出异常）
-    try:
-        invalid_request = GraphRetrievalRequest(
-            query="test",
-            query_type="invalid_type"
-        )
-        print(f"  ✗ 应该抛出异常但没有")
-        sys.exit(1)
-    except ValueError:
-        print(f"  ✓ 无效查询类型验证成功")
-        
-except Exception as e:
-    print(f"  ✗ 测试失败: {e}")
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
+# 测试7: GraphRetrievalRequest (已删除)
+# 已删除：图检索接口已移除，替换为 /api/v1/retrieval/graph/children 接口
+# print("\n测试7: GraphRetrievalRequest")
+# print("-" * 80)
+# try:
+#     ...
+# except Exception as e:
+#     print(f"  ✗ 测试失败: {e}")
+#     sys.exit(1)
 
 # 测试8: HybridRetrievalRequest
 print("\n测试8: HybridRetrievalRequest")
