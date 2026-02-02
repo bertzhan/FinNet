@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 混合检索器
-结合向量检索、全文检索和图检索，使用 RRF 算法融合结果
+结合向量检索和全文检索，使用 RRF 算法融合结果
 """
 
 from typing import List, Dict, Any, Optional
@@ -28,7 +28,7 @@ class HybridRetriever(LoggerMixin):
         使用 RRF 算法融合多个检索结果
 
         Args:
-            results_dict: 检索结果字典，键为检索类型（"vector", "fulltext", "graph"），值为结果列表
+            results_dict: 检索结果字典，键为检索类型（"vector", "fulltext"），值为结果列表
             weights: 权重字典，键为检索类型，值为权重（0-1）
             top_k: 返回数量
             rrf_k: RRF 参数（默认 60）
@@ -41,10 +41,9 @@ class HybridRetriever(LoggerMixin):
             >>> results = retriever.fuse_results(
             ...     results_dict={
             ...         "vector": vector_results,
-            ...         "fulltext": fulltext_results,
-            ...         "graph": graph_results
+            ...         "fulltext": fulltext_results
             ...     },
-            ...     weights={"vector": 0.5, "fulltext": 0.3, "graph": 0.2},
+            ...     weights={"vector": 0.5, "fulltext": 0.5},
             ...     top_k=10
             ... )
         """

@@ -77,9 +77,10 @@ class GraphBuilder(LoggerMixin):
                     ).all()
 
                     # 查询分块信息（不依赖向量化状态）
+                    # 按 chunk_index 排序，确保父节点在子节点之前
                     chunks = session.query(DocumentChunk).filter(
                         DocumentChunk.document_id.in_(batch_doc_ids)
-                    ).all()
+                    ).order_by(DocumentChunk.chunk_index).all()
 
                     # 1. 构建 Company 节点（根节点）
                     company_nodes = []

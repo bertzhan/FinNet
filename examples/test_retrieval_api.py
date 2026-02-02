@@ -112,8 +112,7 @@ def test_hybrid_retrieval():
         "top_k": 10,
         "hybrid_weights": {
             "vector": 0.5,
-            "fulltext": 0.3,
-            "graph": 0.2
+            "fulltext": 0.5
         }
     }
     
@@ -256,6 +255,89 @@ def test_doc_type_filtering():
         return False
 
 
+def test_chunk_by_id():
+    """测试根据 chunk_id 查询接口"""
+    print("\n=== 测试根据 chunk_id 查询接口 ===")
+    
+    # 首先通过向量检索获取一个有效的 chunk_id
+    url_vector = f"{BASE_URL}/api/v1/retrieval/vector"
+    payload = {
+        "query": "营业收入",
+        "filters": {
+            "stock_code": "300542"
+        },
+        "top_k": 1
+    }
+    
+    try:
+        # 获取一个 chunk_id
+        response = requests.post(url_vector, json=payload)
+        response.raise_for_status()
+        result = response.json()
+        
+        if not result.get('results') or len(result['results']) == 0:
+            print("⚠️  向量检索未返回结果，无法测试 chunk-by-id 接口")
+            return False
+        
+        chunk_id = result['results'][0]['chunk_id']
+        print(f"  获取到测试用的 chunk_id: {chunk_id[:20]}...")
+        
+        # 测试 chunk-by-id 接口
+        url_chunk = f"{BASE_URL}/api/v1/retrieval/chunk-by-id"
+        payload_chunk = {
+            "chunk_id": chunk_id
+        }
+        
+        response = requests.post(url_chunk, json=payload_chunk)
+        response.raise_for_status()
+        chunk_result = response.json()
+        
+        print(f"✓ 根据 chunk_id 查询成功")
+        print(f"  - chunk_id: {chunk_result.get('chunk_id')[:20]}...")
+        print(f"  - document_id: {chunk_result.get('document_id')[:20]}...")
+        print(f"  - title: {chunk_result.get('title', 'N/A')}")
+        print(f"  - title_level: {chunk_result.get('title_level', 'N/A')}")
+        print(f"  - parent_chunk_id: {chunk_result.get('parent_chunk_id', 'N/A')}")
+        print(f"  - is_table: {chunk_result.get('is_table', False)}")
+        print(f"  - chunk_text 长度: {len(chunk_result.get('chunk_text', ''))} 字符")
+        print(f"  - chunk_text 预览: {chunk_result.get('chunk_text', '')[:100]}...")
+        
+        # 测试无效的 chunk_id
+        print(f"\n  测试无效的 chunk_id...")
+        payload_invalid = {
+            "chunk_id": "invalid-uuid-format"
+        }
+        response_invalid = requests.post(url_chunk, json=payload_invalid)
+        if response_invalid.status_code == 400:
+            print(f"  ✓ 无效 chunk_id 格式验证成功（返回 400）")
+        else:
+            print(f"  ⚠️  无效 chunk_id 格式验证异常（返回 {response_invalid.status_code}）")
+        
+        # 测试不存在的 chunk_id
+        print(f"  测试不存在的 chunk_id...")
+        payload_not_found = {
+            "chunk_id": "00000000-0000-0000-0000-000000000000"
+        }
+        response_not_found = requests.post(url_chunk, json=payload_not_found)
+        if response_not_found.status_code == 404:
+            print(f"  ✓ 不存在的 chunk_id 验证成功（返回 404）")
+        else:
+            print(f"  ⚠️  不存在的 chunk_id 验证异常（返回 {response_not_found.status_code}）")
+        
+        return True
+        
+    except requests.exceptions.HTTPError as e:
+        print(f"✗ HTTP 错误: {e}")
+        if e.response is not None:
+            print(f"  响应内容: {e.response.text[:200]}")
+        return False
+    except Exception as e:
+        print(f"✗ 根据 chunk_id 查询失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
 def main():
     """运行所有测试"""
     print("=" * 60)
@@ -280,6 +362,9 @@ def main():
     
     # 测试公司名称搜索
     results.append(("公司名称搜索", test_company_name_search()))
+    
+    # 测试根据 chunk_id 查询
+    results.append(("根据 chunk_id 查询", test_chunk_by_id()))
     
     # 汇总结果
     print("\n" + "=" * 60)

@@ -12,13 +12,12 @@ from typing import Optional
 BASE_URL = "http://localhost:8000"
 
 
-def test_company_name_search(company_name: str, top_k: int = 10) -> bool:
+def test_company_name_search(company_name: str) -> bool:
     """
     测试根据公司名称搜索股票代码接口
     
     Args:
         company_name: 公司名称
-        top_k: 检索文档数量
         
     Returns:
         是否测试成功
@@ -27,13 +26,11 @@ def test_company_name_search(company_name: str, top_k: int = 10) -> bool:
     print(f"测试公司名称搜索接口")
     print(f"{'='*60}")
     print(f"公司名称: {company_name}")
-    print(f"检索文档数: {top_k}")
     print()
     
-    url = f"{BASE_URL}/api/v1/retrieval/company-name-search"
+    url = f"{BASE_URL}/api/v1/retrieval/company-code-search"
     payload = {
-        "company_name": company_name,
-        "top_k": top_k
+        "company_name": company_name
     }
     
     try:
@@ -114,7 +111,7 @@ def test_multiple_companies():
     results = []
     for company_name in test_cases:
         print(f"\n测试: {company_name}")
-        success = test_company_name_search(company_name, top_k=10)
+        success = test_company_name_search(company_name)
         results.append((company_name, success))
     
     # 汇总结果
@@ -143,12 +140,6 @@ def main():
         "--company-name",
         type=str,
         help="要搜索的公司名称（如果不提供，将运行批量测试）"
-    )
-    parser.add_argument(
-        "--top-k",
-        type=int,
-        default=10,
-        help="检索文档数量（默认: 10）"
     )
     parser.add_argument(
         "--batch",
@@ -184,11 +175,11 @@ def main():
     if args.batch:
         success = test_multiple_companies()
     elif args.company_name:
-        success = test_company_name_search(args.company_name, args.top_k)
+        success = test_company_name_search(args.company_name)
     else:
         # 默认测试
         print("未指定公司名称，运行默认测试...")
-        success = test_company_name_search("平安银行", args.top_k)
+        success = test_company_name_search("平安银行")
     
     sys.exit(0 if success else 1)
 

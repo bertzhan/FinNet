@@ -328,12 +328,14 @@ class GraphRetriever(LoggerMixin):
             self.logger.error(f"层级遍历失败: {e}", exc_info=True)
             return []
 
-    def get_children(self, chunk_id: str) -> List[Dict[str, Any]]:
+    def get_children(self, chunk_id: str, recursive: bool = True, max_depth: Optional[int] = None) -> List[Dict[str, Any]]:
         """
-        获取给定 chunk_id 的所有直接子节点（children）
+        获取给定 chunk_id 的子节点（children）
 
         Args:
             chunk_id: 父分块 ID
+            recursive: 是否递归查询所有子节点（包括子节点的子节点），默认为 True
+            max_depth: 最大递归深度（仅在 recursive=True 时有效），None 表示不限制深度
 
         Returns:
             子节点列表，每个元素包含 chunk_id 和 title
@@ -341,22 +343,41 @@ class GraphRetriever(LoggerMixin):
 
         Example:
             >>> retriever = GraphRetriever()
-            >>> children = retriever.get_children("chunk-uuid-123")
-            >>> print(children)
-            [{"chunk_id": "child-uuid-1", "title": "第一章"}, ...]
+            >>> # 递归查询所有子节点
+            >>> children = retriever.get_children("chunk-uuid-123", recursive=True)
+            >>> # 只查询直接子节点
+            >>> direct_children = retriever.get_children("chunk-uuid-123", recursive=False)
+            >>> # 递归查询，但限制最大深度为3
+            >>> children = retriever.get_children("chunk-uuid-123", recursive=True, max_depth=3)
         """
         if not chunk_id:
             self.logger.warning("chunk_id 为空")
             return []
 
-        # 查询直接子节点（只查询一层，不使用递归）
-        # 使用 COALESCE 处理 NULL 值，确保排序正确
-        # 注意：不使用 DISTINCT，因为每个关系应该只对应一个子节点
-        cypher = """
-        MATCH (parent:Chunk {id: $chunk_id})-[:HAS_CHILD]->(child:Chunk)
-        RETURN child.id as chunk_id, child.title as title, child.chunk_index as chunk_index
-        ORDER BY COALESCE(child.chunk_index, 999999) ASC
-        """
+        if recursive:
+            # 递归查询所有子节点（包括子节点的子节点）
+            # 使用可变长度路径查询
+            if max_depth is not None:
+                # 限制最大深度，Neo4j 语法: [:HAS_CHILD*1..max_depth]
+                depth_spec = f"*1..{max_depth}"
+            else:
+                # 不限制深度，Neo4j 语法: [:HAS_CHILD*]
+                depth_spec = "*"
+            
+            cypher = f"""
+            MATCH path = (parent:Chunk {{id: $chunk_id}})-[:HAS_CHILD{depth_spec}]->(child:Chunk)
+            RETURN DISTINCT child.id as chunk_id, child.title as title, child.chunk_index as chunk_index,
+                   length(path) as depth
+            ORDER BY depth ASC, COALESCE(child.chunk_index, 999999) ASC
+            """
+        else:
+            # 查询直接子节点（只查询一层，不使用递归）
+            # 使用 COALESCE 处理 NULL 值，确保排序正确
+            cypher = """
+            MATCH (parent:Chunk {id: $chunk_id})-[:HAS_CHILD]->(child:Chunk)
+            RETURN child.id as chunk_id, child.title as title, child.chunk_index as chunk_index
+            ORDER BY COALESCE(child.chunk_index, 999999) ASC
+            """
 
         parameters = {"chunk_id": chunk_id}
 
@@ -375,6 +396,7 @@ class GraphRetriever(LoggerMixin):
             
             self.logger.info(
                 f"查询子节点完成: parent_chunk_id={chunk_id}, "
+                f"recursive={recursive}, max_depth={max_depth}, "
                 f"找到 {len(children)} 个子节点"
             )
             

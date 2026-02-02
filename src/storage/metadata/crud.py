@@ -283,6 +283,60 @@ def get_documents_by_stock(
     return query.order_by(desc(Document.year), desc(Document.quarter)).all()
 
 
+def get_document_id_by_filters(
+    session: Session,
+    stock_code: str,
+    year: int,
+    quarter: Optional[int],
+    doc_type: str
+) -> Optional[uuid.UUID]:
+    """
+    根据stock_code, year, quarter, doc_type查询document_id
+    
+    Args:
+        session: 数据库会话
+        stock_code: 股票代码
+        year: 年份
+        quarter: 季度（可选，如果为None则查询年度文档）
+        doc_type: 文档类型
+        
+    Returns:
+        document_id (UUID) 如果找到，否则返回 None
+        
+    Example:
+        >>> with get_postgres_client().get_session() as session:
+        ...     doc_id = get_document_id_by_filters(
+        ...         session, "000001", 2023, 3, "quarterly_reports"
+        ...     )
+        ...     print(doc_id)
+    """
+    query = session.query(Document.id).filter(
+        Document.stock_code == stock_code,
+        Document.year == year,
+        Document.doc_type == doc_type
+    )
+    
+    if quarter is not None:
+        query = query.filter(Document.quarter == quarter)
+    else:
+        # 如果quarter为None，查询年度文档
+        # 注意：年报可能存储为quarter=NULL或quarter=4，需要同时匹配两种情况
+        if doc_type == "annual_reports":
+            # 对于年报，查询quarter为NULL或4的文档
+            query = query.filter(
+                or_(
+                    Document.quarter.is_(None),
+                    Document.quarter == 4
+                )
+            )
+        else:
+            # 对于其他文档类型，只查询quarter为NULL的文档
+            query = query.filter(Document.quarter.is_(None))
+    
+    result = query.first()
+    return result[0] if result else None
+
+
 # ==================== DocumentChunk CRUD ====================
 
 def create_document_chunk(
@@ -1280,9 +1334,6 @@ def _normalize_company_name(name: str) -> str:
         "股份公司",
         "股份",
         "公司",
-        "企业",
-        "实业",
-        "控股",
         "控股公司",
         "控股集团",
     ]

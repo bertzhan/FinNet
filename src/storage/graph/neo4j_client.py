@@ -374,9 +374,40 @@ class Neo4jClient(LoggerMixin):
         from_key = "code" if from_label == "Company" else "id"
         to_key = "code" if to_label == "Company" else "id"
 
-        query = f"""
+        # 先检查节点是否存在，如果不存在则记录警告
+        # 然后使用 MERGE 创建关系（如果节点不存在，MERGE 会创建只有主键的节点）
+        # 这样可以避免如果节点不存在时关系创建失败的问题
+        check_query = f"""
         MATCH (a:{from_label} {{{from_key}: $from_id}})
         MATCH (b:{to_label} {{{to_key}: $to_id}})
+        RETURN count(a) as from_exists, count(b) as to_exists
+        """
+        
+        try:
+            check_results = self.execute_query(check_query, {
+                "from_id": from_id,
+                "to_id": to_id
+            }, database=db)
+            
+            if check_results:
+                from_exists = check_results[0].get('from_exists', 0) > 0
+                to_exists = check_results[0].get('to_exists', 0) > 0
+                
+                if not from_exists:
+                    self.logger.warning(
+                        f"创建关系时源节点不存在: {from_label}({from_id}) -[{relationship_type}]-> {to_label}({to_id})"
+                    )
+                if not to_exists:
+                    self.logger.warning(
+                        f"创建关系时目标节点不存在: {from_label}({from_id}) -[{relationship_type}]-> {to_label}({to_id})"
+                    )
+        except Exception as e:
+            self.logger.debug(f"检查节点存在性时出错（继续创建关系）: {e}")
+        
+        # 使用 MERGE 确保节点存在，然后创建关系
+        query = f"""
+        MERGE (a:{from_label} {{{from_key}: $from_id}})
+        MERGE (b:{to_label} {{{to_key}: $to_id}})
         MERGE (a)-[r:{relationship_type}]->(b)
         """
         

@@ -42,17 +42,16 @@ python examples/test_company_name_search.py --company-name "平安银行"
 python examples/test_company_name_search.py --batch
 
 # 自定义参数
-python examples/test_company_name_search.py --company-name "平安银行" --top-k 10
+python examples/test_company_name_search.py --company-name "平安银行"
 ```
 
 ### 方式2: 使用 cURL
 
 ```bash
-curl -X POST "http://localhost:8000/api/v1/retrieval/company-name-search" \
+curl -X POST "http://localhost:8000/api/v1/retrieval/company-code-search" \
   -H "Content-Type: application/json" \
   -d '{
-    "company_name": "平安银行",
-    "top_k": 10
+    "company_name": "平安银行"
   }' | python -m json.tool
 ```
 
@@ -62,10 +61,9 @@ curl -X POST "http://localhost:8000/api/v1/retrieval/company-name-search" \
 import requests
 import json
 
-url = "http://localhost:8000/api/v1/retrieval/company-name-search"
+url = "http://localhost:8000/api/v1/retrieval/company-code-search"
 payload = {
-    "company_name": "平安银行",
-    "top_k": 10
+    "company_name": "平安银行"
 }
 
 response = requests.post(url, json=payload)
@@ -82,13 +80,12 @@ for candidate in result['all_candidates']:
 ### 方式4: 在浏览器中测试
 
 1. 访问 http://localhost:8000/docs
-2. 找到 `/api/v1/retrieval/company-name-search` 接口
+2. 找到 `/api/v1/retrieval/company-code-search` 接口
 3. 点击 "Try it out"
 4. 输入请求参数：
    ```json
    {
-     "company_name": "平安银行",
-     "top_k": 10
+     "company_name": "平安银行"
    }
    ```
 5. 点击 "Execute" 执行请求
@@ -98,65 +95,68 @@ for candidate in result['all_candidates']:
 ### 测试用例1: 完整公司名称
 
 ```bash
-curl -X POST "http://localhost:8000/api/v1/retrieval/company-name-search" \
+curl -X POST "http://localhost:8000/api/v1/retrieval/company-code-search" \
   -H "Content-Type: application/json" \
-  -d '{"company_name": "平安银行", "top_k": 10}'
+  -H "Content-Type: application/json" \
+  -d '{"company_name": "平安银行"}'
 ```
 
 ### 测试用例2: 部分公司名称（模糊匹配）
 
 ```bash
-curl -X POST "http://localhost:8000/api/v1/retrieval/company-name-search" \
+curl -X POST "http://localhost:8000/api/v1/retrieval/company-code-search" \
   -H "Content-Type: application/json" \
-  -d '{"company_name": "平安", "top_k": 10}'
+  -H "Content-Type: application/json" \
+  -d '{"company_name": "平安"}'
 ```
 
 ### 测试用例3: 其他公司
 
 ```bash
 # 招商银行
-curl -X POST "http://localhost:8000/api/v1/retrieval/company-name-search" \
+curl -X POST "http://localhost:8000/api/v1/retrieval/company-code-search" \
   -H "Content-Type: application/json" \
-  -d '{"company_name": "招商银行", "top_k": 10}'
+  -H "Content-Type: application/json" \
+  -d '{"company_name": "招商银行"}'
 
 # 工商银行
-curl -X POST "http://localhost:8000/api/v1/retrieval/company-name-search" \
+curl -X POST "http://localhost:8000/api/v1/retrieval/company-code-search" \
   -H "Content-Type: application/json" \
-  -d '{"company_name": "工商银行", "top_k": 10}'
+  -H "Content-Type: application/json" \
+  -d '{"company_name": "工商银行"}'
 ```
 
 ## 预期响应格式
 
+**唯一匹配时：**
 ```json
 {
-  "company_name": "平安银行",
   "stock_code": "000001",
-  "all_candidates": [
-    {
-      "stock_code": "000001",
-      "votes": 8,
-      "confidence": 0.8
-    },
-    {
-      "stock_code": "600000",
-      "votes": 2,
-      "confidence": 0.2
-    }
-  ],
-  "total_documents": 10,
-  "metadata": {
-    "retrieval_time": 0.123,
-    "top_k": 10,
-    "total_votes": 10,
-    "documents": [
-      {
-        "stock_code": "000001",
-        "company_name": "平安银行",
-        "score": 1.5,
-        "chunk_id": "chunk-123"
-      }
-    ]
-  }
+  "message": null
+}
+```
+
+**多个候选时（2-5个）：**
+```json
+{
+  "stock_code": null,
+  "message": "找到 3 个可能的公司，请选择：\n1. 平安银行 (000001) - 平安银行股份有限公司\n2. 平安证券 (002736) - 平安证券股份有限公司\n3. ..."
+}
+```
+
+**候选过多时（>5个）：**
+```json
+{
+  "stock_code": null,
+  "message": "找到 15 个可能的公司，匹配结果过多，请进一步明确公司名称。"
+}
+```
+
+**未找到时：**
+```json
+{
+  "stock_code": null,
+  "message": null
 }
 ```
 

@@ -90,7 +90,9 @@ class FulltextRetrievalRequest(BaseModel):
                 "query": "营业收入 净利润",
                 "filters": {
                     "stock_code": "000001",
-                    "doc_type": "ipo_prospectus"
+                    "year": 2023,
+                    "quarter": 3,
+                    "doc_type": "quarterly_reports"
                 },
                 "top_k": 10
             }
@@ -147,16 +149,16 @@ class HybridRetrievalRequest(BaseModel):
     top_k: int = Field(10, ge=1, le=100, description="返回数量")
     hybrid_weights: Optional[Dict[str, float]] = Field(
         None,
-        description="混合检索权重（vector, fulltext, graph）。默认值：vector=0.5, fulltext=0.3, graph=0.2"
+        description="混合检索权重（vector, fulltext）。默认值：vector=0.5, fulltext=0.5"
     )
 
     @validator('hybrid_weights')
     def validate_hybrid_weights(cls, v):
         """验证混合检索权重"""
         if v is None:
-            return {"vector": 0.5, "fulltext": 0.3, "graph": 0.2}
+            return {"vector": 0.5, "fulltext": 0.5}
         
-        valid_keys = ["vector", "fulltext", "graph"]
+        valid_keys = ["vector", "fulltext"]
         invalid_keys = [k for k in v.keys() if k not in valid_keys]
         if invalid_keys:
             raise ValueError(f"无效的权重键: {invalid_keys}。支持的键: {', '.join(valid_keys)}")
@@ -179,8 +181,7 @@ class HybridRetrievalRequest(BaseModel):
                 "top_k": 10,
                 "hybrid_weights": {
                     "vector": 0.5,
-                    "fulltext": 0.3,
-                    "graph": 0.2
+                    "fulltext": 0.5
                 }
             }
         }
@@ -360,11 +361,15 @@ class RetrievalHealthResponse(BaseModel):
 class ChunkChildrenRequest(BaseModel):
     """查询 chunk 子节点请求模型"""
     chunk_id: str = Field(..., description="父分块 ID", min_length=1)
+    recursive: bool = Field(True, description="是否递归查询所有子节点（包括子节点的子节点），默认为 True")
+    max_depth: Optional[int] = Field(None, description="最大递归深度（仅在 recursive=True 时有效），None 表示不限制深度")
 
     class Config:
         json_schema_extra = {
             "example": {
-                "chunk_id": "123e4567-e89b-12d3-a456-426614174000"
+                "chunk_id": "123e4567-e89b-12d3-a456-426614174000",
+                "recursive": True,
+                "max_depth": None
             }
         }
 
@@ -410,5 +415,41 @@ class ChunkChildrenResponse(BaseModel):
                     "parent_chunk_id": "123e4567-e89b-12d3-a456-426614174000",
                     "query_time": 0.012
                 }
+            }
+        }
+
+
+class ChunkByIdRequest(BaseModel):
+    """根据 chunk_id 查询请求模型"""
+    chunk_id: str = Field(..., description="分块 ID", min_length=1)
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "chunk_id": "123e4567-e89b-12d3-a456-426614174000"
+            }
+        }
+
+
+class ChunkByIdResponse(BaseModel):
+    """根据 chunk_id 查询响应模型"""
+    chunk_id: str = Field(..., description="分块 ID")
+    document_id: str = Field(..., description="文档 ID")
+    chunk_text: str = Field(..., description="分块文本")
+    title: Optional[str] = Field(None, description="标题")
+    title_level: Optional[int] = Field(None, description="标题层级")
+    parent_chunk_id: Optional[str] = Field(None, description="父分块 ID")
+    is_table: bool = Field(False, description="是否是表格分块")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "chunk_id": "123e4567-e89b-12d3-a456-426614174000",
+                "document_id": "123e4567-e89b-12d3-a456-426614174001",
+                "chunk_text": "2023年第三季度，公司实现营业收入XXX亿元...",
+                "title": "一、公司基本情况",
+                "title_level": 1,
+                "parent_chunk_id": "123e4567-e89b-12d3-a456-426614174002",
+                "is_table": False
             }
         }

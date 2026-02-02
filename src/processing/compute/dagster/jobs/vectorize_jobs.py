@@ -252,13 +252,17 @@ def vectorize_chunks_op(context, scan_result: Dict) -> Dict:
     
     logger.info(f"开始向量化 {len(chunks)} 个分块...")
     
-    # 初始化向量化服务
-    vectorizer = get_vectorizer()
-    
     # 提取分块ID列表
     chunk_ids = [chunk["chunk_id"] for chunk in chunks]
     
     try:
+        # 初始化向量化服务（放在 try 块内，以便捕获初始化异常）
+        try:
+            vectorizer = get_vectorizer()
+        except Exception as init_error:
+            logger.error(f"向量化服务初始化失败: {init_error}", exc_info=True)
+            raise Exception(f"向量化服务初始化失败: {str(init_error)}。请检查嵌入模型配置（EMBEDDING_MODE, EMBEDDING_API_URL等）")
+        
         # 批量向量化
         result = vectorizer.vectorize_chunks(
             chunk_ids=chunk_ids,
@@ -330,10 +334,26 @@ def vectorize_chunks_op(context, scan_result: Dict) -> Dict:
         }
         
     except Exception as e:
-        logger.error(f"向量化异常: {e}", exc_info=True)
+        error_msg = str(e)
+        logger.error(f"向量化异常: {error_msg}", exc_info=True)
+        
+        # 提供更详细的错误信息和建议
+        if "初始化失败" in error_msg or "embedder" in error_msg.lower() or "api" in error_msg.lower():
+            logger.error("=" * 80)
+            logger.error("向量化服务初始化失败，可能的原因：")
+            logger.error("1. 嵌入模型 API 配置错误（EMBEDDING_API_URL, EMBEDDING_API_KEY）")
+            logger.error("2. 嵌入模型 API 服务不可用（404/500错误）")
+            logger.error("3. 本地模型路径错误或模型文件缺失")
+            logger.error("")
+            logger.error("建议解决方案：")
+            logger.error("- 检查 .env 文件中的 EMBEDDING_MODE 配置")
+            logger.error("- 如果使用 API 模式，检查 EMBEDDING_API_URL 和 EMBEDDING_API_KEY")
+            logger.error("- 如果使用本地模式，检查模型文件是否存在")
+            logger.error("=" * 80)
+        
         return {
             "success": False,
-            "error_message": str(e),
+            "error_message": error_msg,
             "vectorized_count": 0,
             "failed_count": len(chunks),
             "skipped_count": 0,

@@ -8,14 +8,34 @@ POST /api/v1/retrieval/graph/children
 ```
 
 ### 功能描述
-根据给定的 `chunk_id`，查询该 chunk 的所有直接子节点（children），返回包含 `chunk_id` 和 `title` 的列表。
+根据给定的 `chunk_id`，查询该 chunk 的子节点（children）。默认递归查询所有子节点（包括子节点的子节点），也可以设置为只查询直接子节点。
 
 ### 请求格式
 
 **请求体**
+
+默认递归查询所有子节点：
 ```json
 {
-  "chunk_id": "123e4567-e89b-12d3-a456-426614174000"
+  "chunk_id": "123e4567-e89b-12d3-a456-426614174000",
+  "recursive": true
+}
+```
+
+只查询直接子节点：
+```json
+{
+  "chunk_id": "123e4567-e89b-12d3-a456-426614174000",
+  "recursive": false
+}
+```
+
+限制递归深度：
+```json
+{
+  "chunk_id": "123e4567-e89b-12d3-a456-426614174000",
+  "recursive": true,
+  "max_depth": 3
 }
 ```
 
@@ -24,6 +44,8 @@ POST /api/v1/retrieval/graph/children
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | `chunk_id` | string | 是 | 父分块 ID（UUID 格式） |
+| `recursive` | boolean | 否 | 是否递归查询所有子节点（包括子节点的子节点），默认为 `true` |
+| `max_depth` | integer | 否 | 最大递归深度（仅在 `recursive=true` 时有效），`null` 表示不限制深度 |
 
 ### 响应格式
 
@@ -59,6 +81,8 @@ POST /api/v1/retrieval/graph/children
 | `metadata` | object | 元数据 |
 | `metadata.parent_chunk_id` | string | 父分块 ID |
 | `metadata.query_time` | float | 查询耗时（秒） |
+| `metadata.recursive` | boolean | 是否递归查询 |
+| `metadata.max_depth` | integer/null | 最大递归深度 |
 
 ## 测试方法
 
@@ -88,27 +112,49 @@ python examples/test_graph_children.py <chunk_id> <document_id>
 
 ### 方法2: 使用curl命令
 
+递归查询所有子节点（默认）：
 ```bash
 # 替换 <chunk_id> 为实际的chunk ID
 curl -X POST "http://localhost:8000/api/v1/retrieval/graph/children" \
      -H "Content-Type: application/json" \
      -d '{
-       "chunk_id": "123e4567-e89b-12d3-a456-426614174000"
+       "chunk_id": "123e4567-e89b-12d3-a456-426614174000",
+       "recursive": true
+     }'
+```
+
+只查询直接子节点：
+```bash
+curl -X POST "http://localhost:8000/api/v1/retrieval/graph/children" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "chunk_id": "123e4567-e89b-12d3-a456-426614174000",
+       "recursive": false
      }'
 ```
 
 ### 方法3: 使用Python requests
 
+递归查询所有子节点（默认）：
 ```python
 import requests
 
 url = "http://localhost:8000/api/v1/retrieval/graph/children"
 payload = {
-    "chunk_id": "123e4567-e89b-12d3-a456-426614174000"
+    "chunk_id": "123e4567-e89b-12d3-a456-426614174000",
+    "recursive": True
 }
 
 response = requests.post(url, json=payload)
 print(response.json())
+```
+
+只查询直接子节点：
+```python
+payload = {
+    "chunk_id": "123e4567-e89b-12d3-a456-426614174000",
+    "recursive": False
+}
 ```
 
 ## 获取测试用的chunk_id
@@ -152,6 +198,7 @@ python examples/test_graph_children.py <document_id>
 - **chunk没有子节点**: 使用一个存在但没有子节点的 `chunk_id`，应该返回空列表
 - **chunk不存在**: 使用一个不存在的 `chunk_id`，应该返回空列表（不会报错）
 - **无效的chunk_id格式**: 使用非UUID格式的字符串，应该返回400错误
+- **递归查询深度限制**: 测试 `max_depth` 参数是否正常工作
 
 ### 3. 错误处理测试
 
@@ -214,7 +261,9 @@ curl -X POST "http://localhost:8000/api/v1/retrieval/graph/children" \
 
 ## 注意事项
 
-1. **只查询直接子节点**: 此接口只返回直接子节点（一层），不包括子节点的子节点
-2. **空列表不是错误**: 如果chunk没有子节点，返回空列表是正常情况，不是错误
-3. **Neo4j关系**: 确保Neo4j中存在 `HAS_CHILD` 关系，否则查询结果为空
-4. **chunk_id格式**: 必须是有效的UUID格式字符串
+1. **递归查询**: 默认情况下，此接口会递归查询所有子节点（包括子节点的子节点）。可以通过设置 `recursive=false` 来只查询直接子节点
+2. **深度限制**: 可以通过 `max_depth` 参数限制递归查询的最大深度，避免查询过深的层级
+3. **空列表不是错误**: 如果chunk没有子节点，返回空列表是正常情况，不是错误
+4. **Neo4j关系**: 确保Neo4j中存在 `HAS_CHILD` 关系，否则查询结果为空
+5. **chunk_id格式**: 必须是有效的UUID格式字符串
+6. **性能考虑**: 递归查询可能会返回大量结果，建议在需要时使用 `max_depth` 限制深度

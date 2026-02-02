@@ -216,6 +216,30 @@ class MilvusClient(LoggerMixin):
             if collection is None:
                 raise ValueError(f"Collection 不存在: {collection_name}")
 
+            # 调试日志：检查数据格式
+            self.logger.debug(
+                f"Milvus insert_vectors 调试:\n"
+                f"  chunk_ids 数量: {len(chunk_ids)}\n"
+                f"  document_ids 数量: {len(document_ids)}\n"
+                f"  embeddings 数量: {len(embeddings)}\n"
+                f"  embeddings 类型: {type(embeddings)}\n"
+                f"  第一个 embedding 类型: {type(embeddings[0]) if embeddings else 'N/A'}\n"
+                f"  第一个 embedding 长度: {len(embeddings[0]) if embeddings and hasattr(embeddings[0], '__len__') else 'N/A'}"
+            )
+            
+            # 验证数据一致性
+            expected_rows = len(chunk_ids)
+            if len(embeddings) != expected_rows:
+                self.logger.error(
+                    f"❌ 数据不一致: embeddings 数量 ({len(embeddings)}) != chunk_ids 数量 ({expected_rows})"
+                )
+                # 检查是否是嵌套问题
+                if embeddings and isinstance(embeddings[0], (int, float)):
+                    self.logger.error(
+                        f"⚠️  embeddings 似乎被展平了（第一个元素是 {type(embeddings[0])}），"
+                        f"应该是 List[List[float]] 格式"
+                    )
+
             # 构建数据（chunk_id 是主键，必须放在第一位）
             # 顺序必须与 Schema 定义的字段顺序一致
             data = [

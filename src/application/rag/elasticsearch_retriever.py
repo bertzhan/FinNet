@@ -58,9 +58,9 @@ class ElasticsearchRetriever(LoggerMixin):
             filters: 过滤条件
                 - stock_code: 股票代码
                 - year: 年份
-                - quarter: 季度
-                - doc_type: 文档类型
-                - market: 市场
+                - quarter: 季度（1-4）
+                - doc_type: 文档类型（单个字符串或列表）
+                - market: 市场（a_share/hk_stock/us_stock）
                 - company_name: 公司名称
 
         Returns:
@@ -71,7 +71,7 @@ class ElasticsearchRetriever(LoggerMixin):
             >>> results = retriever.retrieve(
             ...     "平安银行营业收入",
             ...     top_k=5,
-            ...     filters={"stock_code": "000001", "year": 2023}
+            ...     filters={"stock_code": "000001", "year": 2023, "quarter": 3}
             ... )
             >>> for result in results:
             ...     print(f"Score: {result.score}, Text: {result.chunk_text[:100]}")

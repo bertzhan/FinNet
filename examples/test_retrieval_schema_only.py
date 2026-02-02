@@ -141,7 +141,7 @@ try:
         query="平安银行营业收入",
         filters=filter2,
         top_k=10,
-        hybrid_weights={"vector": 0.5, "fulltext": 0.3, "graph": 0.2}
+        hybrid_weights={"vector": 0.5, "fulltext": 0.5}
     )
     assert request.query == "平安银行营业收入"
     assert request.hybrid_weights["vector"] == 0.5

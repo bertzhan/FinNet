@@ -549,8 +549,7 @@ Content-Type: application/json
   "top_k": 10,
   "hybrid_weights": {
     "vector": 0.5,
-    "fulltext": 0.3,
-    "graph": 0.2
+    "fulltext": 0.5
   }
 }
 ```
@@ -562,10 +561,9 @@ Content-Type: application/json
 | `query` | string | 是 | 查询文本 |
 | `filters` | object | 否 | 过滤条件 |
 | `top_k` | integer | 否 | 返回数量（1-100，默认10） |
-| `hybrid_weights` | object | 否 | 混合检索权重（默认：vector=0.5, fulltext=0.3, graph=0.2） |
+| `hybrid_weights` | object | 否 | 混合检索权重（默认：vector=0.5, fulltext=0.5） |
 | `hybrid_weights.vector` | float | 否 | 向量检索权重（0.0-1.0） |
 | `hybrid_weights.fulltext` | float | 否 | 全文检索权重（0.0-1.0） |
-| `hybrid_weights.graph` | float | 否 | 图检索权重（0.0-1.0） |
 
 **响应格式**: 同向量检索
 

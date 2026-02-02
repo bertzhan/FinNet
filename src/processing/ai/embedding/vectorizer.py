@@ -252,6 +252,40 @@ class Vectorizer(LoggerMixin):
         try:
             embeddings = self.embedder.embed_batch(texts)
             
+            # ✅ 验证 embeddings 格式
+            self.logger.debug(
+                f"embed_batch 返回:\n"
+                f"  embeddings 类型: {type(embeddings)}\n"
+                f"  embeddings 数量: {len(embeddings) if embeddings else 0}\n"
+                f"  第一个 embedding 类型: {type(embeddings[0]) if embeddings and len(embeddings) > 0 else 'N/A'}\n"
+                f"  第一个 embedding 长度: {len(embeddings[0]) if embeddings and len(embeddings) > 0 and hasattr(embeddings[0], '__len__') else 'N/A'}"
+            )
+            
+            # 确保 embeddings 是二维列表 List[List[float]]
+            if embeddings and len(embeddings) > 0:
+                first_emb = embeddings[0]
+                if isinstance(first_emb, (int, float)):
+                    # embeddings 被展平了，需要重新整形
+                    self.logger.error(
+                        f"❌ embeddings 格式错误: 被展平为一维列表。"
+                        f"第一个元素是 {type(first_emb)}，应该是 list。"
+                    )
+                    # 尝试修复：如果知道维度，可以重新整形
+                    expected_dim = self.embedder.get_model_dim()
+                    if len(embeddings) % expected_dim == 0:
+                        num_vectors = len(embeddings) // expected_dim
+                        self.logger.warning(
+                            f"尝试修复: 将 {len(embeddings)} 个元素重新整形为 {num_vectors} 个 {expected_dim} 维向量"
+                        )
+                        reshaped = []
+                        for i in range(num_vectors):
+                            reshaped.append(embeddings[i * expected_dim:(i + 1) * expected_dim])
+                        embeddings = reshaped
+                    else:
+                        raise ValueError(
+                            f"无法修复展平的 embeddings: 长度 {len(embeddings)} 不能被维度 {expected_dim} 整除"
+                        )
+            
             # ✅ 检查是否有零向量（表示部分失败）
             if embeddings and len(embeddings) > 0:
                 dimension = len(embeddings[0])
@@ -382,6 +416,28 @@ class Vectorizer(LoggerMixin):
 
         # 插入Milvus（只插入成功的向量）
         try:
+            # 调试日志：检查数据一致性
+            self.logger.debug(
+                f"准备插入 Milvus:\n"
+                f"  chunk_ids 数量: {len(chunk_ids)}\n"
+                f"  embeddings 数量: {len(successful_embeddings)}\n"
+                f"  第一个 embedding 维度: {len(successful_embeddings[0]) if successful_embeddings else 'N/A'}\n"
+                f"  第一个 embedding 类型: {type(successful_embeddings[0]) if successful_embeddings else 'N/A'}"
+            )
+            
+            # 验证数据一致性
+            if len(successful_embeddings) != len(chunk_ids):
+                self.logger.error(
+                    f"数据不一致: embeddings={len(successful_embeddings)}, chunk_ids={len(chunk_ids)}"
+                )
+            
+            # 验证向量格式
+            for i, emb in enumerate(successful_embeddings[:3]):  # 只检查前3个
+                if not isinstance(emb, list):
+                    self.logger.error(f"向量 {i} 不是列表类型: {type(emb)}")
+                elif len(emb) < 10:
+                    self.logger.error(f"向量 {i} 维度异常小: {len(emb)}")
+            
             vector_ids = self.milvus_client.insert_vectors(
                 collection_name=collection_name,
                 embeddings=successful_embeddings,
