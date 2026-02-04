@@ -8,18 +8,17 @@ from typing import Optional, Union, Any
 from src.common.config import embedding_config
 from src.common.logger import get_logger, LoggerMixin
 
-# 延迟导入，避免循环依赖
-try:
-    from .bge_embedder import BGEEmbedder, get_embedder as get_local_embedder
-except ImportError:
-    BGEEmbedder = None
-    get_local_embedder = None
-
+# 延迟导入 API embedder（轻量级，可以立即导入）
 try:
     from .api_embedder import APIEmbedder, get_api_embedder
 except ImportError:
     APIEmbedder = None
     get_api_embedder = None
+
+# BGE embedder 使用真正的延迟导入（只在实际使用时才导入，避免加载重型依赖）
+# 不在模块级别导入，而是在需要时才导入
+BGEEmbedder = None
+get_local_embedder = None
 
 
 class EmbedderFactory:
@@ -88,12 +87,19 @@ class EmbedderFactory:
         
         elif mode == "local":
             logger.info("💻 使用本地模型 Embedder 模式")
-            if BGEEmbedder is None or get_local_embedder is None:
-                raise ImportError("BGEEmbedder 未可用，请检查 sentence-transformers 是否安装")
-            
+
+            # 延迟导入 BGEEmbedder（仅在实际使用时导入，避免在 Dagster 启动时加载重型依赖）
+            try:
+                from .bge_embedder import BGEEmbedder, get_embedder as get_local_embedder
+            except ImportError as e:
+                raise ImportError(
+                    "BGEEmbedder 未可用，请检查 sentence-transformers 是否安装。"
+                    f"原始错误: {e}"
+                )
+
             model_name = kwargs.get("model_name")
             device = kwargs.get("device")
-            
+
             return get_local_embedder(
                 model_name=model_name,
                 device=device

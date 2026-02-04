@@ -499,7 +499,17 @@ class CninfoIPOProspectusCrawler(CninfoBaseCrawler):
                         last_file_count = current_file_count
                     else:
                         no_new_file_count += 1
-                    
+
+                    # 显示进度（每10个任务或每次有新文件时显示）
+                    completed_count = len(upload_results)
+                    total_count = len(tasks_to_crawl)
+                    if current_file_count > last_file_count or completed_count % 10 == 0:
+                        progress_pct = completed_count / total_count * 100 if total_count > 0 else 0
+                        self.logger.info(
+                            f"📦 进度 (IPO): 已完成 {completed_count}/{total_count} ({progress_pct:.1f}%) | "
+                            f"上传中: {len(upload_futures)}"
+                        )
+
                     # 等待一段时间再检查
                     time.sleep(poll_interval)
                 

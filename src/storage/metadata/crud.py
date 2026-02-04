@@ -8,7 +8,7 @@ import uuid
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, desc, func
+from sqlalchemy import and_, or_, desc, func, String
 
 from src.storage.metadata.models import (
     Document, DocumentChunk, CrawlTask, ParseTask,
@@ -482,10 +482,11 @@ def update_chunk_embedding(
     embedding_model: str
 ) -> bool:
     """
-    更新分块的向量化信息
-    
+    更新分块的向量化信息（成功场景）
+
     注意：不再更新 vector_id，因为 Milvus 使用 chunk_id 作为主键
-    使用 vectorized_at 字段来判断是否已向量化
+    使用 vectorized_at 字段来判断是否已向量化（向后兼容）
+    新增 status 字段来追踪向量化状态
     """
     chunk_id = _to_uuid(chunk_id)
     chunk = session.query(DocumentChunk).filter(DocumentChunk.id == chunk_id).first()
@@ -494,6 +495,45 @@ def update_chunk_embedding(
 
     chunk.embedding_model = embedding_model
     chunk.vectorized_at = datetime.now()
+    chunk.status = 'vectorized'  # 设置为已向量化状态
+    chunk.vectorization_error = None  # 清除错误信息
+    session.flush()
+    return True
+
+
+def update_chunk_status(
+    session: Session,
+    chunk_id: Union[uuid.UUID, str],
+    status: str,
+    error_message: Optional[str] = None,
+    increment_retry: bool = False
+) -> bool:
+    """
+    更新分块的向量化状态
+
+    Args:
+        session: 数据库会话
+        chunk_id: 分块ID
+        status: 新状态（pending/vectorizing/vectorized/failed）
+        error_message: 错误信息（失败时提供）
+        increment_retry: 是否增加重试计数
+
+    Returns:
+        是否成功更新
+    """
+    chunk_id = _to_uuid(chunk_id)
+    chunk = session.query(DocumentChunk).filter(DocumentChunk.id == chunk_id).first()
+    if not chunk:
+        return False
+
+    chunk.status = status
+
+    if error_message is not None:
+        chunk.vectorization_error = error_message
+
+    if increment_retry:
+        chunk.vectorization_retry_count = (chunk.vectorization_retry_count or 0) + 1
+
     session.flush()
     return True
 
@@ -1277,20 +1317,33 @@ def get_listed_company_by_code(
 def get_all_listed_companies(
     session: Session,
     limit: Optional[int] = None,
-    offset: Optional[int] = None
+    offset: Optional[int] = None,
+    industry: Optional[str] = None
 ) -> List[ListedCompany]:
     """
     获取所有上市公司列表
-    
+
     Args:
         session: 数据库会话
         limit: 限制返回数量
         offset: 偏移量
-        
+        industry: 按行业过滤（None = 不过滤）
+
     Returns:
         ListedCompany 对象列表
     """
-    query = session.query(ListedCompany).order_by(ListedCompany.code)
+    query = session.query(ListedCompany)
+
+    # 按行业过滤（affiliate_industry 是 JSON 字段，格式: {"ind_code": "...", "ind_name": "..."}）
+    if industry:
+        # 使用 PostgreSQL JSON 操作符 ->> 提取 ind_name 字段，然后用 LIKE 查询
+        # affiliate_industry->>'ind_name' 提取 JSON 中的 ind_name 字段的文本值
+        from sqlalchemy import text
+        query = query.filter(
+            text(f"affiliate_industry->>'ind_name' LIKE :industry")
+        ).params(industry=f'%{industry}%')
+
+    query = query.order_by(ListedCompany.code)
     if offset:
         query = query.offset(offset)
     if limit:

@@ -455,7 +455,18 @@ class BaseCrawler(ABC, LoggerMixin):
         self.logger.info(f"开始批量爬取: {len(tasks)} 个任务")
 
         results = []
-        for task in tasks:
+        total = len(tasks)
+
+        for idx, task in enumerate(tasks):
+            # 显示进度：每10个或每10%显示一次，或最后一个
+            if (idx + 1) % 10 == 0 or (idx + 1) % max(1, total // 10) == 0 or (idx + 1) == total:
+                progress_pct = (idx + 1) / total * 100
+                self.logger.info(
+                    f"📦 [{idx+1}/{total}] {progress_pct:.1f}% | "
+                    f"爬取: {task.stock_code} - {task.company_name} "
+                    f"{task.year}Q{task.quarter if task.quarter else ''}"
+                )
+
             result = self.crawl(task)
             results.append(result)
 

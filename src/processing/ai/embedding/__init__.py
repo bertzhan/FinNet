@@ -5,7 +5,6 @@ Embedding 模块
 支持本地模型和 API 两种方式
 """
 
-from .bge_embedder import BGEEmbedder, get_embedder
 from .api_embedder import APIEmbedder, get_api_embedder
 from .embedder_factory import EmbedderFactory, get_embedder_by_mode
 
@@ -20,8 +19,6 @@ def _lazy_import_vectorizer():
         return None, None
 
 __all__ = [
-    "BGEEmbedder",
-    "get_embedder",
     "APIEmbedder",
     "get_api_embedder",
     "EmbedderFactory",

@@ -58,7 +58,8 @@ class MinerUParser(LoggerMixin):
         document_id: Union[uuid.UUID, str],
         save_to_silver: bool = True,
         start_page_id: int = 0,
-        end_page_id: Optional[int] = None
+        end_page_id: Optional[int] = None,
+        force_reparse: bool = False
     ) -> Dict[str, Any]:
         """
         解析文档
@@ -76,6 +77,7 @@ class MinerUParser(LoggerMixin):
             save_to_silver: 是否保存到 Silver 层
             start_page_id: 起始页码（从0开始），默认0（解析全部）
             end_page_id: 结束页码（从0开始），None 表示解析到最后
+            force_reparse: 是否强制重新解析（即使文档已解析），默认 False
 
         Returns:
             解析结果字典，包含：
@@ -111,23 +113,29 @@ class MinerUParser(LoggerMixin):
             minio_object_path = doc.minio_object_path
             doc_status = doc.status
 
-            # 检查是否已解析
-            if doc_status == DocumentStatus.PARSED.value:
-                self.logger.info(f"文档已解析: document_id={document_id}")
+            # 检查是否已解析（除非强制重新解析）
+            if doc_status == DocumentStatus.PARSED.value and not force_reparse:
+                self.logger.info(f"文档已解析: document_id={document_id}（跳过重新解析）")
                 # 查找已有的解析任务
                 existing_task = session.query(ParseTask).filter(
                     ParseTask.document_id == document_id,
                     ParseTask.status == 'completed'
                 ).first()
                 if existing_task:
+                    # 从 extra_metadata 中读取统计信息
+                    metadata = existing_task.extra_metadata or {}
                     return {
                         "success": True,
                         "parse_task_id": existing_task.id,
                         "output_path": existing_task.output_path,
-                        "extracted_text_length": existing_task.extracted_text_length,
-                        "extracted_tables_count": existing_task.extracted_tables_count,
-                        "extracted_images_count": existing_task.extracted_images_count
+                        "extracted_text_length": metadata.get("extracted_text_length", 0),
+                        "extracted_tables_count": metadata.get("extracted_tables_count", 0),
+                        "extracted_images_count": metadata.get("extracted_images_count", 0)
                     }
+
+            # 如果是强制重新解析，记录日志
+            if doc_status == DocumentStatus.PARSED.value and force_reparse:
+                self.logger.info(f"强制重新解析文档: document_id={document_id}")
 
             # 2. 创建解析任务记录
             parse_task = ParseTask(
@@ -1602,13 +1610,20 @@ class MinerUParser(LoggerMixin):
             ).first()
             if task:
                 task.status = "completed"
-                task.success = True
                 task.completed_at = datetime.now()
-                task.duration_seconds = duration
                 task.output_path = output_path
-                task.extracted_text_length = extracted_text_length
-                task.extracted_tables_count = extracted_tables_count
-                task.extracted_images_count = extracted_images_count
+
+                # 将额外信息存储到 extra_metadata
+                metadata = task.extra_metadata or {}
+                metadata.update({
+                    "success": True,
+                    "duration_seconds": duration,
+                    "extracted_text_length": extracted_text_length,
+                    "extracted_tables_count": extracted_tables_count,
+                    "extracted_images_count": extracted_images_count
+                })
+                task.extra_metadata = metadata
+
                 session.commit()
 
     def _update_parse_task_failed(
@@ -1623,9 +1638,16 @@ class MinerUParser(LoggerMixin):
             ).first()
             if task:
                 task.status = "failed"
-                task.success = False
                 task.completed_at = datetime.now()
                 task.error_message = error_message
+
+                # 将额外信息存储到 extra_metadata
+                metadata = task.extra_metadata or {}
+                metadata.update({
+                    "success": False
+                })
+                task.extra_metadata = metadata
+
                 session.commit()
 
     def _update_document_parsed(self, document_id: Union[uuid.UUID, str]) -> None:

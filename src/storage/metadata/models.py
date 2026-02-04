@@ -285,13 +285,17 @@ class DocumentChunk(Base):
     
     # 向量化相关字段
     # 注意：不再使用 vector_id，因为 Milvus 使用 chunk_id 作为主键
-    # 使用 vectorized_at 字段来判断是否已向量化
+    # 使用 vectorized_at 字段来判断是否已向量化（向后兼容）
+    # 新代码应使用 status 字段
+    status = Column(String(50), default='pending', index=True)  # 向量化状态：pending/vectorizing/vectorized/failed
     embedding_model = Column(String(100))  # 使用的向量化模型（如 "openai/text-embedding-3-large"）
     vectorized_at = Column(DateTime)       # 向量化时间戳（NULL 表示未向量化）
-    
+    vectorization_error = Column(Text)     # 向量化失败原因
+    vectorization_retry_count = Column(Integer, default=0)  # 向量化重试次数
+
     # Elasticsearch 索引相关字段
     es_indexed_at = Column(DateTime)       # ES 索引时间戳（NULL 表示未索引）
-    
+
     # 额外元数据
     extra_metadata = Column(JSON, default={})
     

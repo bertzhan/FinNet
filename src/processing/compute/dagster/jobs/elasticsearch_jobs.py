@@ -50,6 +50,11 @@ ELASTICSEARCH_CONFIG_SCHEMA = {
         is_required=False,
         description="文档类型过滤（quarterly_report/annual_report/ipo_prospectus），None 表示所有类型"
     ),
+    "stock_codes": Field(
+        list,
+        is_required=False,
+        description="按股票代码列表过滤（None = 不过滤，指定后将只处理这些股票代码的文档分块）。例如: ['000001', '000002']"
+    ),
     "limit": Field(
         int,
         is_required=False,
@@ -82,13 +87,14 @@ def scan_chunked_documents_op(context) -> Dict:
     limit = config.get("limit")  # 不设置默认值，None 表示处理全部
     market_filter = config.get("market")
     doc_type_filter = config.get("doc_type")
+    stock_codes_filter = config.get("stock_codes")
     force_reindex = config.get("force_reindex", False)
-    
+
     logger.info(f"开始扫描待索引分块...")
     logger.info(
         f"配置: batch_size={batch_size}, limit={'全部' if limit is None else limit}, "
         f"market={market_filter}, doc_type={doc_type_filter}, "
-        f"force_reindex={force_reindex}"
+        f"stock_codes={stock_codes_filter}, force_reindex={force_reindex}"
     )
     
     pg_client = get_postgres_client()
@@ -114,7 +120,12 @@ def scan_chunked_documents_op(context) -> Dict:
             # 应用文档类型过滤
             if doc_type_filter:
                 query = query.filter(Document.doc_type == doc_type_filter)
-            
+
+            # 应用股票代码过滤
+            if stock_codes_filter:
+                logger.info(f"按股票代码过滤: {stock_codes_filter}")
+                query = query.filter(Document.stock_code.in_(stock_codes_filter))
+
             # 限制数量并执行查询（如果 limit 为 None，则不限制）
             if limit is not None:
                 chunks = query.limit(limit).all()
@@ -260,9 +271,19 @@ def index_chunks_to_elasticsearch_op(context, scan_result: Dict) -> Dict:
     
     # 批量索引（分批处理）
     batch_size = 100
+    total_batches = (len(chunks) + batch_size - 1) // batch_size
     for i in range(0, len(chunks), batch_size):
         batch = chunks[i:i + batch_size]
-        
+        batch_num = i // batch_size + 1
+        processed = min(i + batch_size, len(chunks))
+        progress_pct = processed / len(chunks) * 100
+
+        logger.info(
+            f"📦 批次 [{batch_num}/{total_batches}] | "
+            f"本批 {len(batch)} 项 | "
+            f"总进度 {processed}/{len(chunks)} ({progress_pct:.1f}%)"
+        )
+
         try:
             # 准备文档数据
             documents = []
@@ -304,10 +325,9 @@ def index_chunks_to_elasticsearch_op(context, scan_result: Dict) -> Dict:
             if failed_items:
                 for item in failed_items[:10]:  # 只记录前10个失败项
                     failed_chunks.append(item.get("_id", "unknown"))
-            
-            logger.info(
-                f"批次 {i//batch_size + 1}: 成功={success_count}, 失败={len(failed_items)}"
-            )
+
+            # 显示批次结果
+            logger.info(f"   ✓ 成功 {success_count} 失败 {len(failed_items)}")
             
         except Exception as e:
             logger.error(f"批量索引失败（批次 {i//batch_size + 1}）: {e}", exc_info=True)

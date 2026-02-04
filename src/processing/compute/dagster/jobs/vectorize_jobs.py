@@ -21,6 +21,8 @@ from dagster import (
     RunRequest,
     Field,
     get_dagster_logger,
+    AssetMaterialization,
+    MetadataValue,
 )
 
 # 导入向量化服务和数据库模块
@@ -49,6 +51,11 @@ VECTORIZE_CONFIG_SCHEMA = {
         str,
         is_required=False,
         description="文档类型过滤（quarterly_report/annual_report/ipo_prospectus），None 表示所有类型"
+    ),
+    "stock_codes": Field(
+        list,
+        is_required=False,
+        description="按股票代码列表过滤（None = 不过滤，指定后将只处理这些股票代码的文档分块）。例如: ['000001', '000002']"
     ),
     "limit": Field(
         int,
@@ -82,20 +89,21 @@ def scan_unvectorized_chunks_op(context) -> Dict:
     limit = config.get("limit")  # None 表示处理全部
     market_filter = config.get("market")
     doc_type_filter = config.get("doc_type")
+    stock_codes_filter = config.get("stock_codes")
     force_revectorize = config.get("force_revectorize", False)
-    
+
     logger.info(f"开始扫描待向量化分块...")
     if limit is not None:
         logger.info(
             f"配置: batch_size={batch_size}, limit={limit}, "
             f"market={market_filter}, doc_type={doc_type_filter}, "
-            f"force_revectorize={force_revectorize}"
+            f"stock_codes={stock_codes_filter}, force_revectorize={force_revectorize}"
         )
     else:
         logger.info(
             f"配置: batch_size={batch_size}, limit=无限制（处理全部）, "
             f"market={market_filter}, doc_type={doc_type_filter}, "
-            f"force_revectorize={force_revectorize}"
+            f"stock_codes={stock_codes_filter}, force_revectorize={force_revectorize}"
         )
     
     pg_client = get_postgres_client()
@@ -107,10 +115,11 @@ def scan_unvectorized_chunks_op(context) -> Dict:
                 Document, DocumentChunk.document_id == Document.id
             )
             
-            # 应用过滤条件
+            # 应用过滤条件：使用 status 字段
             if not force_revectorize:
-                query = query.filter(DocumentChunk.vectorized_at.is_(None))
-                logger.info("过滤条件: 只扫描未向量化的分块 (vectorized_at IS NULL)")
+                # 只扫描待处理和失败的分块（支持自动重试失败的分块）
+                query = query.filter(DocumentChunk.status.in_(['pending', 'failed']))
+                logger.info("过滤条件: 只扫描待向量化和失败的分块 (status IN ('pending', 'failed'))")
             else:
                 logger.info("⚠️ force_revectorize=True: 将扫描所有分块（包括已向量化的）")
             
@@ -124,7 +133,12 @@ def scan_unvectorized_chunks_op(context) -> Dict:
             # 应用文档类型过滤
             if doc_type_filter:
                 query = query.filter(Document.doc_type == doc_type_filter)
-            
+
+            # 应用股票代码过滤
+            if stock_codes_filter:
+                logger.info(f"按股票代码过滤: {stock_codes_filter}")
+                query = query.filter(Document.stock_code.in_(stock_codes_filter))
+
             # 限制数量并执行查询（包含表格分块，将在向量化时提取文本）
             if limit is not None:
                 chunks = query.limit(limit).all()
@@ -251,10 +265,10 @@ def vectorize_chunks_op(context, scan_result: Dict) -> Dict:
         }
     
     logger.info(f"开始向量化 {len(chunks)} 个分块...")
-    
+
     # 提取分块ID列表
     chunk_ids = [chunk["chunk_id"] for chunk in chunks]
-    
+
     try:
         # 初始化向量化服务（放在 try 块内，以便捕获初始化异常）
         try:
@@ -262,11 +276,64 @@ def vectorize_chunks_op(context, scan_result: Dict) -> Dict:
         except Exception as init_error:
             logger.error(f"向量化服务初始化失败: {init_error}", exc_info=True)
             raise Exception(f"向量化服务初始化失败: {str(init_error)}。请检查嵌入模型配置（EMBEDDING_MODE, EMBEDDING_API_URL等）")
-        
-        # 批量向量化
+
+        # 定义进度回调函数（用于实时记录 AssetMaterialization 事件）
+        def on_batch_complete(batch_info):
+            """每个批次完成后调用，记录该批次的 AssetMaterialization 事件"""
+            from src.storage.metadata.postgres_client import get_postgres_client
+            from src.storage.metadata.models import DocumentChunk, Document
+            import uuid as uuid_lib
+
+            pg_client = get_postgres_client()
+            try:
+                with pg_client.get_session() as session:
+                    # 为当前批次的成功分块记录事件
+                    for chunk_data in batch_info["batch_chunks"]:
+                        chunk_id = chunk_data["chunk_id"]
+
+                        try:
+                            # 查询分块信息
+                            chunk = session.query(DocumentChunk).filter(
+                                DocumentChunk.id == uuid_lib.UUID(chunk_id)
+                            ).first()
+
+                            if chunk and chunk.vectorized_at:  # 确认已向量化
+                                doc = session.query(Document).filter(
+                                    Document.id == chunk.document_id
+                                ).first()
+
+                                if doc:
+                                    # 立即记录 AssetMaterialization 事件
+                                    context.log_event(
+                                        AssetMaterialization(
+                                            asset_key=["silver", "vectorized_chunks", doc.market, doc.doc_type, doc.stock_code],
+                                            description=f"{doc.company_name} - Chunk {chunk.chunk_index} (批次 {batch_info['batch_num']}/{batch_info['total_batches']})",
+                                            metadata={
+                                                "chunk_id": MetadataValue.text(str(chunk.id)),
+                                                "document_id": MetadataValue.text(str(doc.id)),
+                                                "stock_code": MetadataValue.text(doc.stock_code),
+                                                "company_name": MetadataValue.text(doc.company_name),
+                                                "year": MetadataValue.int(doc.year or 0),
+                                                "quarter": MetadataValue.int(doc.quarter or 0),
+                                                "chunk_index": MetadataValue.int(chunk.chunk_index),
+                                                "batch": MetadataValue.text(f"{batch_info['batch_num']}/{batch_info['total_batches']}"),
+                                                "progress": MetadataValue.text(f"{batch_info['processed']}/{batch_info['total']} ({batch_info['processed']/batch_info['total']*100:.1f}%)"),
+                                                "vectorized_at": MetadataValue.text(chunk.vectorized_at.isoformat() if chunk.vectorized_at else ""),
+                                            }
+                                        )
+                                    )
+                        except Exception as e:
+                            # 单个分块记录失败不影响其他分块
+                            logger.debug(f"记录 AssetMaterialization 事件失败 (chunk_id={chunk_id}): {e}")
+            except Exception as e:
+                # 批次记录失败不影响主流程
+                logger.warning(f"批次 {batch_info['batch_num']} 记录 AssetMaterialization 事件失败: {e}")
+
+        # 批量向量化（传入进度回调）
         result = vectorizer.vectorize_chunks(
             chunk_ids=chunk_ids,
-            force_revectorize=force_revectorize
+            force_revectorize=force_revectorize,
+            progress_callback=on_batch_complete
         )
         
         vectorized_count = result.get("vectorized_count", 0)
@@ -276,7 +343,10 @@ def vectorize_chunks_op(context, scan_result: Dict) -> Dict:
         logger.info(
             f"向量化完成: 成功={vectorized_count}, 失败={failed_count}"
         )
-        
+
+        # 注意：AssetMaterialization 事件已经在 on_batch_complete 回调中实时记录了
+        # 不再需要批量记录逻辑
+
         if failed_chunks:
             logger.warning(f"失败的分块数量: {len(failed_chunks)}")
             logger.warning("=" * 80)
@@ -417,7 +487,22 @@ def validate_vectorize_results_op(context, vectorize_results: Dict) -> Dict:
         logger.warning(f"失败分块列表（前10个）:")
         for chunk_id in failed_chunks:
             logger.warning(f"  - chunk_id={chunk_id}")
-    
+
+    # 记录汇总的 AssetMaterialization 事件（质量指标）
+    context.log_event(
+        AssetMaterialization(
+            asset_key=["quality_metrics", "vectorize_validation"],
+            description=f"向量化数据质量检查: 通过率 {success_rate:.2%}",
+            metadata={
+                "total": MetadataValue.int(total_chunks),
+                "vectorized": MetadataValue.int(vectorized_count),
+                "failed": MetadataValue.int(failed_count),
+                "success_rate": MetadataValue.float(success_rate),
+                "validation_passed": MetadataValue.bool(validation_passed),
+            }
+        )
+    )
+
     return {
         "success": True,
         "validation_passed": validation_passed,

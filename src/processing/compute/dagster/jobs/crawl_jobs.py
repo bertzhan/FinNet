@@ -75,6 +75,11 @@ REPORT_CRAWL_CONFIG_SCHEMA = {
         is_required=False,
         description="Limit number of companies to crawl (None = all companies)"
     ),
+    "stock_codes": Field(
+        list,
+        is_required=False,
+        description="List of stock codes to crawl (None = use limit filter, specified = only crawl these codes). Example: ['000001', '000002']"
+    ),
 }
 
 IPO_CRAWL_CONFIG_SCHEMA = {
@@ -103,41 +108,66 @@ IPO_CRAWL_CONFIG_SCHEMA = {
         is_required=False,
         description="Limit number of companies to crawl (None = all companies)"
     ),
+    "stock_codes": Field(
+        list,
+        is_required=False,
+        description="List of stock codes to crawl (None = use limit filter, specified = only crawl these codes). Example: ['000001', '000002']"
+    ),
 }
 
 
 # ==================== 辅助函数 ====================
 
-def load_company_list_from_db(limit: Optional[int] = None, logger=None) -> List[Dict[str, str]]:
+def load_company_list_from_db(
+    limit: Optional[int] = None,
+    stock_codes: Optional[List[str]] = None,
+    logger=None
+) -> List[Dict[str, str]]:
     """
     从数据库加载公司列表
-    
+
     Args:
         limit: 限制返回数量（None 表示返回所有）
+        stock_codes: 按股票代码列表过滤（None 表示不过滤）
         logger: 日志记录器（如果为 None，使用标准 logging）
-        
+
     Returns:
         公司列表 [{'code': '000001', 'name': '平安银行'}, ...]
     """
     if logger is None:
         import logging
         logger = logging.getLogger(__name__)
-    
+
     companies = []
     try:
         pg_client = get_postgres_client()
         with pg_client.get_session() as session:
-            listed_companies = crud.get_all_listed_companies(session, limit=limit)
+            # 如果指定了股票代码列表，优先使用股票代码过滤
+            if stock_codes:
+                from src.storage.metadata.models import ListedCompany
+                # 查询指定的股票代码
+                listed_companies = session.query(ListedCompany).filter(
+                    ListedCompany.code.in_(stock_codes)
+                ).all()
+                logger.info(f"按股票代码过滤: 指定 {len(stock_codes)} 个代码，找到 {len(listed_companies)} 家公司")
+            else:
+                # 使用原有的 limit 过滤
+                listed_companies = crud.get_all_listed_companies(session, limit=limit)
+
             for company in listed_companies:
                 companies.append({
                     'code': company.code,
                     'name': company.name
                 })
-        logger.info(f"从数据库加载了 {len(companies)} 家公司")
+
+        if stock_codes:
+            logger.info(f"从数据库加载了 {len(companies)} 家公司（按股票代码: {stock_codes}）")
+        else:
+            logger.info(f"从数据库加载了 {len(companies)} 家公司")
     except Exception as e:
         logger.error(f"从数据库加载公司列表失败: {e}", exc_info=True)
         raise  # 重新抛出异常，让调用者知道失败
-    
+
     return companies
 
 
@@ -214,29 +244,57 @@ def crawl_a_share_reports_op(context) -> Dict:
             (year, 4),  # Q4: 年报
         ]
         logger.info(f"指定年份 {year}，将爬取该年的所有季度报告: Q1, Q2, Q3, Q4")
-    
+
     # 确保输出目录存在
     os.makedirs(output_root, exist_ok=True)
-    
+
     # 从数据库加载公司列表
     limit = config.get("limit")
-    if limit is not None:
+    stock_codes = config.get("stock_codes")
+
+    # 构建日志信息
+    if stock_codes:
+        logger.info(f"从数据库加载公司列表（按股票代码: {stock_codes}）...")
+    elif limit is not None:
         logger.info(f"从数据库加载公司列表（限制前 {limit} 家）...")
     else:
         logger.info("从数据库加载公司列表...")
+
     try:
-        companies = load_company_list_from_db(limit=limit, logger=logger)
+        companies = load_company_list_from_db(
+            limit=limit,
+            stock_codes=stock_codes,
+            logger=logger
+        )
         if not companies:
-            logger.warning("⚠️ 公司列表为空，请先运行 update_listed_companies_job 更新公司列表")
-            return {
-                "success": False,
-                "error": "公司列表为空，请先运行 update_listed_companies_job 更新公司列表",
-                "total": 0,
-                "success_count": 0,
-                "fail_count": 0,
-                "results": []
-            }
-        logger.info(f"✅ 成功加载 {len(companies)} 家公司" + (f"（限制为前 {limit} 家）" if limit is not None else ""))
+            if stock_codes:
+                logger.warning(f"⚠️ 公司列表为空，未找到指定的股票代码: {stock_codes}")
+                return {
+                    "success": False,
+                    "error": f"未找到指定的股票代码: {stock_codes}",
+                    "total": 0,
+                    "success_count": 0,
+                    "fail_count": 0,
+                    "results": []
+                }
+            else:
+                logger.warning("⚠️ 公司列表为空，请先运行 update_listed_companies_job 更新公司列表")
+                return {
+                    "success": False,
+                    "error": "公司列表为空，请先运行 update_listed_companies_job 更新公司列表",
+                    "total": 0,
+                    "success_count": 0,
+                    "fail_count": 0,
+                    "results": []
+                }
+
+        # 构建过滤信息
+        filter_info = ""
+        if stock_codes:
+            filter_info = f"（按股票代码: {stock_codes}）"
+        elif limit is not None:
+            filter_info = f"（限制为前 {limit} 家）"
+        logger.info(f"✅ 成功加载 {len(companies)} 家公司{filter_info}")
     except Exception as e:
         logger.error(f"❌ 从数据库加载公司列表失败: {e}", exc_info=True)
         return {
@@ -399,23 +457,51 @@ def crawl_a_share_ipo_op(context) -> Dict:
     
     # 从数据库加载公司列表
     limit = config.get("limit")
-    if limit is not None:
+    stock_codes = config.get("stock_codes")
+
+    # 构建日志信息
+    if stock_codes:
+        logger.info(f"从数据库加载公司列表（按股票代码: {stock_codes}）...")
+    elif limit is not None:
         logger.info(f"从数据库加载公司列表（限制前 {limit} 家）...")
     else:
         logger.info("从数据库加载公司列表...")
+
     try:
-        companies = load_company_list_from_db(limit=limit, logger=logger)
+        companies = load_company_list_from_db(
+            limit=limit,
+            stock_codes=stock_codes,
+            logger=logger
+        )
         if not companies:
-            logger.warning("⚠️ 公司列表为空，请先运行 update_listed_companies_job 更新公司列表")
-            return {
-                "success": False,
-                "error": "公司列表为空，请先运行 update_listed_companies_job 更新公司列表",
-                "total": 0,
-                "success_count": 0,
-                "fail_count": 0,
-                "results": []
-            }
-        logger.info(f"✅ 成功加载 {len(companies)} 家公司" + (f"（限制为前 {limit} 家）" if limit is not None else ""))
+            if stock_codes:
+                logger.warning(f"⚠️ 公司列表为空，未找到指定的股票代码: {stock_codes}")
+                return {
+                    "success": False,
+                    "error": f"未找到指定的股票代码: {stock_codes}",
+                    "total": 0,
+                    "success_count": 0,
+                    "fail_count": 0,
+                    "results": []
+                }
+            else:
+                logger.warning("⚠️ 公司列表为空，请先运行 update_listed_companies_job 更新公司列表")
+                return {
+                    "success": False,
+                    "error": "公司列表为空，请先运行 update_listed_companies_job 更新公司列表",
+                    "total": 0,
+                    "success_count": 0,
+                    "fail_count": 0,
+                    "results": []
+                }
+
+        # 构建过滤信息
+        filter_info = ""
+        if stock_codes:
+            filter_info = f"（按股票代码: {stock_codes}）"
+        elif limit is not None:
+            filter_info = f"（限制为前 {limit} 家）"
+        logger.info(f"✅ 成功加载 {len(companies)} 家公司{filter_info}")
     except Exception as e:
         logger.error(f"❌ 从数据库加载公司列表失败: {e}", exc_info=True)
         return {

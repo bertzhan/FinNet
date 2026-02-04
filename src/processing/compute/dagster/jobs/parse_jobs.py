@@ -63,10 +63,25 @@ PARSE_CONFIG_SCHEMA = {
         is_required=False,
         description="文档类型过滤（quarterly_report/annual_report/ipo_prospectus），None 表示所有类型"
     ),
+    "industry": Field(
+        str,
+        is_required=False,
+        description="按公司行业过滤（None = 不过滤）"
+    ),
+    "stock_codes": Field(
+        list,
+        is_required=False,
+        description="按股票代码列表过滤（None = 不过滤，指定后将只处理这些股票代码的文档）。例如: ['000001', '000002']"
+    ),
     "limit": Field(
         int,
         default_value=100,
         description="本次作业最多处理的文档数量（1-1000）"
+    ),
+    "force_reparse": Field(
+        bool,
+        default_value=False,
+        description="是否强制重新解析已解析的文档（默认 False，只解析未解析的文档）"
     ),
     "enable_silver_upload": Field(
         bool,
@@ -92,42 +107,107 @@ PARSE_CONFIG_SCHEMA = {
 def scan_pending_documents_op(context) -> Dict:
     """
     扫描待解析的文档
-    
+
     查找状态为 'crawled' 的文档，准备进行 PDF 解析
-    
+    支持 force_reparse 强制重新解析已解析的文档
+
     Returns:
         包含待解析文档列表的字典
     """
     config = context.op_config
     logger = get_dagster_logger()
-    
+
     batch_size = config.get("batch_size", 10)
     limit = config.get("limit", 100)
     market_filter = config.get("market")
     doc_type_filter = config.get("doc_type")
-    
+    industry_filter = config.get("industry")
+    stock_codes_filter = config.get("stock_codes")
+    force_reparse = config.get("force_reparse", False)
+
     logger.info(f"开始扫描待解析文档...")
-    logger.info(f"配置: batch_size={batch_size}, limit={limit}, market={market_filter}, doc_type={doc_type_filter}")
-    
+    logger.info(f"配置: batch_size={batch_size}, limit={limit}, market={market_filter}, doc_type={doc_type_filter}, industry={industry_filter}, stock_codes={stock_codes_filter}, force_reparse={force_reparse}")
+
     pg_client = get_postgres_client()
-    
+
     try:
         with pg_client.get_session() as session:
-            # 查找状态为 'crawled' 的文档
-            documents = crud.get_documents_by_status(
-                session=session,
-                status=DocumentStatus.CRAWLED.value,
-                limit=limit,
-                offset=0
-            )
-            
+            # 根据 force_reparse 决定查询哪些状态的文档
+            # 注意：这里不应用 limit，先获取所有符合条件的文档
+            if force_reparse:
+                # 强制重新解析：查询 'crawled' 和 'parsed' 状态的文档
+                logger.info("强制重新解析模式：将解析 'crawled' 和 'parsed' 状态的文档")
+                documents_crawled = crud.get_documents_by_status(
+                    session=session,
+                    status=DocumentStatus.CRAWLED.value,
+                    limit=None,  # 不限制，获取所有
+                    offset=0
+                )
+                documents_parsed = crud.get_documents_by_status(
+                    session=session,
+                    status=DocumentStatus.PARSED.value,
+                    limit=None,  # 不限制，获取所有
+                    offset=0
+                )
+                documents = documents_crawled + documents_parsed
+                # 去重（如果有重复）
+                seen_ids = set()
+                unique_documents = []
+                for doc in documents:
+                    if doc.id not in seen_ids:
+                        seen_ids.add(doc.id)
+                        unique_documents.append(doc)
+                documents = unique_documents
+            else:
+                # 正常模式：只查找状态为 'crawled' 的文档
+                documents = crud.get_documents_by_status(
+                    session=session,
+                    status=DocumentStatus.CRAWLED.value,
+                    limit=None,  # 不限制，获取所有
+                    offset=0
+                )
+
+            logger.info(f"查询到 {len(documents)} 个文档（应用过滤前）")
+
             # 应用市场过滤
             if market_filter:
                 documents = [d for d in documents if d.market == market_filter]
-            
+                logger.info(f"市场过滤后: {len(documents)} 个文档")
+
             # 应用文档类型过滤
             if doc_type_filter:
                 documents = [d for d in documents if d.doc_type == doc_type_filter]
+                logger.info(f"文档类型过滤后: {len(documents)} 个文档")
+
+            # 应用行业过滤
+            if industry_filter:
+                from src.storage.metadata.models import ListedCompany
+                from sqlalchemy import text
+
+                # 查询符合行业的公司列表
+                # affiliate_industry 是 JSON 字段，格式: {"ind_code": "...", "ind_name": "..."}
+                # 使用 PostgreSQL JSON 操作符 ->> 提取 ind_name 字段
+                companies = session.query(ListedCompany).filter(
+                    text("affiliate_industry->>'ind_name' LIKE :industry")
+                ).params(industry=f'%{industry_filter}%').all()
+
+                company_codes = {c.code for c in companies}
+                logger.info(f"行业过滤 '{industry_filter}': 找到 {len(company_codes)} 家公司")
+
+                # 过滤文档
+                documents = [d for d in documents if d.stock_code in company_codes]
+                logger.info(f"行业过滤后: {len(documents)} 个文档")
+
+            # 应用股票代码过滤
+            if stock_codes_filter:
+                logger.info(f"按股票代码过滤: {stock_codes_filter}")
+                documents = [d for d in documents if d.stock_code in stock_codes_filter]
+                logger.info(f"股票代码过滤后: {len(documents)} 个文档")
+
+            # 应用 limit（最后应用）
+            if limit and len(documents) > limit:
+                logger.info(f"应用 limit={limit}，从 {len(documents)} 个文档中截取前 {limit} 个")
+                documents = documents[:limit]
             
             # 只处理 PDF 文档
             pdf_documents = [
@@ -171,13 +251,14 @@ def scan_pending_documents_op(context) -> Dict:
                 batches.append(batch)
             
             logger.info(f"分为 {len(batches)} 个批次，每批 {batch_size} 个文档")
-            
+
             return {
                 "success": True,
                 "total_documents": len(document_list),
                 "total_batches": len(batches),
                 "batches": batches,
                 "documents": document_list,  # 保留完整列表用于后续处理
+                "force_reparse": force_reparse,  # 传递 force_reparse 配置
             }
             
     except Exception as e:
@@ -247,12 +328,18 @@ def parse_documents_op(context, scan_result: Dict) -> Dict:
     start_page_id = config.get("start_page_id", 0) if config else 0
     end_page_id = config.get("end_page_id") if config else None
 
-    logger.info(f"🔍 DEBUG: enable_silver_upload={enable_silver_upload}, start_page_id={start_page_id}, end_page_id={end_page_id}")
+    # 从 scan_result 中获取 force_reparse 配置
+    force_reparse = scan_result.get("force_reparse", False)
+
+    logger.info(f"🔍 DEBUG: enable_silver_upload={enable_silver_upload}, start_page_id={start_page_id}, end_page_id={end_page_id}, force_reparse={force_reparse}")
 
     if end_page_id is not None:
         logger.info(f"📄 页面范围: {start_page_id} - {end_page_id} (共 {end_page_id - start_page_id + 1} 页)")
     else:
         logger.info(f"📄 页面范围: {start_page_id} - 最后 (解析全部)")
+
+    if force_reparse:
+        logger.info(f"⚠️  强制重新解析模式：将重新解析已解析的文档")
     
     if not scan_result.get("success"):
         logger.error(f"扫描失败，跳过解析: {scan_result.get('error_message')}")
@@ -274,24 +361,29 @@ def parse_documents_op(context, scan_result: Dict) -> Dict:
             "skipped_count": 0,
         }
     
-    logger.info(f"开始解析 {len(documents)} 个文档...")
-    
+    logger.info(f"🚀 开始解析: 共 {len(documents)} 个文档")
+
     # 初始化解析器
     parser = get_mineru_parser()
-    
+
     pg_client = get_postgres_client()
-    
+
     parsed_count = 0
     failed_count = 0
     skipped_count = 0
     failed_documents = []
-    
-    for doc_info in documents:
+
+    for idx, doc_info in enumerate(documents):
         document_id = doc_info["document_id"]
         stock_code = doc_info["stock_code"]
+        company_name = doc_info.get("company_name", "")
         minio_path = doc_info["minio_object_path"]
-        
-        logger.info(f"解析文档 {document_id}: {stock_code} - {minio_path}")
+
+        # 显示进度：每10个或每10%显示一次，或最后一个
+        total = len(documents)
+        if (idx + 1) % 10 == 0 or (idx + 1) % max(1, total // 10) == 0 or (idx + 1) == total:
+            progress_pct = (idx + 1) / total * 100
+            logger.info(f"📦 [{idx+1}/{total}] {progress_pct:.1f}% | 解析: {stock_code} - {company_name}")
         
         try:
             # 注意：parse_document 方法内部会重新查询数据库获取 Document 对象
@@ -300,7 +392,8 @@ def parse_documents_op(context, scan_result: Dict) -> Dict:
                 document_id=document_id,
                 save_to_silver=enable_silver_upload,
                 start_page_id=start_page_id,
-                end_page_id=end_page_id
+                end_page_id=end_page_id,
+                force_reparse=force_reparse  # 传递强制重新解析标志
             )
             
             # 检查 result 是否为 None
@@ -456,16 +549,15 @@ def validate_parse_results_op(context, parse_results: Dict) -> Dict:
                 "config": {
                     "enable_silver_upload": True,
                     "start_page_id": 0,
-                    "end_page_id": 4,  # 默认只解析前5页（0-4），用于快速测试
                 }
             }
         }
     },
-    description="PDF 解析作业 - 默认配置解析前5页"
+    description="PDF 解析作业"
 )
 def parse_pdf_job():
     """
-    PDF 解析作业（默认解析前5页）
+    PDF 解析作业（解析全部页面）
 
     完整流程：
     1. 扫描待解析文档（状态为 'crawled'）
@@ -478,15 +570,15 @@ def parse_pdf_job():
         - limit: 10 (最多处理10个文档)
     - parse_documents_op:
         - start_page_id: 0
-        - end_page_id: 4 (只解析前5页，用于快速测试)
+        - enable_silver_upload: True
 
-    如需解析完整文档，请在 Launchpad 中修改配置：
+    如需指定页面范围，请在 Launchpad 中配置 end_page_id：
     ops:
       parse_documents_op:
         config:
           enable_silver_upload: true
           start_page_id: 0
-          # 不设置 end_page_id，表示解析全部
+          end_page_id: 4  # 例如：只解析前5页（0-4）
     """
     scan_result = scan_pending_documents_op()
     parse_results = parse_documents_op(scan_result)
@@ -531,7 +623,7 @@ def parse_pdf_full_job():
         - start_page_id: 0
         - end_page_id: None (解析所有页面)
 
-    ⚠️ 注意：解析完整文档可能需要较长时间，建议先用 parse_pdf_job 测试前几页
+    ⚠️ 注意：解析完整文档可能需要较长时间
     """
     scan_result = scan_pending_documents_op()
     parse_results = parse_documents_op(scan_result)

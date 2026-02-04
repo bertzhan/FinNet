@@ -76,7 +76,8 @@ class Vectorizer(LoggerMixin):
     def vectorize_chunks(
         self,
         chunk_ids: List[Union[uuid.UUID, str]],
-        force_revectorize: bool = False
+        force_revectorize: bool = False,
+        progress_callback: Optional[callable] = None
     ) -> Dict[str, Any]:
         """
         向量化指定的分块
@@ -84,6 +85,9 @@ class Vectorizer(LoggerMixin):
         Args:
             chunk_ids: 分块ID列表
             force_revectorize: 是否强制重新向量化（删除旧向量）
+            progress_callback: 进度回调函数，每个批次完成后调用
+                               回调参数: dict with keys: batch_num, total_batches, batch_size,
+                                        processed, total, vectorized_count, failed_count, batch_chunks
 
         Returns:
             向量化结果字典，包含：
@@ -192,19 +196,61 @@ class Vectorizer(LoggerMixin):
 
         # 批量处理
         batch_size = embedding_config.EMBEDDING_BATCH_SIZE
+        total_batches = (len(chunks_data) + batch_size - 1) // batch_size
         for i in range(0, len(chunks_data), batch_size):
             batch = chunks_data[i:i + batch_size]
+            batch_num = i // batch_size + 1
+            processed = min(i + batch_size, len(chunks_data))
+            progress_pct = processed / len(chunks_data) * 100
+
+            self.logger.info(
+                f"📦 批次 [{batch_num}/{total_batches}] | "
+                f"本批 {len(batch)} 项 | "
+                f"总进度 {processed}/{len(chunks_data)} ({progress_pct:.1f}%)"
+            )
+
             try:
                 result = self._vectorize_batch(batch, force_revectorize)
                 vectorized_count += result["vectorized_count"]
                 failed_count += result["failed_count"]
                 failed_chunks.extend(result["failed_chunks"])
+
+                # 显示批次结果
+                self.logger.info(f"   ✓ 成功 {result['vectorized_count']} 失败 {result['failed_count']}")
+
+                # 调用进度回调（如果提供）
+                if progress_callback:
+                    try:
+                        progress_callback({
+                            "batch_num": batch_num,
+                            "total_batches": total_batches,
+                            "batch_size": len(batch),
+                            "processed": processed,
+                            "total": len(chunks_data),
+                            "vectorized_count": result["vectorized_count"],
+                            "failed_count": result["failed_count"],
+                            "batch_chunks": batch,  # 当前批次的分块数据
+                        })
+                    except Exception as callback_error:
+                        # 回调失败不应影响主流程
+                        self.logger.warning(f"进度回调执行失败: {callback_error}", exc_info=True)
             except Exception as e:
                 self.logger.error(f"批量向量化失败: {e}", exc_info=True)
-                # 标记整批为失败
-                for item in batch:
-                    failed_count += 1
-                    failed_chunks.append(item["chunk_id"])
+                # 标记整批为失败，并更新数据库状态
+                error_message = f"批量向量化异常: {str(e)[:200]}"
+                with self.pg_client.get_session() as session:
+                    for item in batch:
+                        failed_count += 1
+                        failed_chunks.append(item["chunk_id"])
+                        # 更新失败状态
+                        crud.update_chunk_status(
+                            session=session,
+                            chunk_id=item["_chunk_id_uuid"],
+                            status='failed',
+                            error_message=error_message,
+                            increment_retry=True
+                        )
+                    session.commit()
 
         self.logger.info(
             f"向量化完成: 成功={vectorized_count}, 失败={failed_count}"
@@ -314,7 +360,7 @@ class Vectorizer(LoggerMixin):
                     )
         except Exception as e:
             self.logger.error(f"生成向量失败: {e}", exc_info=True)
-            
+
             # 打印所有失败分块的 chunk_text
             self.logger.error("=" * 80)
             self.logger.error(f"批量向量化失败，共 {len(chunks_data)} 个分块:")
@@ -331,7 +377,23 @@ class Vectorizer(LoggerMixin):
                     f"  {'...' if len(item.get('chunk_text', '')) > 200 else ''}"
                 )
             self.logger.error("=" * 80)
-            
+
+            # 更新所有失败分块的状态
+            error_message = f"生成向量失败: {str(e)[:200]}"
+            with self.pg_client.get_session() as session:
+                for item in chunks_data:
+                    try:
+                        crud.update_chunk_status(
+                            session=session,
+                            chunk_id=item["_chunk_id_uuid"],
+                            status='failed',
+                            error_message=error_message,
+                            increment_retry=True
+                        )
+                    except Exception as update_error:
+                        self.logger.warning(f"更新失败状态异常: chunk_id={item['chunk_id']}, error={update_error}")
+                session.commit()
+
             return {
                 "vectorized_count": 0,
                 "failed_count": len(chunks_data),
@@ -342,7 +404,7 @@ class Vectorizer(LoggerMixin):
             self.logger.error(
                 f"向量数量不匹配: 期望={len(chunks_data)}, 实际={len(embeddings)}"
             )
-            
+
             # 打印所有分块的 chunk_text
             self.logger.error("=" * 80)
             self.logger.error("向量数量不匹配，所有分块信息:")
@@ -359,7 +421,23 @@ class Vectorizer(LoggerMixin):
                     f"  {'...' if len(item.get('chunk_text', '')) > 200 else ''}"
                 )
             self.logger.error("=" * 80)
-            
+
+            # 更新所有失败分块的状态
+            error_message = f"向量数量不匹配: 期望={len(chunks_data)}, 实际={len(embeddings)}"
+            with self.pg_client.get_session() as session:
+                for item in chunks_data:
+                    try:
+                        crud.update_chunk_status(
+                            session=session,
+                            chunk_id=item["_chunk_id_uuid"],
+                            status='failed',
+                            error_message=error_message,
+                            increment_retry=True
+                        )
+                    except Exception as update_error:
+                        self.logger.warning(f"更新失败状态异常: chunk_id={item['chunk_id']}, error={update_error}")
+                session.commit()
+
             return {
                 "vectorized_count": 0,
                 "failed_count": len(chunks_data),
@@ -451,7 +529,7 @@ class Vectorizer(LoggerMixin):
             )
         except Exception as e:
             self.logger.error(f"插入Milvus失败: {e}", exc_info=True)
-            
+
             # 打印所有分块的 chunk_text
             self.logger.error("=" * 80)
             self.logger.error("插入Milvus失败，所有分块信息:")
@@ -468,6 +546,23 @@ class Vectorizer(LoggerMixin):
                     f"  {'...' if len(item.get('chunk_text', '')) > 200 else ''}"
                 )
             self.logger.error("=" * 80)
+
+            # 更新所有失败分块的状态（注意：这里 chunks_data 仍然是完整列表）
+            error_message = f"插入Milvus失败: {str(e)[:200]}"
+            with self.pg_client.get_session() as session:
+                for item in chunks_data:
+                    try:
+                        crud.update_chunk_status(
+                            session=session,
+                            chunk_id=item["_chunk_id_uuid"],
+                            status='failed',
+                            error_message=error_message,
+                            increment_retry=True
+                        )
+                    except Exception as update_error:
+                        self.logger.warning(f"更新失败状态异常: chunk_id={item['chunk_id']}, error={update_error}")
+                session.commit()
+
             return {
                 "vectorized_count": 0,
                 "failed_count": len(chunks_data),
@@ -554,6 +649,33 @@ class Vectorizer(LoggerMixin):
                         f"  {'...' if len(item.get('chunk_text', '')) > 200 else ''}",
                         exc_info=True
                     )
+
+            # 统一处理所有失败的分块：更新状态为 'failed'
+            # 包括：1) 零向量失败 2) 数据库更新失败 3) 其他异常
+            all_failed_chunk_ids = set()
+
+            # 收集所有失败的 chunk_id（字符串格式）
+            all_failed_chunk_ids.update(failed_chunks)
+
+            # 从 chunks_data 找到对应的 UUID（用于更新数据库）
+            failed_chunk_uuids = {}
+            for item in chunks_data:
+                if item["chunk_id"] in all_failed_chunk_ids:
+                    failed_chunk_uuids[item["chunk_id"]] = item["_chunk_id_uuid"]
+
+            # 批量更新失败分块的状态
+            for chunk_id_str, chunk_id_uuid in failed_chunk_uuids.items():
+                try:
+                    crud.update_chunk_status(
+                        session=session,
+                        chunk_id=chunk_id_uuid,
+                        status='failed',
+                        error_message='向量化失败（零向量或处理异常）',
+                        increment_retry=True
+                    )
+                    self.logger.debug(f"已标记失败状态: chunk_id={chunk_id_str}")
+                except Exception as e:
+                    self.logger.warning(f"更新失败状态异常: chunk_id={chunk_id_str}, error={e}")
 
             session.commit()
 

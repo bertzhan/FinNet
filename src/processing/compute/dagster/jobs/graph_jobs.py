@@ -51,6 +51,11 @@ GRAPH_CONFIG_SCHEMA = {
         is_required=False,
         description="文档类型过滤（quarterly_report/annual_report/ipo_prospectus），None 表示所有类型"
     ),
+    "stock_codes": Field(
+        list,
+        is_required=False,
+        description="按股票代码列表过滤（None = 不过滤，指定后将只处理这些股票代码的文档）。例如: ['000001', '000002']"
+    ),
     "limit": Field(
         int,
         default_value=100,
@@ -84,13 +89,14 @@ def scan_chunked_documents_for_graph_op(context) -> Dict:
     limit = config.get("limit", 100)
     market_filter = config.get("market")
     doc_type_filter = config.get("doc_type")
+    stock_codes_filter = config.get("stock_codes")
     force_rebuild = config.get("force_rebuild", False)
-    
+
     logger.info(f"开始扫描待建图文档...")
     logger.info(
         f"配置: batch_size={batch_size}, limit={limit}, "
         f"market={market_filter}, doc_type={doc_type_filter}, "
-        f"force_rebuild={force_rebuild}"
+        f"stock_codes={stock_codes_filter}, force_rebuild={force_rebuild}"
     )
     
     pg_client = get_postgres_client()
@@ -108,9 +114,11 @@ def scan_chunked_documents_for_graph_op(context) -> Dict:
                 total_docs_query = total_docs_query.filter(Document.market == market_filter)
             if doc_type_filter:
                 total_docs_query = total_docs_query.filter(Document.doc_type == doc_type_filter)
+            if stock_codes_filter:
+                total_docs_query = total_docs_query.filter(Document.stock_code.in_(stock_codes_filter))
             total_docs_count = total_docs_query.count()
-            logger.info(f"数据库中符合条件的文档总数: {total_docs_count} (market={market_filter}, doc_type={doc_type_filter})")
-            
+            logger.info(f"数据库中符合条件的文档总数: {total_docs_count} (market={market_filter}, doc_type={doc_type_filter}, stock_codes={stock_codes_filter})")
+
             # 统计有分块的文档总数
             chunked_docs_query = session.query(Document.id).filter(
                 exists().where(DocumentChunk.document_id == Document.id)
@@ -119,6 +127,9 @@ def scan_chunked_documents_for_graph_op(context) -> Dict:
                 chunked_docs_query = chunked_docs_query.filter(Document.market == market_filter)
             if doc_type_filter:
                 chunked_docs_query = chunked_docs_query.filter(Document.doc_type == doc_type_filter)
+            if stock_codes_filter:
+                logger.info(f"按股票代码过滤: {stock_codes_filter}")
+                chunked_docs_query = chunked_docs_query.filter(Document.stock_code.in_(stock_codes_filter))
             chunked_docs_count = chunked_docs_query.count()
             logger.info(f"有分块的文档总数: {chunked_docs_count}")
             
@@ -130,6 +141,8 @@ def scan_chunked_documents_for_graph_op(context) -> Dict:
                 chunks_query = chunks_query.filter(Document.market == market_filter)
             if doc_type_filter:
                 chunks_query = chunks_query.filter(Document.doc_type == doc_type_filter)
+            if stock_codes_filter:
+                chunks_query = chunks_query.filter(Document.stock_code.in_(stock_codes_filter))
             total_chunks_count = chunks_query.count()
             logger.info(f"分块总数: {total_chunks_count}")
             

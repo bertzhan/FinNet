@@ -1,0 +1,21 @@
+# parse_pdf_job 配置：强制重新解析光伏设备公司的文档
+#
+# 使用方法：
+# 1. 在 Dagster UI 中打开 parse_pdf_job
+# 2. 点击 "Launchpad" 标签
+# 3. 将此配置粘贴到配置编辑器中
+# 4. 点击 "Launch Run"
+
+ops:
+  scan_pending_documents_op:
+    config:
+      batch_size: 5              # 每批处理 5 个文档
+      limit: 100                 # 最多处理 100 个文档
+      industry: "光伏设备"        # 只处理光伏设备行业的公司
+      force_reparse: true        # 强制重新解析已解析的文档
+
+  parse_documents_op:
+    config:
+      enable_silver_upload: true  # 上传到 Silver 层
+      start_page_id: 0            # 从第 0 页开始
+      # end_page_id: 4            # 如需限制页数，取消注释（例如只解析前 5 页）

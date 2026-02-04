@@ -70,6 +70,14 @@ class DocumentStatus(Enum):
     QUARANTINED = "quarantined" # 已隔离
 
 
+class ChunkStatus(Enum):
+    """分块向量化状态"""
+    PENDING = "pending"         # 待向量化
+    VECTORIZING = "vectorizing" # 向量化中
+    VECTORIZED = "vectorized"   # 已向量化
+    FAILED = "failed"           # 向量化失败
+
+
 class ValidationLevel(Enum):
     """验证级别（plan.md 7.1）"""
     INFO = "info"           # 信息

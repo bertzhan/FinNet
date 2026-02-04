@@ -346,6 +346,7 @@ class ChunkGenerator:
     ) -> List[Dict[str, Any]]:
         """
         将长chunk按换行符分割成多个接近max_length的子块
+        保护表格标签的完整性，确保不会在表格中间切割
         
         Args:
             content: 原始内容
@@ -375,8 +376,28 @@ class ChunkGenerator:
         current_chunk_length = 0  # 当前chunk的字符数（不包括换行符）
         chunk_index = 1
         
+        # 跟踪表格标签状态：记录当前是否在表格内，以及表格嵌套深度
+        in_table = False
+        table_depth = 0  # 表格嵌套深度（处理嵌套表格的情况）
+        
         for line in lines:
             line_length = len(line)
+            
+            # 检测表格标签
+            # 统计当前行中的 <table> 和 </table> 标签数量
+            open_tags = line.count('<table>')
+            close_tags = line.count('</table>')
+            
+            # 更新表格状态
+            if open_tags > 0:
+                table_depth += open_tags
+                in_table = True
+            if close_tags > 0:
+                table_depth -= close_tags
+                if table_depth <= 0:
+                    table_depth = 0
+                    in_table = False
+            
             # 计算添加这一行后的总长度（包括换行符）
             # 如果当前chunk不为空，n行之间有n-1个换行符
             if current_chunk_lines:
@@ -386,8 +407,12 @@ class ChunkGenerator:
             else:
                 new_length = line_length
             
-            # 如果添加当前行会超过max_length，且当前chunk不为空，则创建新chunk
-            if new_length > max_length and current_chunk_lines:
+            # 决定是否创建新chunk
+            # 如果添加当前行会超过max_length，且当前chunk不为空，则考虑创建新chunk
+            # 但是：如果当前在表格内，必须继续添加到当前chunk，直到表格结束
+            should_split = new_length > max_length and current_chunk_lines and not in_table
+            
+            if should_split:
                 # 创建当前chunk
                 chunk_content = '\n'.join(current_chunk_lines)
                 chunk_id = len(self.chunks) + len(sub_chunks) + 1
@@ -414,7 +439,7 @@ class ChunkGenerator:
                 current_chunk_length = line_length
                 chunk_index += 1
             else:
-                # 添加到当前chunk
+                # 添加到当前chunk（包括在表格内的情况，即使超过max_length也要继续）
                 current_chunk_lines.append(line)
                 current_chunk_length += line_length
         

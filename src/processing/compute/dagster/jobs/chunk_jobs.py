@@ -55,6 +55,11 @@ CHUNK_CONFIG_SCHEMA = {
         is_required=False,
         description="文档类型过滤（quarterly_report/annual_report/ipo_prospectus），None 表示所有类型"
     ),
+    "stock_codes": Field(
+        list,
+        is_required=False,
+        description="按股票代码列表过滤（None = 不过滤，指定后将只处理这些股票代码的文档）。例如: ['000001', '000002']"
+    ),
     "limit": Field(
         int,
         default_value=100,
@@ -87,10 +92,11 @@ def scan_parsed_documents_op(context) -> Dict:
     limit = config.get("limit", 100)
     market_filter = config.get("market")
     doc_type_filter = config.get("doc_type")
-    
+    stock_codes_filter = config.get("stock_codes")
+
     logger.info(f"开始扫描待分块文档...")
     force_rechunk = config.get("force_rechunk", False)
-    logger.info(f"配置: batch_size={batch_size}, limit={limit}, market={market_filter}, doc_type={doc_type_filter}, force_rechunk={force_rechunk}")
+    logger.info(f"配置: batch_size={batch_size}, limit={limit}, market={market_filter}, doc_type={doc_type_filter}, stock_codes={stock_codes_filter}, force_rechunk={force_rechunk}")
     
     pg_client = get_postgres_client()
     
@@ -111,7 +117,12 @@ def scan_parsed_documents_op(context) -> Dict:
             # 应用文档类型过滤
             if doc_type_filter:
                 query = query.filter(Document.doc_type == doc_type_filter)
-            
+
+            # 应用股票代码过滤
+            if stock_codes_filter:
+                logger.info(f"按股票代码过滤: {stock_codes_filter}")
+                query = query.filter(Document.stock_code.in_(stock_codes_filter))
+
             # 过滤掉已分块的文档（除非 force_rechunk）
             if not force_rechunk:
                 query = query.filter(ParsedDocument.chunks_count == 0)
@@ -230,22 +241,27 @@ def chunk_documents_op(context, scan_result: Dict) -> Dict:
             "skipped_count": 0,
         }
     
-    logger.info(f"开始分块 {len(documents)} 个文档...")
-    
+    logger.info(f"🚀 开始分块: 共 {len(documents)} 个文档")
+
     # 初始化分块服务
     chunker = get_text_chunker()
-    
+
     chunked_count = 0
     failed_count = 0
     skipped_count = 0
     failed_documents = []
-    
-    for doc_info in documents:
+
+    for idx, doc_info in enumerate(documents):
         document_id = doc_info["document_id"]
         stock_code = doc_info["stock_code"]
+        company_name = doc_info.get("company_name", "")
         markdown_path = doc_info["markdown_path"]
-        
-        logger.info(f"分块文档 {document_id}: {stock_code} - {markdown_path}")
+
+        # 显示进度：每10个或每10%显示一次，或最后一个
+        total = len(documents)
+        if (idx + 1) % 10 == 0 or (idx + 1) % max(1, total // 10) == 0 or (idx + 1) == total:
+            progress_pct = (idx + 1) / total * 100
+            logger.info(f"📦 [{idx+1}/{total}] {progress_pct:.1f}% | 分块: {stock_code} - {company_name}")
         
         try:
             result = chunker.chunk_document(
