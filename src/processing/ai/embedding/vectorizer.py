@@ -234,7 +234,17 @@ class Vectorizer(LoggerMixin):
                     except Exception as callback_error:
                         # 回调失败不应影响主流程
                         self.logger.warning(f"进度回调执行失败: {callback_error}", exc_info=True)
+            except KeyboardInterrupt:
+                # 用户手动中断
+                self.logger.warning("⚠️ 向量化被用户中断")
+                raise
             except Exception as e:
+                # 检查是否是中断异常（DagsterExecutionInterruptedError 等）
+                error_type = type(e).__name__
+                if "Interrupt" in error_type or "Interrupted" in error_type:
+                    self.logger.warning(f"⚠️ 向量化被中断: {error_type}")
+                    raise
+                
                 self.logger.error(f"批量向量化失败: {e}", exc_info=True)
                 # 标记整批为失败，并更新数据库状态
                 error_message = f"批量向量化异常: {str(e)[:200]}"
@@ -358,7 +368,17 @@ class Vectorizer(LoggerMixin):
                         f"⚠️  检测到 {len(failed_embedding_indices)} 个零向量（部分失败），"
                         f"将跳过这些分块，继续处理成功的分块"
                     )
+        except KeyboardInterrupt:
+            # 用户手动中断
+            self.logger.warning("⚠️ 向量生成被用户中断")
+            raise
         except Exception as e:
+            # 检查是否是中断异常（DagsterExecutionInterruptedError 等）
+            error_type = type(e).__name__
+            if "Interrupt" in error_type or "Interrupted" in error_type:
+                self.logger.warning(f"⚠️ 向量生成被中断: {error_type}")
+                raise
+            
             self.logger.error(f"生成向量失败: {e}", exc_info=True)
 
             # 打印所有失败分块的 chunk_text
@@ -527,7 +547,17 @@ class Vectorizer(LoggerMixin):
                 years=years,
                 quarters=quarters
             )
+        except KeyboardInterrupt:
+            # 用户手动中断
+            self.logger.warning("⚠️ Milvus插入被用户中断")
+            raise
         except Exception as e:
+            # 检查是否是中断异常（DagsterExecutionInterruptedError 等）
+            error_type = type(e).__name__
+            if "Interrupt" in error_type or "Interrupted" in error_type:
+                self.logger.warning(f"⚠️ Milvus插入被中断: {error_type}")
+                raise
+            
             self.logger.error(f"插入Milvus失败: {e}", exc_info=True)
 
             # 打印所有分块的 chunk_text

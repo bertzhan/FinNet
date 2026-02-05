@@ -21,6 +21,8 @@ from dagster import (
     RunRequest,
     Field,
     get_dagster_logger,
+    AssetMaterialization,
+    MetadataValue,
 )
 
 # 导入 Elasticsearch 客户端和数据库模块
@@ -37,7 +39,7 @@ from src.common.config import common_config
 ELASTICSEARCH_CONFIG_SCHEMA = {
     "batch_size": Field(
         int,
-        default_value=100,
+        default_value=50,
         description="每批索引的分块数量（1-1000）"
     ),
     "market": Field(
@@ -328,8 +330,17 @@ def index_chunks_to_elasticsearch_op(context, scan_result: Dict) -> Dict:
 
             # 显示批次结果
             logger.info(f"   ✓ 成功 {success_count} 失败 {len(failed_items)}")
-            
+        
+        except KeyboardInterrupt:
+            logger.warning(f"⚠️ Elasticsearch索引被用户中断（批次 {batch_num}）")
+            raise
         except Exception as e:
+            # 检查是否是 Dagster 中断异常
+            error_type = type(e).__name__
+            if "Interrupt" in error_type or "Interrupted" in error_type:
+                logger.warning(f"⚠️ Elasticsearch索引被中断（批次 {batch_num}）: {error_type}")
+                raise
+            
             logger.error(f"批量索引失败（批次 {i//batch_size + 1}）: {e}", exc_info=True)
             failed_count += len(batch)
             failed_chunks.extend([chunk["chunk_id"] for chunk in batch])
@@ -378,6 +389,59 @@ def index_chunks_to_elasticsearch_op(context, scan_result: Dict) -> Dict:
         for chunk_id in failed_chunks[:10]:
             logger.warning(f"  - 失败分块: {chunk_id}")
     
+    # 记录资产物化（Dagster 数据血缘）
+    # 按文档分组，为每个成功索引的文档记录AssetMaterialization
+    failed_set = set(failed_chunks)
+    document_chunks_map = {}  # document_id -> list of chunks
+    
+    for chunk in chunks:
+        if chunk["chunk_id"] in failed_set:
+            continue  # 跳过失败的分块
+        
+        doc_id = chunk["document_id"]
+        if doc_id not in document_chunks_map:
+            document_chunks_map[doc_id] = []
+        document_chunks_map[doc_id].append(chunk)
+    
+    # 为每个文档记录AssetMaterialization
+    for doc_id, doc_chunks in document_chunks_map.items():
+        if not doc_chunks:
+            continue
+        
+        try:
+            # 使用第一个chunk的信息（所有chunk的文档信息应该相同）
+            first_chunk = doc_chunks[0]
+            market = first_chunk.get("market", "")
+            doc_type = first_chunk.get("doc_type", "")
+            stock_code = first_chunk.get("stock_code", "")
+            company_name = first_chunk.get("company_name", "")
+            indexed_chunks_count = len(doc_chunks)
+            
+            # 构建资产key: ["gold", "elasticsearch_index", market, doc_type, stock_code]
+            asset_key = ["gold", "elasticsearch_index", market, doc_type, stock_code]
+            
+            # 构建父资产key（指向chunked_documents，因为elasticsearch_jobs直接依赖chunk_jobs）
+            parent_asset_key = ["silver", "chunked_documents", market, doc_type, stock_code]
+            
+            context.log_event(
+                AssetMaterialization(
+                    asset_key=asset_key,
+                    description=f"{company_name} Elasticsearch索引完成 ({indexed_chunks_count} 个分块)",
+                    metadata={
+                        "document_id": MetadataValue.text(doc_id),
+                        "stock_code": MetadataValue.text(stock_code),
+                        "company_name": MetadataValue.text(company_name or ""),
+                        "market": MetadataValue.text(market),
+                        "doc_type": MetadataValue.text(doc_type),
+                        "indexed_chunks_count": MetadataValue.int(indexed_chunks_count),
+                        "indexed_at": MetadataValue.text(datetime.now().isoformat()),
+                        "parent_asset_key": MetadataValue.text("/".join(parent_asset_key)),
+                    }
+                )
+            )
+        except Exception as e:
+            logger.warning(f"记录 AssetMaterialization 事件失败 (document_id={doc_id}): {e}")
+    
     return {
         "success": True,
         "indexed_count": indexed_count,
@@ -403,12 +467,12 @@ def validate_elasticsearch_results_op(context, index_results: Dict) -> Dict:
     """
     logger = get_dagster_logger()
     
-    # 检查 index_results 是否为 None
+    # 检查 index_results 是否为 None（可能是上游被中断）
     if index_results is None:
-        logger.error("index_results 为 None，无法验证")
+        logger.warning("index_results 为 None，可能是上游步骤被中断，跳过验证")
         return {
             "success": False,
-            "error_message": "index_results 为 None",
+            "error_message": "index_results 为 None（可能被中断）",
             "validation_passed": False,
         }
     
@@ -445,6 +509,24 @@ def validate_elasticsearch_results_op(context, index_results: Dict) -> Dict:
             f"失败数量={failed_count}"
         )
     
+    # 记录数据质量指标
+    try:
+        context.log_event(
+            AssetMaterialization(
+                asset_key=["quality_metrics", "elasticsearch_validation"],
+                description=f"Elasticsearch索引数据质量检查: 通过率 {success_rate:.2%}",
+                metadata={
+                    "total": MetadataValue.int(total_chunks),
+                    "indexed": MetadataValue.int(indexed_count),
+                    "failed": MetadataValue.int(failed_count),
+                    "success_rate": MetadataValue.float(success_rate),
+                    "validation_passed": MetadataValue.bool(validation_passed),
+                }
+            )
+        )
+    except Exception as e:
+        logger.warning(f"记录质量指标 AssetMaterialization 事件失败: {e}")
+    
     return {
         "success": True,
         "validation_passed": validation_passed,
@@ -463,7 +545,7 @@ def validate_elasticsearch_results_op(context, index_results: Dict) -> Dict:
         "ops": {
             "scan_chunked_documents_op": {
                 "config": {
-                    "batch_size": 100,
+                    "batch_size": 50,
                     # limit 不设置则处理全部，market 和 doc_type 是可选的，不设置表示所有类型
                 }
             },
@@ -487,7 +569,7 @@ def elasticsearch_index_job():
 
     默认配置：
     - scan_chunked_documents_op:
-        - batch_size: 100 (每批处理100个分块)
+        - batch_size: 50 (每批处理50个分块)
         - limit: 不设置 (处理全部分块)
     - index_chunks_to_elasticsearch_op:
         - force_reindex: False (不强制重新索引)

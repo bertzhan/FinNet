@@ -309,7 +309,6 @@ class BaseCrawler(ABC, LoggerMixin):
         # 4. 生成 MinIO 路径
         if task.doc_type == DocType.IPO_PROSPECTUS:
             # IPO招股说明书：从下载的文件名中提取实际文件名
-            import os
             actual_filename = os.path.basename(local_file_path)
             minio_object_path = self.path_manager.get_bronze_path(
                 market=task.market,
@@ -369,7 +368,6 @@ class BaseCrawler(ABC, LoggerMixin):
                         year = task.year
                         if task.doc_type == DocType.IPO_PROSPECTUS and not year:
                             # 从文件名提取年份（格式：code_year_date.ext）
-                            import os
                             filename = os.path.basename(local_file_path)
                             parts = filename.replace(".pdf", "").replace(".html", "").replace(".htm", "").split("_")
                             if len(parts) > 1 and parts[1].isdigit():

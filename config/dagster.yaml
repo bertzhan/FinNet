@@ -1,0 +1,12 @@
+# Dagster 配置文件
+# 文档: https://docs.dagster.io/deployment/dagster-instance
+
+# Python 日志配置
+python_logs:
+  # 设置 Dagster 框架日志级别
+  # 可选: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  # 注意: 设置为 CRITICAL 会隐藏大部分框架日志（包括取消时的 ERROR）
+  #       但也会隐藏其他重要信息
+  managed_python_loggers:
+    - dagster
+  python_log_level: INFO  # 默认保持 INFO，如需隐藏取消日志可改为 CRITICAL

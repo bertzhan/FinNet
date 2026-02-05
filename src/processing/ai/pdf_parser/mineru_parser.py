@@ -462,30 +462,92 @@ class MinerUParser(LoggerMixin):
                 "success": False,
                 "error_message": f"API HTTP 错误: {status_code} - {error_text}"
             }
-        except requests.exceptions.RequestException as e:
-            self.logger.error(f"API 请求异常: {e}", exc_info=True)
-            return {
-                "success": False,
-                "error_message": f"API 请求失败: {str(e)}"
-            }
         except KeyboardInterrupt:
             # 用户手动中断（Ctrl+C）
             self.logger.warning("⚠️ API 请求被用户中断")
             # 重新抛出，让上层处理
             raise
         except Exception as e:
-            # 检查是否是中断异常（DagsterExecutionInterruptedError 等）
+            # 首先检查是否是中断异常（DagsterExecutionInterruptedError 等）
+            # 必须在所有其他异常处理之前检查，因为中断异常可能在底层抛出
             error_type = type(e).__name__
             if "Interrupt" in error_type or "Interrupted" in error_type:
                 self.logger.warning(f"⚠️ API 请求被中断: {error_type}")
                 # 重新抛出，让上层处理
                 raise
             
-            self.logger.error(f"MinerU API 调用失败: {e}", exc_info=True)
-            return {
-                "success": False,
-                "error_message": f"API 调用失败: {str(e)}"
-            }
+            # 检查异常原因中是否包含中断信息
+            error_msg = str(e)
+            if "interrupt" in error_msg.lower() or "interrupted" in error_msg.lower():
+                self.logger.warning(f"⚠️ API 请求被中断: {error_msg}")
+                raise
+            
+            # 检查异常的 __cause__ 或 __context__ 是否是中断异常
+            if hasattr(e, '__cause__') and e.__cause__:
+                cause_type = type(e.__cause__).__name__
+                if "Interrupt" in cause_type or "Interrupted" in cause_type:
+                    self.logger.warning(f"⚠️ API 请求被中断（通过异常链）: {cause_type}")
+                    raise
+            
+            # 处理 requests 特定的异常
+            if isinstance(e, requests.exceptions.ConnectTimeout):
+                self.logger.error(f"API 连接超时（超过30秒），无法连接到服务器: {self.api_base}")
+                return {
+                    "success": False,
+                    "error_message": f"API 连接超时，无法连接到服务器 {self.api_base}。请检查网络连接或代理设置。"
+                }
+            elif isinstance(e, requests.exceptions.ReadTimeout):
+                read_timeout_minutes = 60
+                self.logger.error(f"API 读取超时（超过 {read_timeout_minutes} 分钟），PDF 解析可能需要更长时间")
+                return {
+                    "success": False,
+                    "error_message": f"API 读取超时（超过 {read_timeout_minutes} 分钟），PDF 文件可能过大或服务器处理较慢。建议稍后重试或联系管理员。"
+                }
+            elif isinstance(e, requests.exceptions.Timeout):
+                self.logger.error(f"API 请求超时（连接或读取超时）")
+                return {
+                    "success": False,
+                    "error_message": "API 请求超时，可能是网络连接问题或服务器响应过慢。请检查网络连接后重试。"
+                }
+            elif isinstance(e, requests.exceptions.ProxyError):
+                self.logger.error(f"API 代理错误: {e}")
+                return {
+                    "success": False,
+                    "error_message": f"代理连接失败: {str(e)}。请检查代理设置或尝试不使用代理。"
+                }
+            elif isinstance(e, requests.exceptions.ConnectionError):
+                self.logger.error(f"API 连接错误: {e}")
+                return {
+                    "success": False,
+                    "error_message": f"无法连接到 API 服务器 {self.api_base}: {str(e)}。请检查网络连接和服务器状态。"
+                }
+            elif isinstance(e, requests.exceptions.HTTPError):
+                status_code = e.response.status_code if e.response else "未知"
+                error_text = e.response.text[:200] if e.response else str(e)
+                self.logger.error(f"API HTTP 错误: {status_code} - {error_text}")
+                return {
+                    "success": False,
+                    "error_message": f"API HTTP 错误: {status_code} - {error_text}"
+                }
+            elif isinstance(e, requests.exceptions.RequestException):
+                self.logger.error(f"API 请求异常: {e}", exc_info=True)
+                return {
+                    "success": False,
+                    "error_message": f"API 请求失败: {str(e)}"
+                }
+            elif isinstance(e, ImportError):
+                self.logger.error("requests 库未安装，请安装: pip install requests")
+                return {
+                    "success": False,
+                    "error_message": "requests 库未安装"
+                }
+            else:
+                # 其他未知异常
+                self.logger.error(f"MinerU API 调用失败: {e}", exc_info=True)
+                return {
+                    "success": False,
+                    "error_message": f"API 调用失败: {str(e)}"
+                }
     
     def _process_zip_response(self, response, pdf_path: str) -> Dict[str, Any]:
         """

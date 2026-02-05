@@ -39,7 +39,7 @@ from src.common.config import common_config
 VECTORIZE_CONFIG_SCHEMA = {
     "batch_size": Field(
         int,
-        default_value=32,
+        default_value=50,
         description="每批向量化的分块数量（1-100）"
     ),
     "market": Field(
@@ -277,57 +277,22 @@ def vectorize_chunks_op(context, scan_result: Dict) -> Dict:
             logger.error(f"向量化服务初始化失败: {init_error}", exc_info=True)
             raise Exception(f"向量化服务初始化失败: {str(init_error)}。请检查嵌入模型配置（EMBEDDING_MODE, EMBEDDING_API_URL等）")
 
-        # 定义进度回调函数（用于实时记录 AssetMaterialization 事件）
+        # 定义进度回调函数（用于实时进度日志）
         def on_batch_complete(batch_info):
-            """每个批次完成后调用，记录该批次的 AssetMaterialization 事件"""
-            from src.storage.metadata.postgres_client import get_postgres_client
-            from src.storage.metadata.models import DocumentChunk, Document
-            import uuid as uuid_lib
-
-            pg_client = get_postgres_client()
-            try:
-                with pg_client.get_session() as session:
-                    # 为当前批次的成功分块记录事件
-                    for chunk_data in batch_info["batch_chunks"]:
-                        chunk_id = chunk_data["chunk_id"]
-
-                        try:
-                            # 查询分块信息
-                            chunk = session.query(DocumentChunk).filter(
-                                DocumentChunk.id == uuid_lib.UUID(chunk_id)
-                            ).first()
-
-                            if chunk and chunk.vectorized_at:  # 确认已向量化
-                                doc = session.query(Document).filter(
-                                    Document.id == chunk.document_id
-                                ).first()
-
-                                if doc:
-                                    # 立即记录 AssetMaterialization 事件
-                                    context.log_event(
-                                        AssetMaterialization(
-                                            asset_key=["silver", "vectorized_chunks", doc.market, doc.doc_type, doc.stock_code],
-                                            description=f"{doc.company_name} - Chunk {chunk.chunk_index} (批次 {batch_info['batch_num']}/{batch_info['total_batches']})",
-                                            metadata={
-                                                "chunk_id": MetadataValue.text(str(chunk.id)),
-                                                "document_id": MetadataValue.text(str(doc.id)),
-                                                "stock_code": MetadataValue.text(doc.stock_code),
-                                                "company_name": MetadataValue.text(doc.company_name),
-                                                "year": MetadataValue.int(doc.year or 0),
-                                                "quarter": MetadataValue.int(doc.quarter or 0),
-                                                "chunk_index": MetadataValue.int(chunk.chunk_index),
-                                                "batch": MetadataValue.text(f"{batch_info['batch_num']}/{batch_info['total_batches']}"),
-                                                "progress": MetadataValue.text(f"{batch_info['processed']}/{batch_info['total']} ({batch_info['processed']/batch_info['total']*100:.1f}%)"),
-                                                "vectorized_at": MetadataValue.text(chunk.vectorized_at.isoformat() if chunk.vectorized_at else ""),
-                                            }
-                                        )
-                                    )
-                        except Exception as e:
-                            # 单个分块记录失败不影响其他分块
-                            logger.debug(f"记录 AssetMaterialization 事件失败 (chunk_id={chunk_id}): {e}")
-            except Exception as e:
-                # 批次记录失败不影响主流程
-                logger.warning(f"批次 {batch_info['batch_num']} 记录 AssetMaterialization 事件失败: {e}")
+            """每个批次完成后调用，记录进度日志"""
+            batch_num = batch_info.get('batch_num', 0)
+            total_batches = batch_info.get('total_batches', 0)
+            processed = batch_info.get('processed', 0)
+            total = batch_info.get('total', len(chunks))
+            
+            # 计算进度百分比
+            progress_pct = (processed / total * 100) if total > 0 else 0
+            
+            # 使用 logger.info 确保在 Dagster UI 中可见（参考 parse_jobs 和 chunk_jobs 的格式）
+            logger.info(
+                f"📦 [{processed}/{total}] {progress_pct:.1f}% | "
+                f"向量化批次: {batch_num}/{total_batches}"
+            )
 
         # 批量向量化（传入进度回调）
         result = vectorizer.vectorize_chunks(
@@ -344,8 +309,59 @@ def vectorize_chunks_op(context, scan_result: Dict) -> Dict:
             f"向量化完成: 成功={vectorized_count}, 失败={failed_count}"
         )
 
-        # 注意：AssetMaterialization 事件已经在 on_batch_complete 回调中实时记录了
-        # 不再需要批量记录逻辑
+        # 记录资产物化（Dagster 数据血缘）
+        # 按文档分组，为每个成功向量化的文档记录 AssetMaterialization
+        failed_set = set(failed_chunks)
+        document_chunks_map = {}  # document_id -> list of chunks
+        
+        for chunk in chunks:
+            chunk_id = chunk["chunk_id"]
+            if chunk_id in failed_set:
+                continue  # 跳过失败的分块
+            
+            doc_id = chunk["document_id"]
+            if doc_id not in document_chunks_map:
+                document_chunks_map[doc_id] = []
+            document_chunks_map[doc_id].append(chunk)
+        
+        # 为每个文档记录 AssetMaterialization
+        for doc_id, doc_chunks in document_chunks_map.items():
+            if not doc_chunks:
+                continue
+            
+            try:
+                # 使用第一个chunk的信息（所有chunk的文档信息应该相同）
+                first_chunk = doc_chunks[0]
+                market = first_chunk.get("market", "")
+                doc_type = first_chunk.get("doc_type", "")
+                stock_code = first_chunk.get("stock_code", "")
+                company_name = first_chunk.get("company_name", "")
+                vectorized_chunks_count = len(doc_chunks)
+                
+                # 构建资产key: ["silver", "vectorized_chunks", market, doc_type, stock_code]
+                asset_key = ["silver", "vectorized_chunks", market, doc_type, stock_code]
+                
+                # 构建父资产key（指向chunked_documents）
+                parent_asset_key = ["silver", "chunked_documents", market, doc_type, stock_code]
+                
+                context.log_event(
+                    AssetMaterialization(
+                        asset_key=asset_key,
+                        description=f"{company_name} 向量化完成 ({vectorized_chunks_count} 个分块)",
+                        metadata={
+                            "document_id": MetadataValue.text(doc_id),
+                            "stock_code": MetadataValue.text(stock_code),
+                            "company_name": MetadataValue.text(company_name or ""),
+                            "market": MetadataValue.text(market),
+                            "doc_type": MetadataValue.text(doc_type),
+                            "vectorized_chunks_count": MetadataValue.int(vectorized_chunks_count),
+                            "vectorized_at": MetadataValue.text(datetime.now().isoformat()),
+                            "parent_asset_key": MetadataValue.text("/".join(parent_asset_key)),
+                        }
+                    )
+                )
+            except Exception as e:
+                logger.warning(f"记录 AssetMaterialization 事件失败 (document_id={doc_id}): {e}")
 
         if failed_chunks:
             logger.warning(f"失败的分块数量: {len(failed_chunks)}")
@@ -404,6 +420,12 @@ def vectorize_chunks_op(context, scan_result: Dict) -> Dict:
         }
         
     except Exception as e:
+        # 检查是否是 Dagster 中断异常
+        error_type = type(e).__name__
+        if "Interrupt" in error_type or "Interrupted" in error_type:
+            logger.warning(f"⚠️ 向量化被中断: {error_type}")
+            raise
+        
         error_msg = str(e)
         logger.error(f"向量化异常: {error_msg}", exc_info=True)
         
@@ -446,13 +468,13 @@ def validate_vectorize_results_op(context, vectorize_results: Dict) -> Dict:
     """
     logger = get_dagster_logger()
     
-    # 检查 vectorize_results 是否为 None
+    # 检查 vectorize_results 是否为 None（可能是上游被中断）
     if vectorize_results is None:
-        logger.error("vectorize_results 为 None，无法验证")
+        logger.warning("vectorize_results 为 None，可能是上游步骤被中断，跳过验证")
         return {
             "success": False,
             "validation_passed": False,
-            "error_message": "vectorize_results 为 None",
+            "error_message": "vectorize_results 为 None（可能被中断）",
         }
     
     if not vectorize_results.get("success"):
@@ -521,7 +543,7 @@ def validate_vectorize_results_op(context, vectorize_results: Dict) -> Dict:
         "ops": {
             "scan_unvectorized_chunks_op": {
                 "config": {
-                    "batch_size": 32,
+                    "batch_size": 50,
                     # limit 不设置表示处理全部未向量化的分块
                     # market 和 doc_type 是可选的，不设置表示所有类型
                 }

@@ -23,6 +23,8 @@ from dagster import (
     RunRequest,
     Field,
     get_dagster_logger,
+    AssetMaterialization,
+    MetadataValue,
 )
 
 # 导入分块服务和数据库模块
@@ -42,7 +44,7 @@ PROJECT_ROOT = Path(common_config.PROJECT_ROOT)
 CHUNK_CONFIG_SCHEMA = {
     "batch_size": Field(
         int,
-        default_value=10,
+        default_value=50,
         description="每批处理的文档数量（1-50）"
     ),
     "market": Field(
@@ -62,8 +64,8 @@ CHUNK_CONFIG_SCHEMA = {
     ),
     "limit": Field(
         int,
-        default_value=100,
-        description="本次作业最多处理的文档数量（1-1000）"
+        is_required=False,
+        description="本次作业最多处理的文档数量，None 或不设置表示处理全部"
     ),
     "force_rechunk": Field(
         bool,
@@ -286,12 +288,52 @@ def chunk_documents_op(context, scan_result: Dict) -> Dict:
                 chunks_count = result.get("chunks_count", 0)
                 structure_path = result.get("structure_path", "N/A")
                 chunks_path = result.get("chunks_path", "N/A")
+                avg_chunk_size = result.get("avg_chunk_size", 0)
                 logger.info(
                     f"✅ 分块成功: document_id={document_id}, "
                     f"chunks_count={chunks_count}, "
                     f"structure_path={structure_path}, "
                     f"chunks_path={chunks_path}"
                 )
+                
+                # 记录资产物化（Dagster 数据血缘）
+                try:
+                    market = doc_info.get("market", "")
+                    doc_type = doc_info.get("doc_type", "")
+                    
+                    # 构建资产key: ["silver", "chunked_documents", market, doc_type, stock_code]
+                    asset_key = ["silver", "chunked_documents", market, doc_type, stock_code]
+                    
+                    # 构建父资产key（指向parsed_documents）
+                    parent_asset_key = ["silver", "parsed_documents", market, doc_type, stock_code]
+                    year = doc_info.get("year")
+                    quarter = doc_info.get("quarter")
+                    if year:
+                        parent_asset_key.append(str(year))
+                    if quarter:
+                        parent_asset_key.append(f"Q{quarter}")
+                    
+                    context.log_event(
+                        AssetMaterialization(
+                            asset_key=asset_key,
+                            description=f"{company_name} 分块完成 ({chunks_count} 个分块)",
+                            metadata={
+                                "document_id": MetadataValue.text(str(document_id)),
+                                "stock_code": MetadataValue.text(stock_code),
+                                "company_name": MetadataValue.text(company_name or ""),
+                                "market": MetadataValue.text(market),
+                                "doc_type": MetadataValue.text(doc_type),
+                                "chunks_count": MetadataValue.int(chunks_count),
+                                "avg_chunk_size": MetadataValue.int(avg_chunk_size),
+                                "structure_path": MetadataValue.text(structure_path),
+                                "chunks_path": MetadataValue.text(chunks_path),
+                                "chunked_at": MetadataValue.text(datetime.now().isoformat()),
+                                "parent_asset_key": MetadataValue.text("/".join(parent_asset_key)),
+                            }
+                        )
+                    )
+                except Exception as e:
+                    logger.warning(f"记录 AssetMaterialization 事件失败 (document_id={document_id}): {e}")
             else:
                 # 检查是否是跳过（已分块）
                 if "已分块" in result.get("error_message", ""):
@@ -307,7 +349,17 @@ def chunk_documents_op(context, scan_result: Dict) -> Dict:
                         "error": error_msg
                     })
                 
+        except KeyboardInterrupt:
+            # 用户手动中断（Ctrl+C）
+            logger.warning(f"⚠️ 分块被用户中断: document_id={document_id}")
+            raise
         except Exception as e:
+            # 检查是否是 Dagster 中断异常
+            error_type = type(e).__name__
+            if "Interrupt" in error_type or "Interrupted" in error_type:
+                logger.warning(f"⚠️ 分块被中断: document_id={document_id}, error_type={error_type}")
+                raise
+            
             failed_count += 1
             error_msg = str(e)
             logger.error(f"❌ 分块异常: document_id={document_id}, error={error_msg}", exc_info=True)
@@ -346,13 +398,13 @@ def validate_chunk_results_op(context, chunk_results: Dict) -> Dict:
     """
     logger = get_dagster_logger()
     
-    # 检查 chunk_results 是否为 None
+    # 检查 chunk_results 是否为 None（可能是上游被中断）
     if chunk_results is None:
-        logger.error("chunk_results 为 None，无法验证")
+        logger.warning("chunk_results 为 None，可能是上游步骤被中断，跳过验证")
         return {
             "success": False,
             "validation_passed": False,
-            "error_message": "chunk_results 为 None",
+            "error_message": "chunk_results 为 None（可能被中断）",
         }
     
     if not chunk_results.get("success"):
@@ -390,6 +442,24 @@ def validate_chunk_results_op(context, chunk_results: Dict) -> Dict:
                          f"stock_code={failed['stock_code']}, "
                          f"error={failed['error']}")
     
+    # 记录数据质量指标
+    try:
+        context.log_event(
+            AssetMaterialization(
+                asset_key=["quality_metrics", "chunk_validation"],
+                description=f"分块数据质量检查: 通过率 {success_rate:.2%}",
+                metadata={
+                    "total": MetadataValue.int(total_documents),
+                    "chunked": MetadataValue.int(chunked_count),
+                    "failed": MetadataValue.int(failed_count),
+                    "success_rate": MetadataValue.float(success_rate),
+                    "validation_passed": MetadataValue.bool(validation_passed),
+                }
+            )
+        )
+    except Exception as e:
+        logger.warning(f"记录质量指标 AssetMaterialization 事件失败: {e}")
+    
     return {
         "success": True,
         "validation_passed": validation_passed,
@@ -408,9 +478,8 @@ def validate_chunk_results_op(context, chunk_results: Dict) -> Dict:
         "ops": {
             "scan_parsed_documents_op": {
                 "config": {
-                    "batch_size": 5,
-                    "limit": 20,
-                    # doc_type 是可选的，不设置表示所有类型
+                    "batch_size": 50,
+                    # limit 不设置表示处理全部，doc_type 是可选的，不设置表示所有类型
                 }
             },
             "chunk_documents_op": {

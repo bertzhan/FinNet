@@ -145,6 +145,51 @@ FinNet 严格遵循 `plan.md` 的四层架构设计：
 
 ---
 
+## 📊 数据血缘追踪
+
+FinNet 使用 Dagster 的 AssetMaterialization 功能建立完整的数据血缘追踪体系，实现从原始数据（Bronze层）到应用数据（Gold层）的完整数据流转追踪。
+
+### 数据流依赖关系
+
+```
+crawl_jobs (Bronze)
+    ↓
+parse_jobs (Silver: parsed_documents)
+    ↓
+chunk_jobs (Silver: chunked_documents)
+    ├─→ vectorize_jobs (Silver: vectorized_chunks)
+    ├─→ graph_jobs (Gold: graph_nodes)
+    └─→ elasticsearch_jobs (Gold: elasticsearch_index)
+```
+
+### 关键特性
+
+1. **完整的资产记录**: 所有 Dagster 作业都记录 AssetMaterialization，包括：
+   - `crawl_jobs.py` - 爬虫作业（Bronze层）
+   - `parse_jobs.py` - PDF解析作业（Silver层）
+   - `chunk_jobs.py` - 文本分块作业（Silver层）
+   - `vectorize_jobs.py` - 向量化作业（Silver层）
+   - `graph_jobs.py` - 图构建作业（Gold层）
+   - `elasticsearch_jobs.py` - Elasticsearch索引作业（Gold层）
+
+2. **显式依赖关系**: 通过 `parent_asset_key` 字段建立上游依赖关系
+
+3. **统一命名规范**: 所有资产遵循 `[layer, category, market?, doc_type?, stock_code?, year?, quarter?]` 格式
+
+4. **质量指标关联**: 质量指标资产关联到具体的数据资产
+
+### 在 Dagster UI 中查看
+
+- **Assets 页面**: 查看所有资产的层次结构
+- **Lineage 标签**: 查看每个资产的上游和下游依赖关系
+- **Materializations**: 查看所有物化事件和元数据
+
+### 详细文档
+
+更多关于数据血缘的信息，请参考 [DATA_LINEAGE.md](./DATA_LINEAGE.md)。
+
+---
+
 ## 🔄 数据流转示例
 
 ### 场景：爬取 A股平安银行 2023 Q3 季报

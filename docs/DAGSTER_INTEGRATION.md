@@ -153,19 +153,60 @@ Dagster 自动执行以下数据质量检查：
 
 ## 📊 数据血缘追踪
 
-Dagster 自动追踪数据血缘：
+Dagster 通过 AssetMaterialization 自动追踪完整的数据血缘，实现从原始数据（Bronze层）到应用数据（Gold层）的完整数据流转追踪。
+
+### 数据流依赖关系
 
 ```
-crawl_a_share_reports_op
-  ↓
-bronze/a_share/quarterly_reports/2023/Q3/000001/...
-  ↓
-validate_crawl_results_op
-  ↓
-quality_metrics/crawl_validation
+crawl_jobs (Bronze)
+    ↓
+parse_jobs (Silver: parsed_documents)
+    ↓
+chunk_jobs (Silver: chunked_documents)
+    ├─→ vectorize_jobs (Silver: vectorized_chunks)
+    ├─→ graph_jobs (Gold: graph_nodes)
+    └─→ elasticsearch_jobs (Gold: elasticsearch_index)
 ```
 
-在 Dagster UI 的 **"Assets"** 标签页可以查看完整的数据血缘图。
+### 资产命名规范
+
+所有资产遵循统一的命名格式：`[layer, category, market?, doc_type?, stock_code?, year?, quarter?]`
+
+- **Bronze层**: `["bronze", "a_share", "annual_report", "2023", "Q4"]`
+- **Silver层**: `["silver", "parsed_documents", "a_share", "annual_report", "000001", "2023", "Q4"]`
+- **Gold层**: `["gold", "graph_nodes", "a_share", "annual_report", "000001"]`
+
+### 依赖关系建立
+
+每个 AssetMaterialization 的 `metadata` 中包含 `parent_asset_key` 字段，建立显式的上游依赖关系：
+
+```python
+AssetMaterialization(
+    asset_key=["silver", "parsed_documents", ...],
+    metadata={
+        "parent_asset_key": MetadataValue.text("bronze/a_share/annual_report/2023/Q4"),
+        # ... 其他元数据
+    }
+)
+```
+
+### 在 Dagster UI 中查看
+
+1. 打开 Dagster UI
+2. 点击 **"Assets"** 标签页
+3. 可以看到完整的数据血缘图：
+   - `bronze/` - 原始数据层
+   - `silver/` - 加工数据层
+   - `gold/` - 应用数据层
+   - `quality_metrics/` - 质量指标
+
+4. 点击任意资产，在 **Lineage** 标签页可以查看：
+   - **Upstream**: 上游资产（依赖的数据源）
+   - **Downstream**: 下游资产（使用此数据的目标）
+
+### 详细文档
+
+更多关于数据血缘的信息，请参考 [DATA_LINEAGE.md](./DATA_LINEAGE.md)。
 
 ## 🎯 使用场景
 

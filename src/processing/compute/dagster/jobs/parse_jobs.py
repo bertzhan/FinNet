@@ -45,7 +45,7 @@ PROJECT_ROOT = Path(common_config.PROJECT_ROOT)
 PARSE_CONFIG_SCHEMA = {
     "batch_size": Field(
         int,
-        default_value=10,
+        default_value=50,
         description="每批处理的文档数量（1-50）"
     ),
     "parser_type": Field(
@@ -63,11 +63,6 @@ PARSE_CONFIG_SCHEMA = {
         is_required=False,
         description="文档类型过滤（quarterly_report/annual_report/ipo_prospectus），None 表示所有类型"
     ),
-    "industry": Field(
-        str,
-        is_required=False,
-        description="按公司行业过滤（None = 不过滤）"
-    ),
     "stock_codes": Field(
         list,
         is_required=False,
@@ -75,8 +70,8 @@ PARSE_CONFIG_SCHEMA = {
     ),
     "limit": Field(
         int,
-        default_value=100,
-        description="本次作业最多处理的文档数量（1-1000）"
+        is_required=False,
+        description="本次作业最多处理的文档数量，None 或不设置表示处理全部"
     ),
     "force_reparse": Field(
         bool,
@@ -118,15 +113,14 @@ def scan_pending_documents_op(context) -> Dict:
     logger = get_dagster_logger()
 
     batch_size = config.get("batch_size", 10)
-    limit = config.get("limit", 100)
+    limit = config.get("limit")
     market_filter = config.get("market")
     doc_type_filter = config.get("doc_type")
-    industry_filter = config.get("industry")
     stock_codes_filter = config.get("stock_codes")
     force_reparse = config.get("force_reparse", False)
 
     logger.info(f"开始扫描待解析文档...")
-    logger.info(f"配置: batch_size={batch_size}, limit={limit}, market={market_filter}, doc_type={doc_type_filter}, industry={industry_filter}, stock_codes={stock_codes_filter}, force_reparse={force_reparse}")
+    logger.info(f"配置: batch_size={batch_size}, limit={limit}, market={market_filter}, doc_type={doc_type_filter}, stock_codes={stock_codes_filter}, force_reparse={force_reparse}")
 
     pg_client = get_postgres_client()
 
@@ -179,23 +173,6 @@ def scan_pending_documents_op(context) -> Dict:
                 documents = [d for d in documents if d.doc_type == doc_type_filter]
                 logger.info(f"文档类型过滤后: {len(documents)} 个文档")
 
-            # 应用行业过滤
-            if industry_filter:
-                from src.storage.metadata.models import ListedCompany
-                from sqlalchemy import text
-
-                # 查询符合行业的公司列表
-                # affiliate_industry 是 JSON 字段，格式: {"ind_code": "...", "ind_name": "..."}
-                # 使用 PostgreSQL JSON 操作符 ->> 提取 ind_name 字段
-                companies = session.query(ListedCompany).filter(
-                    text("affiliate_industry->>'ind_name' LIKE :industry")
-                ).params(industry=f'%{industry_filter}%').all()
-
-                company_codes = {c.code for c in companies}
-                logger.info(f"行业过滤 '{industry_filter}': 找到 {len(company_codes)} 家公司")
-
-                # 过滤文档
-                documents = [d for d in documents if d.stock_code in company_codes]
                 logger.info(f"行业过滤后: {len(documents)} 个文档")
 
             # 应用股票代码过滤
@@ -412,11 +389,56 @@ def parse_documents_op(context, scan_result: Dict) -> Dict:
                 parsed_count += 1
                 output_path = result.get("output_path", "N/A")
                 text_length = result.get("extracted_text_length", 0)
+                page_count = result.get("page_count", 0)
                 logger.info(
                     f"✅ 解析成功: document_id={document_id}, "
                     f"output_path={output_path}, "
                     f"text_length={text_length}"
                 )
+                
+                # 记录资产物化（Dagster 数据血缘）
+                try:
+                    market = doc_info.get("market", "")
+                    doc_type = doc_info.get("doc_type", "")
+                    year = doc_info.get("year")
+                    quarter = doc_info.get("quarter")
+                    
+                    # 构建资产key: ["silver", "parsed_documents", market, doc_type, stock_code, year, quarter]
+                    asset_key = ["silver", "parsed_documents", market, doc_type, stock_code]
+                    if year:
+                        asset_key.append(str(year))
+                    if quarter:
+                        asset_key.append(f"Q{quarter}")
+                    
+                    # 构建父资产key（指向bronze层）
+                    parent_asset_key = ["bronze", market, doc_type]
+                    if year:
+                        parent_asset_key.append(str(year))
+                    if quarter:
+                        parent_asset_key.append(f"Q{quarter}")
+                    
+                    context.log_event(
+                        AssetMaterialization(
+                            asset_key=asset_key,
+                            description=f"{company_name} {year or ''} Q{quarter or ''} 解析完成",
+                            metadata={
+                                "document_id": MetadataValue.text(str(document_id)),
+                                "stock_code": MetadataValue.text(stock_code),
+                                "company_name": MetadataValue.text(company_name or ""),
+                                "market": MetadataValue.text(market),
+                                "doc_type": MetadataValue.text(doc_type),
+                                "year": MetadataValue.int(year) if year else MetadataValue.int(0),
+                                "quarter": MetadataValue.int(quarter) if quarter else MetadataValue.int(0),
+                                "text_length": MetadataValue.int(text_length),
+                                "page_count": MetadataValue.int(page_count),
+                                "silver_path": MetadataValue.text(output_path),
+                                "parsed_at": MetadataValue.text(datetime.now().isoformat()),
+                                "parent_asset_key": MetadataValue.text("/".join(parent_asset_key)),
+                            }
+                        )
+                    )
+                except Exception as e:
+                    logger.warning(f"记录 AssetMaterialization 事件失败 (document_id={document_id}): {e}")
             else:
                 failed_count += 1
                 error_msg = result.get("error_message", "未知错误")
@@ -427,11 +449,7 @@ def parse_documents_op(context, scan_result: Dict) -> Dict:
                     "error": error_msg
                 })
                 
-        except KeyboardInterrupt:
-            # 用户手动中断（Ctrl+C）
-            logger.warning(f"⚠️ 解析被用户中断: document_id={document_id}")
-            # 重新抛出异常，让 Dagster 知道任务被中断
-            raise
+
         except Exception as e:
             # 检查是否是 Dagster 中断异常（DagsterExecutionInterruptedError 等）
             error_type = type(e).__name__
@@ -478,13 +496,13 @@ def validate_parse_results_op(context, parse_results: Dict) -> Dict:
     """
     logger = get_dagster_logger()
     
-    # 检查 parse_results 是否为 None
+    # 检查 parse_results 是否为 None（可能是上游被中断）
     if parse_results is None:
-        logger.error("parse_results 为 None，无法验证")
+        logger.warning("parse_results 为 None，可能是上游步骤被中断，跳过验证")
         return {
             "success": False,
             "validation_passed": False,
-            "error_message": "parse_results 为 None",
+            "error_message": "parse_results 为 None（可能被中断）",
         }
     
     if not parse_results.get("success"):
@@ -522,6 +540,24 @@ def validate_parse_results_op(context, parse_results: Dict) -> Dict:
                          f"stock_code={failed['stock_code']}, "
                          f"error={failed['error']}")
     
+    # 记录数据质量指标
+    try:
+        context.log_event(
+            AssetMaterialization(
+                asset_key=["quality_metrics", "parse_validation"],
+                description=f"解析数据质量检查: 通过率 {success_rate:.2%}",
+                metadata={
+                    "total": MetadataValue.int(total_documents),
+                    "parsed": MetadataValue.int(parsed_count),
+                    "failed": MetadataValue.int(failed_count),
+                    "success_rate": MetadataValue.float(success_rate),
+                    "validation_passed": MetadataValue.bool(validation_passed),
+                }
+            )
+        )
+    except Exception as e:
+        logger.warning(f"记录质量指标 AssetMaterialization 事件失败: {e}")
+    
     return {
         "success": True,
         "validation_passed": validation_passed,
@@ -540,9 +576,8 @@ def validate_parse_results_op(context, parse_results: Dict) -> Dict:
         "ops": {
             "scan_pending_documents_op": {
                 "config": {
-                    "batch_size": 2,
-                    "limit": 10,
-                    # doc_type 是可选的，不设置表示所有类型
+                    "batch_size": 50,
+                    # limit 不设置表示处理全部，doc_type 是可选的，不设置表示所有类型
                 }
             },
             "parse_documents_op": {
@@ -590,9 +625,8 @@ def parse_pdf_job():
         "ops": {
             "scan_pending_documents_op": {
                 "config": {
-                    "batch_size": 5,
-                    "limit": 100,
-                    # doc_type 是可选的，不设置表示所有类型
+                    "batch_size": 50,
+                    # limit 不设置表示处理全部，doc_type 是可选的，不设置表示所有类型
                 }
             },
             "parse_documents_op": {

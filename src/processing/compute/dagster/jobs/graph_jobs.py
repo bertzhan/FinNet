@@ -23,6 +23,8 @@ from dagster import (
     RunRequest,
     Field,
     get_dagster_logger,
+    AssetMaterialization,
+    MetadataValue,
 )
 
 # 导入图构建服务和数据库模块
@@ -58,8 +60,8 @@ GRAPH_CONFIG_SCHEMA = {
     ),
     "limit": Field(
         int,
-        default_value=100,
-        description="本次作业最多处理的文档数量（1-1000）"
+        is_required=False,
+        description="本次作业最多处理的文档数量，None 或不设置表示处理全部"
     ),
     "force_rebuild": Field(
         bool,
@@ -357,6 +359,51 @@ def build_graph_op(context, scan_result: Dict) -> Dict:
             for doc_id in failed_documents[:10]:
                 logger.warning(f"  - 失败文档: {doc_id}")
         
+        # 记录资产物化（Dagster 数据血缘）
+        # 为每个成功处理的文档记录AssetMaterialization
+        failed_set = {str(doc_id) for doc_id in failed_documents}
+        for doc_info in documents:
+            doc_id_str = doc_info.get("document_id", "")
+            if doc_id_str in failed_set:
+                continue  # 跳过失败的文档
+            
+            try:
+                market = doc_info.get("market", "")
+                doc_type = doc_info.get("doc_type", "")
+                stock_code = doc_info.get("stock_code", "")
+                company_name = doc_info.get("company_name", "")
+                
+                # 构建资产key: ["gold", "graph_nodes", market, doc_type, stock_code]
+                asset_key = ["gold", "graph_nodes", market, doc_type, stock_code]
+                
+                # 构建父资产key（指向chunked_documents，因为graph_jobs直接依赖chunk_jobs）
+                parent_asset_key = ["silver", "chunked_documents", market, doc_type, stock_code]
+                
+                # 计算该文档的节点和边数量（从汇总结果中估算，或从数据库查询）
+                # 这里使用汇总数据，实际每个文档的数量需要从数据库查询
+                nodes_count = 0  # 需要从数据库查询该文档的分块数量
+                edges_count = 0  # 需要从数据库查询该文档的边数量
+                
+                context.log_event(
+                    AssetMaterialization(
+                        asset_key=asset_key,
+                        description=f"{company_name} 图构建完成",
+                        metadata={
+                            "document_id": MetadataValue.text(doc_id_str),
+                            "stock_code": MetadataValue.text(stock_code),
+                            "company_name": MetadataValue.text(company_name or ""),
+                            "market": MetadataValue.text(market),
+                            "doc_type": MetadataValue.text(doc_type),
+                            "nodes_count": MetadataValue.int(nodes_count),
+                            "edges_count": MetadataValue.int(edges_count),
+                            "graph_built_at": MetadataValue.text(datetime.now().isoformat()),
+                            "parent_asset_key": MetadataValue.text("/".join(parent_asset_key)),
+                        }
+                    )
+                )
+            except Exception as e:
+                logger.warning(f"记录 AssetMaterialization 事件失败 (document_id={doc_id_str}): {e}")
+        
         return {
             "success": result.get("success", True),
             "documents_processed": documents_processed,
@@ -365,8 +412,14 @@ def build_graph_op(context, scan_result: Dict) -> Dict:
             "has_child_edges_created": has_child_edges_created,
             "failed_documents": failed_documents[:10],  # 最多返回10个失败记录
         }
-        
+    
     except Exception as e:
+        # 检查是否是 Dagster 中断异常
+        error_type = type(e).__name__
+        if "Interrupt" in error_type or "Interrupted" in error_type:
+            logger.warning(f"⚠️ 图构建被中断: {error_type}")
+            raise
+        
         logger.error(f"图构建异常: {e}", exc_info=True)
         return {
             "success": False,
@@ -394,13 +447,13 @@ def validate_graph_op(context, build_results: Dict) -> Dict:
     """
     logger = get_dagster_logger()
     
-    # 检查 build_results 是否为 None
+    # 检查 build_results 是否为 None（可能是上游被中断）
     if build_results is None:
-        logger.error("build_results 为 None，无法验证")
+        logger.warning("build_results 为 None，可能是上游步骤被中断，跳过验证")
         return {
             "success": False,
             "validation_passed": False,
-            "error_message": "build_results 为 None",
+            "error_message": "build_results 为 None（可能被中断）",
         }
     
     if not build_results.get("success"):
@@ -445,6 +498,26 @@ def validate_graph_op(context, build_results: Dict) -> Dict:
         if not validation_passed:
             logger.warning("⚠️ 图构建验证未通过")
         
+        # 记录数据质量指标
+        try:
+            context.log_event(
+                AssetMaterialization(
+                    asset_key=["quality_metrics", "graph_validation"],
+                    description=f"图构建数据质量检查: 文档={documents_processed}, 节点={chunks_created}",
+                    metadata={
+                        "documents_processed": MetadataValue.int(documents_processed),
+                        "chunks_created": MetadataValue.int(chunks_created),
+                        "belongs_to_edges_created": MetadataValue.int(belongs_to_edges_created),
+                        "has_child_edges_created": MetadataValue.int(has_child_edges_created),
+                        "validation_passed": MetadataValue.bool(validation_passed),
+                        "total_document_nodes": MetadataValue.int(graph_stats.get("document_nodes", 0)),
+                        "total_chunk_nodes": MetadataValue.int(graph_stats.get("chunk_nodes", 0)),
+                    }
+                )
+            )
+        except Exception as e:
+            logger.warning(f"记录质量指标 AssetMaterialization 事件失败: {e}")
+        
         return {
             "success": True,
             "validation_passed": validation_passed,
@@ -475,8 +548,7 @@ def validate_graph_op(context, build_results: Dict) -> Dict:
             "scan_chunked_documents_for_graph_op": {
                 "config": {
                     "batch_size": 50,
-                    "limit": 100,
-                    # market 和 doc_type 是可选的，不设置表示所有类型
+                    # limit 不设置表示处理全部，market 和 doc_type 是可选的，不设置表示所有类型
                 }
             },
             "build_graph_op": {

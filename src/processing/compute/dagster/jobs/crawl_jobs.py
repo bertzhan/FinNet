@@ -351,10 +351,112 @@ def crawl_a_share_reports_op(context) -> Dict:
     
     logger.info(f"生成 {len(tasks)} 个爬取任务（{len(companies)} 家公司 × {len(years_quarters)} 个季度）")
     
-    # 执行批量爬取
+    # 执行批量爬取（实时记录进度和资产）
+    results = []
+    success_count = 0
+    fail_count = 0
+    total = len(tasks)
+    
     try:
-        results = crawler.crawl_batch(tasks)
+        # 自己循环调用 crawl()，以便实时记录进度和 AssetMaterialization
+        for idx, task in enumerate(tasks, 1):
+            # 实时进度日志（每10个或每10%显示一次，或最后一个）
+            if idx % 10 == 0 or idx % max(1, total // 10) == 0 or idx == total:
+                progress_pct = idx / total * 100
+                logger.info(
+                    f"📦 [{idx}/{total}] {progress_pct:.1f}% | "
+                    f"正在爬取: {task.stock_code} - {task.company_name} "
+                    f"{task.year}Q{task.quarter if task.quarter else ''}"
+                )
+            
+            # 执行单个任务
+            try:
+                result = crawler.crawl(task)
+                results.append(result)
+                
+                # 实时记录 AssetMaterialization（成功时立即记录）
+                if result.success:
+                    success_count += 1
+                    
+                    # 根据季度确定文档类型字符串（用于资产key）
+                    if result.task.quarter == 4:
+                        doc_type_str = "annual_report"
+                    elif result.task.quarter == 2:
+                        doc_type_str = "interim_report"
+                    else:
+                        doc_type_str = "quarterly_report"
+                    
+                    # 立即记录 AssetMaterialization，无需等待所有任务完成
+                    try:
+                        context.log_event(
+                            AssetMaterialization(
+                                asset_key=["bronze", "a_share", doc_type_str, str(result.task.year), f"Q{result.task.quarter}"],
+                                description=f"{result.task.company_name} {result.task.year} Q{result.task.quarter}",
+                                metadata={
+                                    "stock_code": MetadataValue.text(result.task.stock_code),
+                                    "company_name": MetadataValue.text(result.task.company_name),
+                                    "minio_path": MetadataValue.text(result.minio_object_path or ""),
+                                    "file_size": MetadataValue.int(result.file_size or 0),
+                                    "file_hash": MetadataValue.text(result.file_hash or ""),
+                                    "document_id": MetadataValue.text(str(result.document_id) if result.document_id else ""),
+                                    "progress": MetadataValue.text(f"{idx}/{total} ({idx/total*100:.1f}%)"),
+                                }
+                            )
+                        )
+                        logger.debug(f"✅ 已记录资产: {result.task.stock_code} {result.task.year} Q{result.task.quarter}")
+                    except Exception as e:
+                        logger.warning(f"记录 AssetMaterialization 失败 (task={result.task.stock_code}): {e}")
+                else:
+                    fail_count += 1
+                    logger.warning(
+                        f"❌ 爬取失败: {task.stock_code} ({task.company_name}) "
+                        f"{task.year} Q{task.quarter} - {result.error_message}"
+                    )
+            except KeyboardInterrupt:
+                # 用户手动中断（Ctrl+C）
+                logger.warning(f"⚠️ 爬取被用户中断: {task.stock_code}")
+                raise
+            except Exception as e:
+                # 检查是否是 Dagster 中断异常
+                error_type = type(e).__name__
+                if "Interrupt" in error_type or "Interrupted" in error_type:
+                    logger.warning(f"⚠️ 爬取被中断: {task.stock_code}, error_type={error_type}")
+                    raise
+                
+                fail_count += 1
+                logger.error(f"❌ 任务执行异常: {task.stock_code} - {e}", exc_info=True)
+                # 创建失败结果
+                from src.ingestion.base.base_crawler import CrawlResult
+                results.append(CrawlResult(
+                    task=task,
+                    success=False,
+                    error_message=str(e)
+                ))
+        
+        logger.info(f"✅ 爬取完成: 成功 {success_count}/{total}, 失败 {fail_count}/{total}")
+        
+        # 记录失败任务的详细信息
+        if fail_count > 0:
+            logger.warning(f"⚠️ 有 {fail_count} 个任务失败，详细错误信息：")
+            failed_results = [r for r in results if not r.success]
+            for i, result in enumerate(failed_results[:10], 1):  # 最多显示10个
+                logger.error(
+                    f"  失败任务 {i}: {result.task.stock_code} ({result.task.company_name}) "
+                    f"{result.task.year} Q{result.task.quarter} - {result.error_message}"
+                )
+            if fail_count > 10:
+                logger.warning(f"  ... 还有 {fail_count - 10} 个失败任务")
+    
+    except KeyboardInterrupt:
+        logger.warning("⚠️ 批量爬取被用户中断")
+        raise
     except Exception as e:
+        # 检查是否是 Dagster 中断异常
+        error_type = type(e).__name__
+        if "Interrupt" in error_type or "Interrupted" in error_type:
+            logger.warning(f"⚠️ 批量爬取被中断: {error_type}")
+            raise
+        
         logger.error(f"❌ 批量爬取过程中发生异常: {e}", exc_info=True)
         return {
             "success": False,
@@ -364,50 +466,6 @@ def crawl_a_share_reports_op(context) -> Dict:
             "fail_count": len(tasks),
             "results": []
         }
-    
-    # 统计结果
-    success_count = sum(1 for r in results if r.success)
-    fail_count = len(results) - success_count
-    
-    logger.info(f"爬取完成: 成功 {success_count}, 失败 {fail_count}")
-    
-    # 记录失败任务的详细信息
-    if fail_count > 0:
-        logger.warning(f"⚠️ 有 {fail_count} 个任务失败，详细错误信息：")
-        failed_results = [r for r in results if not r.success]
-        for i, result in enumerate(failed_results[:10], 1):  # 最多显示10个
-            logger.error(
-                f"  失败任务 {i}: {result.task.stock_code} ({result.task.company_name}) "
-                f"{result.task.year} Q{result.task.quarter} - {result.error_message}"
-            )
-        if fail_count > 10:
-            logger.warning(f"  ... 还有 {fail_count - 10} 个失败任务")
-    
-    # 记录资产物化（Dagster 数据血缘）
-    for result in results:
-        if result.success:
-            # 根据季度确定文档类型字符串（用于资产key）
-            if result.task.quarter == 4:
-                doc_type_str = "annual_report"
-            elif result.task.quarter == 2:
-                doc_type_str = "interim_report"
-            else:
-                doc_type_str = "quarterly_report"
-            
-            context.log_event(
-                AssetMaterialization(
-                    asset_key=["bronze", "a_share", doc_type_str, str(result.task.year), f"Q{result.task.quarter}"],
-                    description=f"{result.task.company_name} {result.task.year} Q{result.task.quarter}",
-                    metadata={
-                        "stock_code": MetadataValue.text(result.task.stock_code),
-                        "company_name": MetadataValue.text(result.task.company_name),
-                        "minio_path": MetadataValue.text(result.minio_object_path or ""),
-                        "file_size": MetadataValue.int(result.file_size or 0),
-                        "file_hash": MetadataValue.text(result.file_hash or ""),
-                        "document_id": MetadataValue.text(str(result.document_id) if result.document_id else ""),
-                    }
-                )
-            )
     
     # 返回结果
     return {
@@ -535,10 +593,104 @@ def crawl_a_share_ipo_op(context) -> Dict:
     
     logger.info(f"生成 {len(tasks)} 个IPO爬取任务")
     
-    # 执行批量爬取
+    # 执行批量爬取（实时记录进度和资产）
+    results = []
+    success_count = 0
+    fail_count = 0
+    minio_upload_count = 0
+    minio_fail_count = 0
+    total = len(tasks)
+    
     try:
-        results = crawler.crawl_batch(tasks)
+        # 自己循环调用 crawl()，以便实时记录进度和 AssetMaterialization
+        for idx, task in enumerate(tasks, 1):
+            # 实时进度日志（每10个或每10%显示一次，或最后一个）
+            if idx % 10 == 0 or idx % max(1, total // 10) == 0 or idx == total:
+                progress_pct = idx / total * 100
+                logger.info(
+                    f"📦 [{idx}/{total}] {progress_pct:.1f}% | "
+                    f"正在爬取IPO: {task.stock_code} - {task.company_name}"
+                )
+            
+            # 执行单个任务
+            try:
+                result = crawler.crawl(task)
+                results.append(result)
+                
+                # 实时记录 AssetMaterialization（成功时立即记录）
+                if result.success:
+                    success_count += 1
+                    
+                    # 统计 MinIO 上传情况
+                    if result.minio_object_path:
+                        minio_upload_count += 1
+                    else:
+                        minio_fail_count += 1
+                    
+                    # 立即记录 AssetMaterialization，无需等待所有任务完成
+                    try:
+                        context.log_event(
+                            AssetMaterialization(
+                                asset_key=["bronze", "a_share", "ipo_prospectus"],
+                                description=f"{result.task.company_name} IPO招股说明书",
+                                metadata={
+                                    "stock_code": MetadataValue.text(result.task.stock_code),
+                                    "company_name": MetadataValue.text(result.task.company_name),
+                                    "minio_path": MetadataValue.text(result.minio_object_path or ""),
+                                    "file_size": MetadataValue.int(result.file_size or 0),
+                                    "file_hash": MetadataValue.text(result.file_hash or ""),
+                                    "document_id": MetadataValue.text(str(result.document_id) if result.document_id else ""),
+                                    "progress": MetadataValue.text(f"{idx}/{total} ({idx/total*100:.1f}%)"),
+                                }
+                            )
+                        )
+                        logger.debug(f"✅ 已记录资产: {result.task.stock_code} IPO")
+                    except Exception as e:
+                        logger.warning(f"记录 AssetMaterialization 失败 (task={result.task.stock_code}): {e}")
+                else:
+                    fail_count += 1
+                    logger.warning(
+                        f"❌ IPO爬取失败: {task.stock_code} ({task.company_name}) - {result.error_message}"
+                    )
+            except KeyboardInterrupt:
+                # 用户手动中断（Ctrl+C）
+                logger.warning(f"⚠️ IPO爬取被用户中断: {task.stock_code}")
+                raise
+            except Exception as e:
+                # 检查是否是 Dagster 中断异常
+                error_type = type(e).__name__
+                if "Interrupt" in error_type or "Interrupted" in error_type:
+                    logger.warning(f"⚠️ IPO爬取被中断: {task.stock_code}, error_type={error_type}")
+                    raise
+                
+                fail_count += 1
+                logger.error(f"❌ IPO任务执行异常: {task.stock_code} - {e}", exc_info=True)
+                # 创建失败结果
+                from src.ingestion.base.base_crawler import CrawlResult
+                results.append(CrawlResult(
+                    task=task,
+                    success=False,
+                    error_message=str(e)
+                ))
+        
+        logger.info(f"✅ IPO爬取完成: 成功 {success_count}/{total}, 失败 {fail_count}/{total}")
+        if enable_minio:
+            logger.info(f"MinIO 上传: 成功 {minio_upload_count}, 失败 {minio_fail_count}")
+            if minio_fail_count > 0:
+                logger.warning(f"⚠️ 有 {minio_fail_count} 个文件下载成功但未上传到 MinIO")
+        else:
+            logger.warning("⚠️ MinIO 未启用，文件未上传")
+    
+    except KeyboardInterrupt:
+        logger.warning("⚠️ IPO批量爬取被用户中断")
+        raise
     except Exception as e:
+        # 检查是否是 Dagster 中断异常
+        error_type = type(e).__name__
+        if "Interrupt" in error_type or "Interrupted" in error_type:
+            logger.warning(f"⚠️ IPO批量爬取被中断: {error_type}")
+            raise
+        
         logger.error(f"❌ IPO批量爬取过程中发生异常: {e}", exc_info=True)
         return {
             "success": False,
@@ -548,40 +700,6 @@ def crawl_a_share_ipo_op(context) -> Dict:
             "fail_count": len(tasks),
             "results": []
         }
-    
-    # 统计结果
-    success_count = sum(1 for r in results if r.success)
-    fail_count = len(results) - success_count
-    
-    # 统计 MinIO 上传情况
-    minio_upload_count = sum(1 for r in results if r.success and r.minio_object_path)
-    minio_fail_count = sum(1 for r in results if r.success and not r.minio_object_path)
-    
-    logger.info(f"IPO爬取完成: 成功 {success_count}, 失败 {fail_count}")
-    if enable_minio:
-        logger.info(f"MinIO 上传: 成功 {minio_upload_count}, 失败 {minio_fail_count}")
-        if minio_fail_count > 0:
-            logger.warning(f"⚠️ 有 {minio_fail_count} 个文件下载成功但未上传到 MinIO")
-    else:
-        logger.warning("⚠️ MinIO 未启用，文件未上传")
-    
-    # 记录资产物化
-    for result in results:
-        if result.success:
-            context.log_event(
-                AssetMaterialization(
-                    asset_key=["bronze", "a_share", "ipo_prospectus"],
-                    description=f"{result.task.company_name} IPO招股说明书",
-                    metadata={
-                        "stock_code": MetadataValue.text(result.task.stock_code),
-                        "company_name": MetadataValue.text(result.task.company_name),
-                        "minio_path": MetadataValue.text(result.minio_object_path or ""),
-                        "file_size": MetadataValue.int(result.file_size or 0),
-                        "file_hash": MetadataValue.text(result.file_hash or ""),
-                        "document_id": MetadataValue.text(str(result.document_id) if result.document_id else ""),
-                    }
-                )
-            )
     
     return {
         "success": True,
