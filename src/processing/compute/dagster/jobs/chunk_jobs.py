@@ -348,11 +348,7 @@ def chunk_documents_op(context, scan_result: Dict) -> Dict:
                         "stock_code": stock_code,
                         "error": error_msg
                     })
-                
-        except KeyboardInterrupt:
-            # 用户手动中断（Ctrl+C）
-            logger.warning(f"⚠️ 分块被用户中断: document_id={document_id}")
-            raise
+            
         except Exception as e:
             # 检查是否是 Dagster 中断异常
             error_type = type(e).__name__

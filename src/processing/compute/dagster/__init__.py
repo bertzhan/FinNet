@@ -10,16 +10,26 @@ Dagster 调度模块
 from dagster import Definitions
 
 from .jobs import (
+    # A股 Jobs
     crawl_a_share_reports_job,
     crawl_a_share_ipo_job,
+    # 港股 Jobs
+    update_hk_companies_job,
+    crawl_hk_reports_job,
+    # 其他 Jobs
     parse_pdf_job,
     chunk_documents_job,
     vectorize_documents_job,
     build_graph_job,
     elasticsearch_index_job,
     update_listed_companies_job,
+    # A股 Schedules
     daily_crawl_reports_schedule,
     daily_crawl_ipo_schedule,
+    # 港股 Schedules
+    weekly_update_hk_companies_schedule,
+    daily_crawl_hk_reports_schedule,
+    # 其他 Schedules
     hourly_parse_schedule,
     daily_parse_schedule,
     hourly_chunk_schedule,
@@ -31,8 +41,13 @@ from .jobs import (
     hourly_elasticsearch_schedule,
     daily_elasticsearch_schedule,
     daily_update_companies_schedule,
+    # A股 Sensors
     manual_trigger_reports_sensor,
     manual_trigger_ipo_sensor,
+    # 港股 Sensors
+    manual_trigger_update_hk_companies_sensor,
+    manual_trigger_hk_reports_sensor,
+    # 其他 Sensors
     manual_trigger_parse_sensor,
     manual_trigger_chunk_sensor,
     manual_trigger_vectorize_sensor,
@@ -47,8 +62,13 @@ from .assets import all_assets
 # 创建 Definitions 对象（Dagster 1.5+ 推荐方式）
 # 这允许模块中有多个 Jobs、Schedules、Sensors 和 Assets
 jobs_list = [
+    # A股
     crawl_a_share_reports_job,
     crawl_a_share_ipo_job,
+    # 港股
+    update_hk_companies_job,
+    crawl_hk_reports_job,
+    # 其他
     parse_pdf_job,
     chunk_documents_job,
     vectorize_documents_job,
@@ -58,8 +78,13 @@ jobs_list = [
 ]
 
 schedules_list = [
+    # A股
     daily_crawl_reports_schedule,
     daily_crawl_ipo_schedule,
+    # 港股
+    weekly_update_hk_companies_schedule,
+    daily_crawl_hk_reports_schedule,
+    # 其他
     hourly_parse_schedule,
     daily_parse_schedule,
     hourly_chunk_schedule,
@@ -74,8 +99,13 @@ schedules_list = [
 ]
 
 sensors_list = [
+    # A股
     manual_trigger_reports_sensor,
     manual_trigger_ipo_sensor,
+    # 港股
+    manual_trigger_update_hk_companies_sensor,
+    manual_trigger_hk_reports_sensor,
+    # 其他
     manual_trigger_parse_sensor,
     manual_trigger_chunk_sensor,
     manual_trigger_vectorize_sensor,
@@ -96,18 +126,26 @@ defs = Definitions(
 # 为了向后兼容，仍然导出单个对象
 __all__ = [
     "defs",  # Definitions 对象（Dagster UI 会使用这个）
-    # Jobs
+    # A股 Jobs
     "crawl_a_share_reports_job",
     "crawl_a_share_ipo_job",
+    # 港股 Jobs
+    "update_hk_companies_job",
+    "crawl_hk_reports_job",
+    # 其他 Jobs
     "parse_pdf_job",
     "chunk_documents_job",
     "vectorize_documents_job",
     "build_graph_job",
     "elasticsearch_index_job",
     "update_listed_companies_job",
-    # Schedules
+    # A股 Schedules
     "daily_crawl_reports_schedule",
     "daily_crawl_ipo_schedule",
+    # 港股 Schedules
+    "weekly_update_hk_companies_schedule",
+    "daily_crawl_hk_reports_schedule",
+    # 其他 Schedules
     "hourly_parse_schedule",
     "daily_parse_schedule",
     "hourly_chunk_schedule",
@@ -119,9 +157,13 @@ __all__ = [
     "hourly_elasticsearch_schedule",
     "daily_elasticsearch_schedule",
     "daily_update_companies_schedule",
-    # Sensors
+    # A股 Sensors
     "manual_trigger_reports_sensor",
     "manual_trigger_ipo_sensor",
+    # 港股 Sensors
+    "manual_trigger_update_hk_companies_sensor",
+    "manual_trigger_hk_reports_sensor",
+    # 其他 Sensors
     "manual_trigger_parse_sensor",
     "manual_trigger_chunk_sensor",
     "manual_trigger_vectorize_sensor",

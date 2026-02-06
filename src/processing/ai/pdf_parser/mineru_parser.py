@@ -365,13 +365,18 @@ class MinerUParser(LoggerMixin):
             
             # 发送 POST 请求
             # 设置较长的超时时间，因为 PDF 解析可能需要较长时间
-            # 连接超时：30秒（建立连接的时间）
-            # 读取超时：3600秒（60分钟，处理大文件时需要更长时间）
-            connect_timeout = 30  # 连接超时：30秒
+            # 连接超时：600秒（10分钟，大文件上传需要足够时间）
+            # 读取超时：1200秒（20分钟，处理大文件时需要更长时间）
+            connect_timeout = 600  # 连接超时：10分钟（确保大文件有足够时间上传）
             read_timeout = 1200   # 读取超时：20分钟
             timeout = (connect_timeout, read_timeout)  # requests支持tuple格式：(connect_timeout, read_timeout)
             
-            self.logger.info(f"API 请求超时设置: 连接超时={connect_timeout}秒, 读取超时={read_timeout//60}分钟")
+            file_size_mb = len(pdf_data) / (1024 * 1024)
+            self.logger.info(
+                f"API 请求超时设置: 文件大小={file_size_mb:.2f}MB, "
+                f"连接超时={connect_timeout}秒({connect_timeout//60}分钟), "
+                f"读取超时={read_timeout//60}分钟"
+            )
             
             # 创建带重试机制的 Session
             session = requests.Session()
@@ -424,10 +429,10 @@ class MinerUParser(LoggerMixin):
                 "error_message": "requests 库未安装"
             }
         except requests.exceptions.ConnectTimeout:
-            self.logger.error(f"API 连接超时（超过30秒），无法连接到服务器: {self.api_base}")
+            self.logger.error(f"API 连接超时（超过10分钟），无法连接到服务器或文件上传超时: {self.api_base}")
             return {
                 "success": False,
-                "error_message": f"API 连接超时，无法连接到服务器 {self.api_base}。请检查网络连接或代理设置。"
+                "error_message": f"API 连接超时（超过10分钟），无法连接到服务器 {self.api_base} 或文件上传时间过长。请检查网络连接、代理设置或文件大小。"
             }
         except requests.exceptions.ReadTimeout:
             read_timeout_minutes = 60
@@ -491,10 +496,10 @@ class MinerUParser(LoggerMixin):
             
             # 处理 requests 特定的异常
             if isinstance(e, requests.exceptions.ConnectTimeout):
-                self.logger.error(f"API 连接超时（超过30秒），无法连接到服务器: {self.api_base}")
+                self.logger.error(f"API 连接超时（超过10分钟），无法连接到服务器或文件上传超时: {self.api_base}")
                 return {
                     "success": False,
-                    "error_message": f"API 连接超时，无法连接到服务器 {self.api_base}。请检查网络连接或代理设置。"
+                    "error_message": f"API 连接超时（超过10分钟），无法连接到服务器 {self.api_base} 或文件上传时间过长。请检查网络连接、代理设置或文件大小。"
                 }
             elif isinstance(e, requests.exceptions.ReadTimeout):
                 read_timeout_minutes = 60

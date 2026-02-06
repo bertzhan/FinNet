@@ -13,12 +13,21 @@ from sqlalchemy import and_, or_, desc, func, String
 from src.storage.metadata.models import (
     Document, DocumentChunk, CrawlTask, ParseTask,
     ValidationLog, QuarantineRecord, EmbeddingTask,
-    ParsedDocument, Image, ImageAnnotation, ListedCompany
+    ParsedDocument, Image, ImageAnnotation, ListedCompany,
+    HKListedCompany
 )
 from src.common.constants import DocumentStatus
 from src.common.logger import get_logger
 
 logger = get_logger(__name__)
+
+# 繁简转换器（用于将港股公司名称从繁体转换为简体）
+try:
+    from opencc import OpenCC
+    _t2s_converter = OpenCC('t2s')  # 繁体转简体
+except ImportError:
+    _t2s_converter = None
+    logger.warning("opencc 未安装，无法自动将港股公司名称从繁体转换为简体")
 
 
 # ==================== UUID 辅助函数 ====================
@@ -1558,3 +1567,316 @@ def search_listed_company(
     result = candidates[:max_candidates]
     logger.debug(f"公司搜索: {query_name} -> 找到 {len(result)} 个匹配")
     return result
+
+
+# ==================== HKListedCompany CRUD ====================
+
+def upsert_hk_listed_company(
+    session: Session,
+    code: str,
+    name: str,
+    org_id: Optional[int] = None,
+    category: Optional[str] = None,
+    sub_category: Optional[str] = None,
+    **kwargs  # 支持其他字段（org_name_cn, telephone, etc.）
+) -> HKListedCompany:
+    """
+    插入或更新港股上市公司信息
+    
+    注意：code 是主键，如果已存在会自动更新，不存在则创建
+    
+    Args:
+        session: 数据库会话
+        code: 股票代码（主键，如：00001）
+        name: 公司名称（中文繁体）
+        org_id: 披露易 orgId（用于查询报告）
+        category: 分类
+        sub_category: 次分类
+        **kwargs: 其他字段（org_name_cn, org_name_en, telephone, email, etc.）
+        
+    Returns:
+        HKListedCompany 对象
+        
+    Example:
+        >>> with get_postgres_client().get_session() as session:
+        ...     company = upsert_hk_listed_company(
+        ...         session, "00001", "長和",
+        ...         org_id=1,
+        ...         org_name_cn="長江和記實業有限公司",
+        ...         telephone="+852 2128 8888"
+        ...     )
+        ...     print(company.code)
+    """
+    # 使用主键查询
+    company = session.get(HKListedCompany, code)
+    
+    # 繁简转换辅助函数
+    def convert_to_simplified(value):
+        """将繁体中文转换为简体中文"""
+        if _t2s_converter and value and isinstance(value, str):
+            try:
+                return _t2s_converter.convert(value)
+            except Exception:
+                pass
+        return value
+    
+    # 需要进行繁简转换的文本字段
+    text_fields_to_convert = {
+        'name', 'org_name_cn', 'reg_location', 'reg_address', 
+        'office_address_cn', 'chairman', 'secretary', 'industry',
+        'category', 'sub_category', 'org_cn_introduction', 'security_type'
+    }
+    
+    # 转换 name 字段
+    name = convert_to_simplified(name)
+    
+    # 准备更新数据字典
+    update_data = {
+        'name': name,
+        'updated_at': datetime.now()
+    }
+    
+    # 添加可选字段
+    optional_fields = {
+        'org_id': org_id,
+        'category': convert_to_simplified(category),
+        'sub_category': convert_to_simplified(sub_category),
+    }
+    
+    # 添加 kwargs 中的其他字段，并对文本字段进行繁简转换
+    for key, value in kwargs.items():
+        if key in text_fields_to_convert:
+            optional_fields[key] = convert_to_simplified(value)
+        else:
+            optional_fields[key] = value
+    
+    for field, value in optional_fields.items():
+        # 允许更新所有非 None 的值，包括空字符串、False、0 等
+        # 如果需要清除字段，可以显式传递 None
+        if value is not None:
+            update_data[field] = value
+        # 注意：如果字段不在模型中，setattr 会失败，但不会抛出异常
+        # 我们依赖 SQLAlchemy 来验证字段名
+    
+    if company:
+        # 更新现有记录
+        for key, value in update_data.items():
+            setattr(company, key, value)
+        logger.debug(f"更新港股公司: {code} - {name}")
+    else:
+        # 创建新记录
+        company = HKListedCompany(code=code, **update_data)
+        session.add(company)
+        logger.debug(f"新增港股公司: {code} - {name}")
+    
+    session.flush()
+    return company
+
+
+def get_hk_listed_company_by_code(
+    session: Session,
+    code: str
+) -> Optional[HKListedCompany]:
+    """
+    根据股票代码获取港股上市公司信息
+    
+    Args:
+        session: 数据库会话
+        code: 股票代码（如：00001）
+        
+    Returns:
+        HKListedCompany 对象，如果不存在则返回 None
+    """
+    return session.query(HKListedCompany).filter(HKListedCompany.code == code).first()
+
+
+def get_all_hk_listed_companies(
+    session: Session,
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
+    with_org_id_only: bool = False
+) -> List[HKListedCompany]:
+    """
+    获取所有港股上市公司列表
+    
+    Args:
+        session: 数据库会话
+        limit: 限制返回数量
+        offset: 偏移量
+        with_org_id_only: 是否只返回有 orgId 的公司
+        
+    Returns:
+        HKListedCompany 对象列表
+    """
+    query = session.query(HKListedCompany)
+    
+    if with_org_id_only:
+        query = query.filter(HKListedCompany.org_id.isnot(None))
+    
+    query = query.order_by(HKListedCompany.code)
+    
+    if offset:
+        query = query.offset(offset)
+    if limit:
+        query = query.limit(limit)
+    
+    return query.all()
+
+
+def update_hk_company_org_id(
+    session: Session,
+    code: str,
+    org_id: int
+) -> Optional[HKListedCompany]:
+    """
+    更新港股公司的 orgId
+    
+    Args:
+        session: 数据库会话
+        code: 股票代码
+        org_id: 披露易 orgId
+        
+    Returns:
+        更新后的 HKListedCompany 对象，如果不存在则返回 None
+    """
+    company = session.query(HKListedCompany).filter(HKListedCompany.code == code).first()
+    if not company:
+        return None
+    
+    company.org_id = org_id
+    company.updated_at = datetime.now()
+    session.flush()
+    
+    logger.debug(f"更新港股公司 orgId: {code} -> {org_id}")
+    return company
+
+
+def batch_upsert_hk_listed_companies(
+    session: Session,
+    companies: List[Dict[str, Any]]
+) -> int:
+    """
+    批量插入或更新港股上市公司
+    
+    Args:
+        session: 数据库会话
+        companies: 公司数据列表，每个字典包含：
+            - code: 股票代码（必需）
+            - name: 公司名称（必需）
+            - org_id: 披露易 orgId（可选，兼容 stock_id）
+            - category: 分类（可选）
+            - sub_category: 次分类（可选）
+            - 其他字段（org_name_cn, org_name_en, telephone, etc.）
+            
+    Returns:
+        成功处理的公司数量
+    """
+    count = 0
+    for company_data in companies:
+        code = company_data.get('code')
+        name = company_data.get('name')
+        
+        if not code or not name:
+            logger.warning(f"跳过无效公司数据: {company_data}")
+            continue
+        
+        # 提取基本字段（兼容 stock_id 和 org_id）
+        org_id = company_data.get('org_id') or company_data.get('stock_id')
+        kwargs = {
+            'org_id': org_id,
+            'category': company_data.get('category'),
+            'sub_category': company_data.get('sub_category'),
+        }
+        
+        # 添加其他字段（akshare 获取的详细信息）
+        # 注意：只添加存在的键，值可以是 None、空字符串、False 等
+        enriched_fields = []
+        for key in ['org_name_cn', 'org_name_en', 'reg_location', 'reg_address',
+                    'office_address_cn', 'telephone', 'fax', 'email', 'org_website',
+                    'org_cn_introduction', 'chairman', 'secretary', 'established_date',
+                    'listed_date', 'staff_num', 'industry', 'fiscal_year_end',
+                    'security_type', 'issue_price', 'issue_amount', 'lot_size',
+                    'par_value', 'isin', 'is_sh_hk_connect', 'is_sz_hk_connect']:
+            if key in company_data:
+                value = company_data[key]
+                # 只添加非 None 的值（None 表示字段不存在或未获取到）
+                if value is not None:
+                    kwargs[key] = value
+                    enriched_fields.append(key)
+        
+        # 调试日志：记录哪些字段被添加
+        if enriched_fields:
+            logger.debug(f"公司 {code} 添加了 {len(enriched_fields)} 个字段: {enriched_fields[:5]}...")
+        
+        upsert_hk_listed_company(
+            session=session,
+            code=code,
+            name=name,
+            **kwargs
+        )
+        count += 1
+    
+    logger.info(f"批量更新港股公司: {count} 家")
+    return count
+
+
+def search_hk_listed_company(
+    session: Session,
+    query: str,
+    max_results: int = 10
+) -> List[HKListedCompany]:
+    """
+    搜索港股上市公司（支持模糊匹配）
+    
+    Args:
+        session: 数据库会话
+        query: 搜索关键词（公司名称或代码）
+        max_results: 最大返回数量
+        
+    Returns:
+        匹配的 HKListedCompany 列表
+    """
+    query_str = query.strip()
+    if not query_str:
+        return []
+    
+    # 如果是纯数字，按代码精确匹配
+    if query_str.isdigit():
+        code = query_str.zfill(5)
+        company = get_hk_listed_company_by_code(session, code)
+        return [company] if company else []
+    
+        # 否则按名称模糊匹配
+        results = session.query(HKListedCompany).filter(
+            or_(
+                HKListedCompany.name.ilike(f'%{query_str}%'),
+                HKListedCompany.org_name_cn.ilike(f'%{query_str}%'),
+                HKListedCompany.org_name_en.ilike(f'%{query_str}%'),
+            )
+        ).order_by(HKListedCompany.code).limit(max_results).all()
+    
+    return results
+
+
+def get_hk_companies_without_org_id(
+    session: Session,
+    limit: Optional[int] = None
+) -> List[HKListedCompany]:
+    """
+    获取没有 orgId 的港股公司列表（用于补全）
+    
+    Args:
+        session: 数据库会话
+        limit: 限制返回数量
+        
+    Returns:
+        缺少 orgId 的 HKListedCompany 列表
+    """
+    query = session.query(HKListedCompany).filter(
+        HKListedCompany.org_id.is_(None)
+    ).order_by(HKListedCompany.code)
+    
+    if limit:
+        query = query.limit(limit)
+    
+    return query.all()

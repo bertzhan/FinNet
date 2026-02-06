@@ -5,22 +5,39 @@ Dagster Jobs 模块
 """
 
 from .crawl_jobs import (
-    # Jobs
+    # A股 Jobs
     crawl_a_share_reports_job,
     crawl_a_share_ipo_job,
     
-    # Ops
+    # A股 Ops
     crawl_a_share_reports_op,
     crawl_a_share_ipo_op,
     validate_crawl_results_op,
     
-    # Schedules
+    # A股 Schedules
     daily_crawl_reports_schedule,
     daily_crawl_ipo_schedule,
     
-    # Sensors
+    # A股 Sensors
     manual_trigger_reports_sensor,
     manual_trigger_ipo_sensor,
+    
+    # ============ 港股 ============
+    # 港股 Jobs
+    update_hk_companies_job,
+    crawl_hk_reports_job,
+    
+    # 港股 Ops
+    update_hk_companies_op,
+    crawl_hk_reports_op,
+    
+    # 港股 Schedules
+    weekly_update_hk_companies_schedule,
+    daily_crawl_hk_reports_schedule,
+    
+    # 港股 Sensors
+    manual_trigger_update_hk_companies_sensor,
+    manual_trigger_hk_reports_sensor,
 )
 
 from .parse_jobs import (

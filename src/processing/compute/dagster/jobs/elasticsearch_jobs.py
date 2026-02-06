@@ -331,9 +331,7 @@ def index_chunks_to_elasticsearch_op(context, scan_result: Dict) -> Dict:
             # 显示批次结果
             logger.info(f"   ✓ 成功 {success_count} 失败 {len(failed_items)}")
         
-        except KeyboardInterrupt:
-            logger.warning(f"⚠️ Elasticsearch索引被用户中断（批次 {batch_num}）")
-            raise
+
         except Exception as e:
             # 检查是否是 Dagster 中断异常
             error_type = type(e).__name__

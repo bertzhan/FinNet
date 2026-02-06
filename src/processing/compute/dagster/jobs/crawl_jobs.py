@@ -30,6 +30,7 @@ from dagster import (
 
 # 导入新的爬虫模块
 from src.ingestion.a_share import ReportCrawler, CninfoIPOProspectusCrawler
+from src.ingestion.hk_stock import HKReportCrawler
 from src.ingestion.base.base_crawler import CrawlTask, CrawlResult
 from src.common.constants import Market, DocType
 from src.common.config import common_config
@@ -67,8 +68,8 @@ REPORT_CRAWL_CONFIG_SCHEMA = {
     ),
     "year": Field(
         int,
-        is_required=False,
-        description="Year to crawl (None = auto: current and previous quarter, specified = all quarters of that year)"
+        is_required=True,
+        description="Year to crawl. Will crawl all quarters (Q1, Q2, Q3, Q4) of that year"
     ),
     "limit": Field(
         int,
@@ -115,6 +116,69 @@ IPO_CRAWL_CONFIG_SCHEMA = {
     ),
 }
 
+# 港股爬取配置 Schema
+HK_REPORT_CRAWL_CONFIG_SCHEMA = {
+    "output_root": Field(
+        str,
+        is_required=False,
+        description="Output root directory (default: downloads/, 港股主要用于临时文件)"
+    ),
+    "workers": Field(
+        int,
+        default_value=4,
+        description="Number of parallel workers (1-16, 港股使用多线程并行)"
+    ),
+    "enable_minio": Field(
+        bool,
+        default_value=True,
+        description="Enable MinIO upload"
+    ),
+    "enable_postgres": Field(
+        bool,
+        default_value=True,
+        description="Enable PostgreSQL metadata recording"
+    ),
+    "year": Field(
+        int,
+        is_required=True,
+        description="Year to crawl. start_date will be {year}-01-01, end_date will be {year+1}-06-30"
+    ),
+    "limit": Field(
+        int,
+        is_required=False,
+        description="Limit number of companies to crawl (None = all companies)"
+    ),
+    "stock_codes": Field(
+        list,
+        is_required=False,
+        description="List of stock codes to crawl (5-digit codes). Example: ['00001', '00700']"
+    ),
+}
+
+# 港股公司列表更新配置 Schema
+HK_COMPANY_UPDATE_CONFIG_SCHEMA = {
+    "enable_postgres": Field(
+        bool,
+        default_value=True,
+        description="Enable PostgreSQL metadata recording"
+    ),
+    "include_inactive": Field(
+        bool,
+        default_value=False,
+        description="Include inactive (delisted) stocks"
+    ),
+    "equity_only": Field(
+        bool,
+        default_value=True,
+        description="Only include equity stocks (filter out bonds, warrants, derivatives)"
+    ),
+    "enrich_with_akshare": Field(
+        bool,
+        default_value=False,
+        description="Enrich company data with akshare stock_hk_company_profile_em API (slower but more detailed)"
+    ),
+}
+
 
 # ==================== 辅助函数 ====================
 
@@ -124,7 +188,7 @@ def load_company_list_from_db(
     logger=None
 ) -> List[Dict[str, str]]:
     """
-    从数据库加载公司列表
+    从数据库加载公司列表（A股）
 
     Args:
         limit: 限制返回数量（None 表示返回所有）
@@ -202,6 +266,62 @@ def calculate_quarters() -> tuple:
     return current_year, current_quarter, prev_year, prev_quarter
 
 
+def load_hk_company_list_from_db(
+    limit: Optional[int] = None,
+    stock_codes: Optional[List[str]] = None,
+    with_org_id_only: bool = True,
+    logger=None
+) -> List[Dict]:
+    """
+    从数据库加载港股公司列表
+
+    Args:
+        limit: 限制返回数量（None 表示返回所有）
+        stock_codes: 按股票代码列表过滤（None 表示不过滤）
+        with_org_id_only: 是否只返回有 orgId 的公司
+        logger: 日志记录器
+
+    Returns:
+        公司列表 [{'code': '00001', 'name': '長和', 'org_id': 1}, ...]
+    """
+    if logger is None:
+        import logging
+        logger = logging.getLogger(__name__)
+
+    companies = []
+    try:
+        pg_client = get_postgres_client()
+        with pg_client.get_session() as session:
+            if stock_codes:
+                from src.storage.metadata.models import HKListedCompany
+                # 查询指定的股票代码
+                listed_companies = session.query(HKListedCompany).filter(
+                    HKListedCompany.code.in_(stock_codes)
+                ).all()
+                logger.info(f"港股按股票代码过滤: 指定 {len(stock_codes)} 个代码，找到 {len(listed_companies)} 家公司")
+            else:
+                # 使用 CRUD 函数
+                listed_companies = crud.get_all_hk_listed_companies(
+                    session,
+                    limit=limit,
+                    with_org_id_only=with_org_id_only
+                )
+
+            for company in listed_companies:
+                companies.append({
+                    'code': company.code,
+                    'name': company.name,
+                    'org_id': company.org_id,
+                })
+
+        logger.info(f"从数据库加载了 {len(companies)} 家港股公司")
+    except Exception as e:
+        logger.error(f"从数据库加载港股公司列表失败: {e}", exc_info=True)
+        raise
+
+    return companies
+
+
 # ==================== Dagster Ops ====================
 
 @op(config_schema=REPORT_CRAWL_CONFIG_SCHEMA)
@@ -224,26 +344,28 @@ def crawl_a_share_reports_op(context) -> Dict:
     enable_minio = config.get("enable_minio", True)
     enable_postgres = config.get("enable_postgres", True)
     
-    # 计算年份和季度
+    # 获取年份（必需参数）
     year = config.get("year")
     
     if year is None:
-        # 自动计算：爬取当前季度和上一季度
-        current_year, current_quarter, prev_year, prev_quarter = calculate_quarters()
-        years_quarters = [
-            (prev_year, prev_quarter),
-            (current_year, current_quarter),
-        ]
-        logger.info(f"自动计算季度: {prev_year}Q{prev_quarter}, {current_year}Q{current_quarter}")
-    else:
-        # 指定年份：爬取该年的所有季度（Q1, Q2, Q3, Q4）
-        years_quarters = [
-            (year, 1),  # Q1: 季度报告
-            (year, 2),  # Q2: 半年报
-            (year, 3),  # Q3: 季度报告
-            (year, 4),  # Q4: 年报
-        ]
-        logger.info(f"指定年份 {year}，将爬取该年的所有季度报告: Q1, Q2, Q3, Q4")
+        logger.error("year 参数是必需的")
+        return {
+            "success": False,
+            "error": "year 参数是必需的",
+            "total": 0,
+            "success_count": 0,
+            "fail_count": 0,
+            "results": []
+        }
+    
+    # 爬取该年的所有季度（Q1, Q2, Q3, Q4）
+    years_quarters = [
+        (year, 1),  # Q1: 季度报告
+        (year, 2),  # Q2: 半年报
+        (year, 3),  # Q3: 季度报告
+        (year, 4),  # Q4: 年报
+    ]
+    logger.info(f"爬取年份 {year} 的所有季度报告: Q1, Q2, Q3, Q4")
 
     # 确保输出目录存在
     os.makedirs(output_root, exist_ok=True)
@@ -412,10 +534,6 @@ def crawl_a_share_reports_op(context) -> Dict:
                         f"❌ 爬取失败: {task.stock_code} ({task.company_name}) "
                         f"{task.year} Q{task.quarter} - {result.error_message}"
                     )
-            except KeyboardInterrupt:
-                # 用户手动中断（Ctrl+C）
-                logger.warning(f"⚠️ 爬取被用户中断: {task.stock_code}")
-                raise
             except Exception as e:
                 # 检查是否是 Dagster 中断异常
                 error_type = type(e).__name__
@@ -1023,5 +1141,399 @@ def manual_trigger_ipo_sensor(context):
     """
     手动触发爬取IPO传感器
     可以通过Dagster UI手动触发
+    """
+    return RunRequest()
+
+
+# ==================== 港股 Dagster Ops ====================
+
+@op(config_schema=HK_COMPANY_UPDATE_CONFIG_SCHEMA)
+def update_hk_companies_op(context) -> Dict:
+    """
+    更新港股公司列表
+    
+    从披露易获取最新的股票列表，并同步到数据库
+    默认只获取股本证券（过滤债券、窝轮、衍生品等）
+    """
+    config = context.op_config
+    logger = get_dagster_logger()
+    
+    enable_postgres = config.get("enable_postgres", True)
+    include_inactive = config.get("include_inactive", False)
+    equity_only = config.get("equity_only", True)
+    
+    logger.info(f"开始更新港股公司列表 (include_inactive={include_inactive}, equity_only={equity_only})")
+    
+    try:
+        # 使用 HKEX 客户端获取股票列表
+        from src.ingestion.hk_stock import HKEXClient
+        
+        hkex_client = HKEXClient()
+        stocks = hkex_client.get_stock_list(
+            include_inactive=include_inactive,
+            equity_only=equity_only
+        )
+        
+        if not stocks:
+            logger.warning("未获取到港股公司列表")
+            return {
+                "success": False,
+                "error": "未获取到港股公司列表",
+                "count": 0
+            }
+        
+        logger.info(f"从披露易获取了 {len(stocks)} 家股本证券公司")
+        
+        # 使用 akshare 获取公司详细信息（可选）
+        enrich_with_akshare = config.get("enrich_with_akshare", False)
+        if enrich_with_akshare:
+            logger.info(f"开始使用 akshare 获取 {len(stocks)} 家公司的详细信息...")
+            from src.ingestion.hk_stock.utils.akshare_helper import batch_get_company_profiles
+            
+            stock_codes = [s['code'] for s in stocks]
+            total_codes = len(stock_codes)
+            
+            # 定义进度回调函数
+            last_logged_pct = -1
+            def progress_callback(current: int, total: int, code: str):
+                """进度回调函数，记录进度信息"""
+                nonlocal last_logged_pct
+                progress_pct_int = int((current / total) * 100)
+                
+                # 每 10% 或每 50 个记录一次进度，避免日志过多
+                if progress_pct_int % 10 == 0 and progress_pct_int != last_logged_pct:
+                    logger.info(f"[akshare 进度] {current}/{total} ({progress_pct_int}%) - 正在处理: {code}")
+                    last_logged_pct = progress_pct_int
+                elif current % 50 == 0:
+                    logger.info(f"[akshare 进度] {current}/{total} ({progress_pct_int}%) - 正在处理: {code}")
+                elif current == total:
+                    logger.info(f"[akshare 进度] 完成 {current}/{total} (100%)")
+            
+            profiles = batch_get_company_profiles(
+                stock_codes, 
+                delay=0.1,  # 减少延迟到 0.1 秒
+                max_workers=10,  # 使用 10 个并发线程
+                progress_callback=progress_callback
+            )
+            
+            # 合并详细信息到 stocks
+            enriched_count = 0
+            company_info_count = 0
+            security_info_count = 0
+            
+            for stock in stocks:
+                code = stock['code']
+                profile = profiles.get(code)
+                # profile 可能是字典（包括空字典 {}）或 None
+                # 如果是字典（即使是空的），也要更新，因为空字典表示获取成功但无数据
+                if profile is not None:
+                    # 统计公司信息字段和证券信息字段
+                    company_fields = ['org_name_cn', 'org_name_en', 'reg_location', 'reg_address',
+                                    'office_address_cn', 'telephone', 'fax', 'email', 'org_website',
+                                    'org_cn_introduction', 'chairman', 'secretary', 'established_date',
+                                    'staff_num', 'industry']
+                    security_fields = ['listed_date', 'security_type', 'issue_price', 'issue_amount',
+                                     'lot_size', 'par_value', 'isin', 'is_sh_hk_connect', 'is_sz_hk_connect',
+                                     'fiscal_year_end']
+                    
+                    has_company_info = any(k in profile for k in company_fields)
+                    has_security_info = any(k in profile for k in security_fields)
+                    
+                    if has_company_info:
+                        company_info_count += 1
+                    if has_security_info:
+                        security_info_count += 1
+                    
+                    stock.update(profile)
+                    # 统计有实际数据的数量（至少有一个非空字段）
+                    if len(profile) > 0:
+                        enriched_count += 1
+            
+            logger.info(f"✅ 成功获取 {enriched_count}/{len(stocks)} 家公司的详细信息")
+            logger.info(f"   其中：公司信息 {company_info_count} 家，证券信息 {security_info_count} 家")
+            
+            # 调试：打印一些示例数据，确认数据是否正确获取
+            if enriched_count > 0:
+                sample_stock = next((s for s in stocks if profiles.get(s.get('code')) and len(profiles.get(s.get('code'), {})) > 0), None)
+                if sample_stock:
+                    sample_code = sample_stock['code']
+                    sample_profile = profiles.get(sample_code, {})
+                    logger.info(f"示例数据 ({sample_code}): 获取到 {len(sample_profile)} 个字段")
+                    logger.info(f"示例字段: {list(sample_profile.keys())[:15]}")
+        
+        # 保存到数据库
+        if enable_postgres:
+            pg_client = get_postgres_client()
+            with pg_client.get_session() as session:
+                count = crud.batch_upsert_hk_listed_companies(session, stocks)
+                session.commit()
+                logger.info(f"✅ 成功更新 {count} 家港股公司到数据库")
+        
+        # 记录 Asset Materialization
+        context.log_event(
+            AssetMaterialization(
+                asset_key=["hk_stock", "companies"],
+                description=f"更新港股公司列表: {len(stocks)} 家股本证券",
+                metadata={
+                    "total_count": MetadataValue.int(len(stocks)),
+                    "include_inactive": MetadataValue.bool(include_inactive),
+                    "equity_only": MetadataValue.bool(equity_only),
+                }
+            )
+        )
+        
+        return {
+            "success": True,
+            "count": len(stocks),
+            "message": f"成功更新 {len(stocks)} 家港股股本证券公司"
+        }
+        
+    except Exception as e:
+        logger.error(f"更新港股公司列表失败: {e}", exc_info=True)
+        return {
+            "success": False,
+            "error": str(e),
+            "count": 0
+        }
+
+
+@op(config_schema=HK_REPORT_CRAWL_CONFIG_SCHEMA)
+def crawl_hk_reports_op(context) -> Dict:
+    """
+    爬取港股定期报告（年报/中报）
+    
+    功能：
+    - 从数据库加载港股公司列表
+    - 使用 HKReportCrawler 批量爬取报告（支持多线程并行）
+    - 自动上传到 MinIO（Bronze层）
+    - 自动记录到 PostgreSQL
+    """
+    config = context.op_config
+    logger = get_dagster_logger()
+    
+    # 解析配置
+    output_root = config.get("output_root") or str(DEFAULT_OUTPUT_ROOT)
+    workers = config.get("workers", 4)
+    enable_minio = config.get("enable_minio", True)
+    enable_postgres = config.get("enable_postgres", True)
+    year = config.get("year")
+    
+    if year is None:
+        logger.error("year 参数是必需的")
+        return {
+            "success": False,
+            "error": "year 参数是必需的",
+            "total": 0,
+            "success_count": 0,
+            "fail_count": 0,
+            "results": []
+        }
+    
+    # 根据 year 计算 start_date 和 end_date
+    # start_date: year 的 1月1日
+    # end_date: year+1 的 6月30日（因为年报通常在次年3-4月发布）
+    start_date = f"{year}-01-01"
+    end_date = f"{year + 1}-06-30"
+    
+    limit = config.get("limit")
+    stock_codes = config.get("stock_codes")
+    
+    logger.info(f"爬取年份: {year}, 查询日期范围: {start_date} ~ {end_date}, 将爬取所有季度 (Q1, Q2, Q3, Q4)")
+    
+    # 从数据库加载港股公司列表
+    try:
+        companies = load_hk_company_list_from_db(
+            limit=limit,
+            stock_codes=stock_codes,
+            with_org_id_only=True,  # 只爬取有 orgId 的公司
+            logger=logger
+        )
+        
+        if not companies:
+            logger.warning("未找到港股公司，请先运行 update_hk_companies_op 更新公司列表")
+            return {
+                "success": False,
+                "error": "未找到港股公司列表",
+                "total": 0,
+                "success_count": 0,
+                "fail_count": 0,
+                "results": []
+            }
+        
+        logger.info(f"加载了 {len(companies)} 家港股公司")
+        
+    except Exception as e:
+        logger.error(f"加载港股公司列表失败: {e}", exc_info=True)
+        return {
+            "success": False,
+            "error": str(e),
+            "total": 0,
+            "success_count": 0,
+            "fail_count": 0,
+            "results": []
+        }
+    
+    # 确保输出目录存在（虽然港股主要使用临时目录，但为了接口一致性保留）
+    os.makedirs(output_root, exist_ok=True)
+    
+    # 创建爬虫实例
+    crawler = HKReportCrawler(
+        enable_minio=enable_minio,
+        enable_postgres=enable_postgres,
+        start_date=start_date,
+        end_date=end_date,
+        workers=workers
+    )
+    
+    logger.info(f"港股爬虫配置: workers={workers}, start_date={start_date}, end_date={end_date}")
+    
+    # 构建任务列表：为每个公司生成 Q1, Q2, Q3, Q4 的所有任务
+    tasks = []
+    for company in companies:
+        stock_code = company['code']
+        company_name = company['name']
+        org_id = company.get('org_id')
+        
+        # 季度到文档类型的映射
+        quarter_doc_type_map = {
+            1: DocType.HK_QUARTERLY_REPORT,   # Q1: 季度报告
+            2: DocType.HK_INTERIM_REPORT,     # Q2: 中期报告
+            3: DocType.HK_QUARTERLY_REPORT,   # Q3: 季度报告
+            4: DocType.HK_ANNUAL_REPORT,      # Q4: 年报
+        }
+        
+        # 为每个季度生成任务
+        for quarter, doc_type in quarter_doc_type_map.items():
+            tasks.append(CrawlTask(
+                stock_code=stock_code,
+                company_name=company_name,
+                market=Market.HK_STOCK,
+                doc_type=doc_type,
+                year=year,
+                quarter=quarter,
+                metadata={'org_id': org_id} if org_id else {}
+            ))
+    
+    logger.info(f"生成了 {len(tasks)} 个爬取任务")
+    
+    # 执行爬取
+    results = crawler.crawl_batch(tasks)
+    
+    # 统计结果
+    success_count = sum(1 for r in results if r.success)
+    fail_count = len(results) - success_count
+    
+    logger.info(f"港股报告爬取完成: 成功 {success_count}, 失败 {fail_count}")
+    
+    # 记录 Asset Materialization
+    for result in results:
+        if result.success and result.minio_object_path:
+            context.log_event(
+                AssetMaterialization(
+                    asset_key=["hk_stock", "reports", result.task.stock_code],
+                    description=f"港股报告: {result.task.stock_code} {result.task.year} Q{result.task.quarter}",
+                    metadata={
+                        "stock_code": MetadataValue.text(result.task.stock_code),
+                        "company_name": MetadataValue.text(result.task.company_name),
+                        "year": MetadataValue.int(result.task.year),
+                        "quarter": MetadataValue.int(result.task.quarter) if result.task.quarter else MetadataValue.int(0),
+                        "minio_path": MetadataValue.text(result.minio_object_path),
+                        "file_size": MetadataValue.int(result.file_size) if result.file_size else MetadataValue.int(0),
+                    }
+                )
+            )
+    
+    return {
+        "success": True,
+        "total": len(results),
+        "success_count": success_count,
+        "fail_count": fail_count,
+        "results": [
+            {
+                "stock_code": r.task.stock_code,
+                "company_name": r.task.company_name,
+                "year": r.task.year,
+                "quarter": r.task.quarter,
+                "success": r.success,
+                "minio_object_path": r.minio_object_path if r.success else None,
+                "document_id": str(r.document_id) if r.success and r.document_id else None,
+                "error": r.error_message if not r.success else None,
+            }
+            for r in results
+        ]
+    }
+
+
+# ==================== 港股 Dagster Jobs ====================
+
+@job
+def update_hk_companies_job():
+    """
+    港股公司列表更新作业
+    
+    从披露易获取最新的股票列表并同步到数据库
+    """
+    update_hk_companies_op()
+
+
+@job
+def crawl_hk_reports_job():
+    """
+    港股定期报告爬取作业
+    
+    完整流程：
+    1. 爬取年报/中报
+    2. 验证爬取结果
+    """
+    crawl_results = crawl_hk_reports_op()
+    validate_crawl_results_op(crawl_results)
+
+
+# ==================== 港股 Schedules ====================
+
+@schedule(
+    job=update_hk_companies_job,
+    cron_schedule="0 1 * * 1",  # 每周一凌晨1点执行
+    default_status=DefaultScheduleStatus.STOPPED,
+)
+def weekly_update_hk_companies_schedule(context):
+    """
+    每周定时更新港股公司列表
+    """
+    return RunRequest()
+
+
+@schedule(
+    job=crawl_hk_reports_job,
+    cron_schedule="0 4 * * *",  # 每天凌晨4点执行
+    default_status=DefaultScheduleStatus.STOPPED,
+)
+def daily_crawl_hk_reports_schedule(context):
+    """
+    每日定时爬取港股报告
+    """
+    return RunRequest()
+
+
+# ==================== 港股 Sensors ====================
+
+@sensor(
+    job=update_hk_companies_job,
+    default_status=DefaultSensorStatus.STOPPED,
+)
+def manual_trigger_update_hk_companies_sensor(context):
+    """
+    手动触发更新港股公司列表
+    """
+    return RunRequest()
+
+
+@sensor(
+    job=crawl_hk_reports_job,
+    default_status=DefaultSensorStatus.STOPPED,
+)
+def manual_trigger_hk_reports_sensor(context):
+    """
+    手动触发爬取港股报告
     """
     return RunRequest()

@@ -24,10 +24,10 @@ class DocType(Enum):
     ANNOUNCEMENT = "announcements"           # 公告
 
     # 港股文档类型
-    HK_ANNUAL_REPORT = "hk_annual_reports"
-    HK_INTERIM_REPORT = "hk_interim_reports"
-    HK_QUARTERLY_REPORT = "hk_quarterly_reports"
-    HK_IPO_PROSPECTUS = "hk_ipo_prospectus"
+    HK_ANNUAL_REPORT = "annual_reports"
+    HK_INTERIM_REPORT = "interim_reports"
+    HK_QUARTERLY_REPORT = "quarterly_reports"
+    HK_IPO_PROSPECTUS = "ipo_prospectus"
     EARNINGS_CALL = "earnings_calls"         # 财报电话会
 
     # 美股文档类型
