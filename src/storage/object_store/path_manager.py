@@ -88,6 +88,42 @@ class PathManager:
 
         return "/".join(components)
 
+    def get_us_stock_bronze_path(
+        self,
+        stock_code: str,
+        year: int,
+        period: str,
+        filename: str = "document.htm"
+    ) -> str:
+        """
+        获取美股 Bronze 层路径（SEC 财报专用格式）
+
+        路径格式：bronze/us_stock/{stock_code}/{year}/{period}/{filename}
+
+        Args:
+            stock_code: 股票代码（如 AAPL）
+            year: 年份
+            period: 报告期，取值 {Q1, Q2, Q3, FY}
+                    10-K、20-F、40-F 使用 FY；10-Q 使用 Q1/Q2/Q3
+            filename: 文件名（默认 document.htm，图片为 document_image-001.gif 等）
+
+        Returns:
+            对象存储路径
+
+        Example:
+            >>> pm = PathManager()
+            >>> pm.get_us_stock_bronze_path("AAPL", 2025, "FY", "document.htm")
+            'bronze/us_stock/AAPL/2025/FY/document.htm'
+        """
+        return "/".join([
+            DataLayer.BRONZE.value,
+            Market.US_STOCK.value,
+            stock_code,
+            str(year),
+            period,
+            filename
+        ])
+
     def get_silver_path(
         self,
         market: Market,

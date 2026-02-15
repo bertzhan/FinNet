@@ -132,6 +132,79 @@ def create_document(
     return doc
 
 
+def create_or_update_document(
+    session: Session,
+    stock_code: str,
+    company_name: str,
+    market: str,
+    doc_type: str,
+    year: int,
+    quarter: Optional[int],
+    minio_object_path: str,
+    file_size: Optional[int] = None,
+    file_hash: Optional[str] = None,
+    source_url: Optional[str] = None,
+    publish_date: Optional[datetime] = None,
+    status: str = DocumentStatus.CRAWLED.value
+) -> Optional[uuid.UUID]:
+    """
+    创建或更新文档记录（按 source_url 去重）
+
+    若 source_url 已存在则更新，否则创建新记录。
+    适用于 SEC 财报等以 source_url 为唯一标识的场景。
+
+    Args:
+        session: 数据库会话
+        stock_code: 股票代码
+        company_name: 公司名称
+        market: 市场类型
+        doc_type: 文档类型
+        year: 年份
+        quarter: 季度
+        minio_object_path: MinIO 对象路径
+        file_size: 文件大小
+        file_hash: 文件哈希
+        source_url: 文档来源URL（用于去重，必需）
+        publish_date: 文档发布日期
+        status: 状态（默认 crawled）
+
+    Returns:
+        文档 ID，失败返回 None
+    """
+    if not source_url:
+        logger.warning("create_or_update_document 需要 source_url 用于去重")
+        return None
+
+    existing = session.query(Document).filter(Document.source_url == source_url).first()
+
+    if existing:
+        existing.minio_object_path = minio_object_path
+        existing.file_size = file_size
+        existing.file_hash = file_hash
+        existing.publish_date = publish_date
+        existing.status = status
+        existing.crawled_at = datetime.now()
+        session.flush()
+        logger.debug(f"更新文档记录: id={existing.id}, source_url={source_url[:80]}...")
+        return existing.id
+    else:
+        doc = create_document(
+            session=session,
+            stock_code=stock_code,
+            company_name=company_name,
+            market=market,
+            doc_type=doc_type,
+            year=year,
+            quarter=quarter,
+            minio_object_path=minio_object_path,
+            file_size=file_size,
+            file_hash=file_hash,
+            source_url=source_url,
+            publish_date=publish_date
+        )
+        return doc.id
+
+
 def get_document_by_id(session: Session, document_id: Union[uuid.UUID, str]) -> Optional[Document]:
     """获取文档（按 ID）"""
     document_id = _to_uuid(document_id)

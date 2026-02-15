@@ -186,28 +186,29 @@ def scan_pending_documents_op(context) -> Dict:
                 logger.info(f"应用 limit={limit}，从 {len(documents)} 个文档中截取前 {limit} 个")
                 documents = documents[:limit]
             
-            # 只处理 PDF 文档
-            pdf_documents = [
+            # 处理 PDF 和 HTM/HTML 文档（SEC 报告等为 .htm 格式，解析时会先转为 PDF）
+            supported_extensions = ('.pdf', '.htm', '.html')
+            documents_to_parse = [
                 d for d in documents
-                if d.minio_object_path and d.minio_object_path.endswith('.pdf')
+                if d.minio_object_path and d.minio_object_path.lower().endswith(supported_extensions)
             ]
             
             # 验证文件是否在 MinIO 中存在（避免解析不存在的文件）
             from src.storage.object_store.minio_client import MinIOClient
             minio_client = MinIOClient()
-            existing_pdf_documents = []
-            for doc in pdf_documents:
+            existing_documents = []
+            for doc in documents_to_parse:
                 if minio_client.file_exists(doc.minio_object_path):
-                    existing_pdf_documents.append(doc)
+                    existing_documents.append(doc)
                 else:
                     logger.warning(f"文档文件不存在，跳过: document_id={doc.id}, path={doc.minio_object_path}")
             
-            pdf_documents = existing_pdf_documents
-            logger.info(f"找到 {len(pdf_documents)} 个待解析的 PDF 文档（已过滤不存在的文件）")
+            documents_to_parse = existing_documents
+            logger.info(f"找到 {len(documents_to_parse)} 个待解析的文档（PDF/HTM，已过滤不存在的文件）")
             
             # 将文档列表转换为字典格式（便于 Dagster 传递）
             document_list = []
-            for doc in pdf_documents:
+            for doc in documents_to_parse:
                 document_list.append({
                     "document_id": doc.id,
                     "stock_code": doc.stock_code,

@@ -7,6 +7,7 @@ MinerU PDF 解析器
 
 import os
 import json
+import subprocess
 import tempfile
 import hashlib
 import uuid
@@ -155,12 +156,22 @@ class MinerUParser(LoggerMixin):
                 f"minio_path={minio_object_path}"
             )
 
-        # 3. 下载 PDF 到临时文件
-        temp_pdf_path = None
+        # 3. 下载文件到临时文件（支持 PDF 和 HTM/HTML）
+        temp_file_path = None
+        temp_pdf_path = None  # 用于 MinerU 的 PDF 路径（可能是转换后的）
         try:
-            temp_pdf_path = self._download_pdf_to_temp(minio_object_path)
-            if not temp_pdf_path:
-                raise Exception("PDF 下载失败")
+            temp_file_path = self._download_pdf_to_temp(minio_object_path)
+            if not temp_file_path:
+                raise Exception("文件下载失败")
+
+            # 3.1 如果是 HTM/HTML 文件，先通过 Chrome 打印转换为 PDF
+            if temp_file_path.lower().endswith((".htm", ".html")):
+                self.logger.info(f"检测到 HTM/HTML 文件，先转换为 PDF: {temp_file_path}")
+                temp_pdf_path = self._convert_html_to_pdf(temp_file_path)
+                if not temp_pdf_path:
+                    raise Exception("HTM 转 PDF 失败")
+            else:
+                temp_pdf_path = temp_file_path
 
             # 4. 调用 MinerU 解析（支持页面范围）
             try:
@@ -248,22 +259,29 @@ class MinerUParser(LoggerMixin):
                 "error_message": error_msg
             }
         finally:
-            # 清理临时文件
+            # 清理临时文件（PDF 和 HTM 转换后的 PDF 可能是不同文件）
             if temp_pdf_path and os.path.exists(temp_pdf_path):
                 try:
                     os.remove(temp_pdf_path)
+                    self.logger.debug(f"已清理临时 PDF: {temp_pdf_path}")
                 except Exception as e:
-                    self.logger.warning(f"清理临时文件失败: {e}")
+                    self.logger.warning(f"清理临时 PDF 失败: {e}")
+            if temp_file_path and temp_file_path != temp_pdf_path and os.path.exists(temp_file_path):
+                try:
+                    os.remove(temp_file_path)
+                    self.logger.debug(f"已清理临时 HTM: {temp_file_path}")
+                except Exception as e:
+                    self.logger.warning(f"清理临时 HTM 失败: {e}")
 
     def _download_pdf_to_temp(self, minio_object_path: str) -> Optional[str]:
         """
-        从 MinIO 下载 PDF 到临时文件
+        从 MinIO 下载文件到临时文件（支持 PDF 和 HTM/HTML）
 
         Args:
-            minio_object_path: MinIO 对象路径
+            minio_object_path: MinIO 对象路径（如 bronze/xxx/document.pdf 或 document.htm）
 
         Returns:
-            临时文件路径
+            临时文件路径（保留原始扩展名）
         """
         try:
             # 下载文件数据
@@ -272,21 +290,126 @@ class MinerUParser(LoggerMixin):
                 self.logger.error(f"无法下载文件: {minio_object_path}")
                 return None
 
-            # 创建临时文件
+            # 从路径获取扩展名，默认 .pdf
+            path_lower = minio_object_path.lower()
+            if path_lower.endswith(".htm"):
+                ext = ".htm"
+            elif path_lower.endswith(".html"):
+                ext = ".html"
+            else:
+                ext = ".pdf"
+
+            # 创建临时文件（保留原始扩展名）
             temp_dir = tempfile.gettempdir()
             temp_file = os.path.join(
                 temp_dir,
-                f"mineru_parse_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{os.getpid()}.pdf"
+                f"mineru_parse_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{os.getpid()}{ext}"
             )
 
             with open(temp_file, "wb") as f:
                 f.write(file_data)
 
-            self.logger.debug(f"PDF 已下载到临时文件: {temp_file}")
+            self.logger.debug(f"文件已下载到临时文件: {temp_file}")
             return temp_file
 
         except Exception as e:
-            self.logger.error(f"下载 PDF 失败: {e}", exc_info=True)
+            self.logger.error(f"下载文件失败: {e}", exc_info=True)
+            return None
+
+    def _convert_html_to_pdf(self, html_path: str) -> Optional[str]:
+        """
+        使用 Chrome 无头模式将 HTML/HTM 文件转换为 PDF（打印功能）
+
+        Args:
+            html_path: HTML/HTM 文件本地路径
+
+        Returns:
+            转换后的 PDF 文件路径，失败返回 None
+        """
+        try:
+            # 查找 Chrome 可执行文件（支持 macOS、Linux、Windows）
+            chrome_paths = [
+                "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",  # macOS
+                "/usr/bin/google-chrome-stable",
+                "/usr/bin/google-chrome",
+                "/usr/bin/chromium",
+                "/usr/bin/chromium-browser",
+                "google-chrome",
+                "chromium",
+            ]
+            chrome_exec = None
+            for p in chrome_paths:
+                if p.startswith("/") and os.path.isfile(p):
+                    chrome_exec = p
+                    break
+                elif not p.startswith("/"):
+                    result = subprocess.run(["which", p], capture_output=True, text=True)
+                    if result.returncode == 0 and result.stdout.strip():
+                        chrome_exec = result.stdout.strip()
+                        break
+            if not chrome_exec:
+                self.logger.error("未找到 Chrome/Chromium，请安装 Google Chrome 或 Chromium")
+                return None
+
+            # 创建输出 PDF 路径
+            pdf_path = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf").name
+
+            # 构建 file:// URL（Chrome 需要 URL 格式访问本地文件）
+            abs_path = Path(html_path).resolve()
+            file_url = abs_path.as_uri()
+
+            # --headless=new 为新版 Chrome，旧版用 --headless
+            cmd = [
+                chrome_exec,
+                "--headless",
+                "--disable-gpu",
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-software-rasterizer",
+                "--print-to-pdf=" + pdf_path,
+                "--no-pdf-header-footer",
+                file_url,
+            ]
+
+            self.logger.info(f"HTM 转 PDF: 使用 Chrome 打印 {html_path} -> {pdf_path}")
+
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=120,  # 2 分钟超时
+            )
+
+            if result.returncode != 0:
+                self.logger.error(f"Chrome 转换失败: {result.stderr[:500] if result.stderr else result.stdout}")
+                if os.path.exists(pdf_path):
+                    os.remove(pdf_path)
+                return None
+
+            if not os.path.exists(pdf_path) or os.path.getsize(pdf_path) == 0:
+                self.logger.error("Chrome 未生成有效 PDF 文件")
+                if os.path.exists(pdf_path):
+                    os.remove(pdf_path)
+                return None
+
+            self.logger.info(f"HTM 转 PDF 成功: {pdf_path}")
+            return pdf_path
+
+        except subprocess.TimeoutExpired:
+            self.logger.error("Chrome 转换超时（120秒）")
+            if "pdf_path" in locals() and os.path.exists(pdf_path):
+                try:
+                    os.remove(pdf_path)
+                except Exception:
+                    pass
+            return None
+        except Exception as e:
+            self.logger.error(f"HTM 转 PDF 失败: {e}", exc_info=True)
+            if "pdf_path" in locals() and os.path.exists(pdf_path):
+                try:
+                    os.remove(pdf_path)
+                except Exception:
+                    pass
             return None
 
     def _parse_with_mineru(self, pdf_path: str, start_page_id: int = 0, end_page_id: Optional[int] = None) -> Dict[str, Any]:

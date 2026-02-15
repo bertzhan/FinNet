@@ -1,0 +1,339 @@
+// FinNet 数据库模型 ER 关系图
+digraph "FinNet Database ER Diagram" {
+	bgcolor="#FAFAFA" fontname=Helvetica fontsize=14 label=<<B><FONT POINT-SIZE="24">FinNet 数据库模型 ER 关系图</FONT></B>> labelloc=t nodesep=0.8 pad=0.5 rankdir=TB ranksep=1.2
+	node [fontname=Helvetica fontsize=11 shape=plaintext]
+	edge [color="#666666" fontname=Helvetica fontsize=9]
+	subgraph cluster_pipeline {
+		color="#4A90D9" fontcolor="#4A90D9" fontsize=13 label="核心文档处理流水线" style=dashed
+		documents [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+        <TR><TD COLSPAN="2" BGCOLOR="#4A90D9"><FONT COLOR="white"><B>Document</B></FONT></TD></TR>
+        <TR><TD COLSPAN="2" BGCOLOR="#4A90D9AA"><FONT COLOR="white" POINT-SIZE="10">(文档表 · Bronze层)</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="id">🔑 id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="stock_code">stock_code</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="company_name">company_name</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="market">market</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="doc_type">doc_type</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="year">year</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="quarter">quarter</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="minio_object_path">minio_object_path</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="file_size">file_size</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">BIGINT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="file_hash">file_hash</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="source_url">source_url</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="status">status</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="created_at">created_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="crawled_at">crawled_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="parsed_at">parsed_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="chunked_at">chunked_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="vectorized_at">vectorized_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="graphed_at">graphed_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="updated_at">updated_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="publish_date">publish_date</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="error_message">error_message</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">TEXT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="retry_count">retry_count</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+    </TABLE>
+    >]
+		parse_tasks [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+        <TR><TD COLSPAN="2" BGCOLOR="#5BA0E0"><FONT COLOR="white"><B>ParseTask</B></FONT></TD></TR>
+        <TR><TD COLSPAN="2" BGCOLOR="#5BA0E0AA"><FONT COLOR="white" POINT-SIZE="10">(解析任务表)</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="id">🔑 id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="document_id">🔗 document_id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="parser_type">parser_type</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="parser_version">parser_version</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="status">status</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="output_path">output_path</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="error_message">error_message</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">TEXT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="created_at">created_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="started_at">started_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="completed_at">completed_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="extra_metadata">extra_metadata</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">JSON · NULL</FONT></TD></TR>
+    </TABLE>
+    >]
+		parsed_documents [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+        <TR><TD COLSPAN="2" BGCOLOR="#6CB0E8"><FONT COLOR="white"><B>ParsedDocument</B></FONT></TD></TR>
+        <TR><TD COLSPAN="2" BGCOLOR="#6CB0E8AA"><FONT COLOR="white" POINT-SIZE="10">(解析文档表 · Silver层)</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="id">🔑 id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="document_id">🔗 document_id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="parse_task_id">🔗 parse_task_id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="content_json_path">content_json_path</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="markdown_path">markdown_path</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="middle_json_path">middle_json_path</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="model_json_path">model_json_path</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="image_folder_path">image_folder_path</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="structure_json_path">structure_json_path</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="chunks_json_path">chunks_json_path</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="content_json_hash">content_json_hash</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="markdown_hash">markdown_hash</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="source_document_hash">source_document_hash</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="structure_json_hash">structure_json_hash</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="chunks_json_hash">chunks_json_hash</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="text_length">text_length</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="tables_count">tables_count</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="images_count">images_count</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="pages_count">pages_count</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="chunks_count">chunks_count</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="parser_type">parser_type</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="parser_version">parser_version</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="parsing_quality_score">parsing_quality_score</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">FLOAT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="has_tables">has_tables</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">BOOL · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="has_images">has_images</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">BOOL · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="parsed_at">parsed_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="updated_at">updated_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="chunked_at">chunked_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="status">status</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+    </TABLE>
+    >]
+		images [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+        <TR><TD COLSPAN="2" BGCOLOR="#7DC0F0"><FONT COLOR="white"><B>Image</B></FONT></TD></TR>
+        <TR><TD COLSPAN="2" BGCOLOR="#7DC0F0AA"><FONT COLOR="white" POINT-SIZE="10">(图片元数据表)</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="id">🔑 id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="parsed_document_id">🔗 parsed_document_id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="document_id">🔗 document_id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="image_index">image_index</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="filename">filename</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="file_path">file_path</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="page_number">page_number</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="bbox">bbox</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">JSON · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="description">description</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="width">width</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="height">height</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="file_size">file_size</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">BIGINT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="file_hash">file_hash</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="created_at">created_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="extracted_at">extracted_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
+    </TABLE>
+    >]
+		image_annotations [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+        <TR><TD COLSPAN="2" BGCOLOR="#8ED0F8"><FONT COLOR="white"><B>ImageAnnotation</B></FONT></TD></TR>
+        <TR><TD COLSPAN="2" BGCOLOR="#8ED0F8AA"><FONT COLOR="white" POINT-SIZE="10">(图片标注表)</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="id">🔑 id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="image_id">🔗 image_id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="annotation_version">annotation_version</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="category">category</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="subcategory">subcategory</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="confidence">confidence</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">FLOAT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="annotator_type">annotator_type</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="annotator_id">annotator_id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="annotator_name">annotator_name</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="status">status</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="reviewed_by">reviewed_by</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="reviewed_at">reviewed_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="annotation_text">annotation_text</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">TEXT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="tags">tags</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">JSON · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="extra_metadata">extra_metadata</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">JSON · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="created_at">created_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="updated_at">updated_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME · NULL</FONT></TD></TR>
+    </TABLE>
+    >]
+		document_chunks [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+        <TR><TD COLSPAN="2" BGCOLOR="#5BA0E0"><FONT COLOR="white"><B>DocumentChunk</B></FONT></TD></TR>
+        <TR><TD COLSPAN="2" BGCOLOR="#5BA0E0AA"><FONT COLOR="white" POINT-SIZE="10">(文档分块表)</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="id">🔑 id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="document_id">🔗 document_id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="chunk_index">chunk_index</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="chunk_text">chunk_text</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">TEXT</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="chunk_size">chunk_size</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="title">title</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="title_level">title_level</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="heading_index">heading_index</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="parent_chunk_id">parent_chunk_id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="start_line">start_line</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="end_line">end_line</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="is_table">is_table</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">BOOL · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="status">status</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="embedding_model">embedding_model</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="vectorized_at">vectorized_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="vectorization_error">vectorization_error</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">TEXT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="vectorization_retry_count">vectorization_retry_count</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="es_indexed_at">es_indexed_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="extra_metadata">extra_metadata</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">JSON · NULL</FONT></TD></TR>
+    </TABLE>
+    >]
+	}
+	subgraph cluster_tasks {
+		color="#5CB85C" fontcolor="#5CB85C" fontsize=13 label="任务管理" style=dashed
+		crawl_tasks [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+        <TR><TD COLSPAN="2" BGCOLOR="#5CB85C"><FONT COLOR="white"><B>CrawlTask</B></FONT></TD></TR>
+        <TR><TD COLSPAN="2" BGCOLOR="#5CB85CAA"><FONT COLOR="white" POINT-SIZE="10">(爬取任务表)</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="id">🔑 id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="task_type">task_type</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="stock_code">stock_code</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="company_name">company_name</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="market">market</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="doc_type">doc_type</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="year">year</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="quarter">quarter</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="status">status</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="success">success</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">BOOL · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="document_id">🔗 document_id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="error_message">error_message</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">TEXT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="created_at">created_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="started_at">started_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="completed_at">completed_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="extra_metadata">extra_metadata</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">JSON · NULL</FONT></TD></TR>
+    </TABLE>
+    >]
+		embedding_tasks [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+        <TR><TD COLSPAN="2" BGCOLOR="#6EC86E"><FONT COLOR="white"><B>EmbeddingTask</B></FONT></TD></TR>
+        <TR><TD COLSPAN="2" BGCOLOR="#6EC86EAA"><FONT COLOR="white" POINT-SIZE="10">(向量化任务表)</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="id">🔑 id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="document_id">🔗 document_id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="embedding_model">embedding_model</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="status">status</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="chunks_count">chunks_count</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="completed_chunks">completed_chunks</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="error_message">error_message</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">TEXT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="created_at">created_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="started_at">started_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="completed_at">completed_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="extra_metadata">extra_metadata</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">JSON · NULL</FONT></TD></TR>
+    </TABLE>
+    >]
+	}
+	subgraph cluster_quality {
+		color="#F0AD4E" fontcolor="#EC971F" fontsize=13 label="数据质量管理" style=dashed
+		validation_logs [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+        <TR><TD COLSPAN="2" BGCOLOR="#F0AD4E"><FONT COLOR="white"><B>ValidationLog</B></FONT></TD></TR>
+        <TR><TD COLSPAN="2" BGCOLOR="#F0AD4EAA"><FONT COLOR="white" POINT-SIZE="10">(验证日志表)</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="id">🔑 id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="document_id">🔗 document_id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="validation_type">validation_type</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="validation_status">validation_status</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="message">message</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">TEXT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="details">details</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">JSON · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="created_at">created_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
+    </TABLE>
+    >]
+		quarantine_records [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+        <TR><TD COLSPAN="2" BGCOLOR="#EC971F"><FONT COLOR="white"><B>QuarantineRecord</B></FONT></TD></TR>
+        <TR><TD COLSPAN="2" BGCOLOR="#EC971FAA"><FONT COLOR="white" POINT-SIZE="10">(隔离记录表)</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="id">🔑 id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="document_id">🔗 document_id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">UUID · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="source_type">source_type</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="doc_type">doc_type</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="original_path">original_path</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="quarantine_path">quarantine_path</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="failure_stage">failure_stage</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="failure_reason">failure_reason</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="failure_details">failure_details</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">TEXT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="status">status</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="handler">handler</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="resolution">resolution</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">TEXT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="quarantine_time">quarantine_time</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="resolution_time">resolution_time</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="extra_metadata">extra_metadata</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">JSON · NULL</FONT></TD></TR>
+    </TABLE>
+    >]
+	}
+	subgraph cluster_base {
+		color="#9B59B6" fontcolor="#8E44AD" fontsize=13 label="上市公司基础数据" style=dashed
+		listed_companies [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+        <TR><TD COLSPAN="2" BGCOLOR="#9B59B6"><FONT COLOR="white"><B>ListedCompany</B></FONT></TD></TR>
+        <TR><TD COLSPAN="2" BGCOLOR="#9B59B6AA"><FONT COLOR="white" POINT-SIZE="10">(A股上市公司表)</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="code">🔑 code</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="name">name</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="org_id">org_id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="org_name_cn">org_name_cn</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="org_short_name_cn">org_short_name_cn</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="org_name_en">org_name_en</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="org_short_name_en">org_short_name_en</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="pre_name_cn">pre_name_cn</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="main_operation_business">main_operation_business</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">TEXT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="operating_scope">operating_scope</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">TEXT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="org_cn_introduction">org_cn_introduction</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">TEXT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="telephone">telephone</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="postcode">postcode</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="fax">fax</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="email">email</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="org_website">org_website</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="reg_address_cn">reg_address_cn</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="reg_address_en">reg_address_en</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="office_address_cn">office_address_cn</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="office_address_en">office_address_en</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="legal_representative">legal_representative</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="general_manager">general_manager</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="secretary">secretary</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="chairman">chairman</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="executives_nums">executives_nums</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="district_encode">district_encode</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="provincial_name">provincial_name</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="actual_controller">actual_controller</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="classi_name">classi_name</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="established_date">established_date</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">BIGINT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="listed_date">listed_date</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">BIGINT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="reg_asset">reg_asset</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">FLOAT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="staff_num">staff_num</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="actual_issue_vol">actual_issue_vol</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">FLOAT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="issue_price">issue_price</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">FLOAT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="actual_rc_net_amt">actual_rc_net_amt</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">FLOAT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="pe_after_issuing">pe_after_issuing</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">FLOAT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="online_success_rate_of_issue">online_success_rate_of_issue</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">FLOAT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="currency_encode">currency_encode</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="currency">currency</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="affiliate_industry">affiliate_industry</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">JSON · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="created_at">created_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="updated_at">updated_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
+    </TABLE>
+    >]
+		hk_listed_companies [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+        <TR><TD COLSPAN="2" BGCOLOR="#8E44AD"><FONT COLOR="white"><B>HKListedCompany</B></FONT></TD></TR>
+        <TR><TD COLSPAN="2" BGCOLOR="#8E44ADAA"><FONT COLOR="white" POINT-SIZE="10">(港股上市公司表)</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="code">🔑 code</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="name">name</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="org_name_cn">org_name_cn</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="org_name_en">org_name_en</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="org_id">org_id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="category">category</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="sub_category">sub_category</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="org_cn_introduction">org_cn_introduction</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">TEXT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="telephone">telephone</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="fax">fax</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="email">email</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="org_website">org_website</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="reg_location">reg_location</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="reg_address">reg_address</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="office_address_cn">office_address_cn</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="secretary">secretary</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="chairman">chairman</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="established_date">established_date</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">BIGINT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="listed_date">listed_date</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">BIGINT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="staff_num">staff_num</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="fiscal_year_end">fiscal_year_end</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="security_type">security_type</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="issue_price">issue_price</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">FLOAT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="issue_amount">issue_amount</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">BIGINT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="lot_size">lot_size</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="par_value">par_value</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="isin">isin</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="is_sh_hk_connect">is_sh_hk_connect</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">BOOL · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="is_sz_hk_connect">is_sz_hk_connect</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">BOOL · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="industry">industry</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="created_at">created_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="updated_at">updated_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
+    </TABLE>
+    >]
+	}
+	parsed_documents:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
+	parsed_documents:parse_task_id -> parse_tasks:id [label=parse_task_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
+	document_chunks:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
+	embedding_tasks:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
+	image_annotations:image_id -> images:id [label=image_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
+	crawl_tasks:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#F39C12" dir=both penwidth=1.5 style=dashed]
+	validation_logs:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
+	quarantine_records:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
+	parse_tasks:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
+	images:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
+	images:parsed_document_id -> parsed_documents:id [label=parsed_document_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
+	document_chunks:parent_chunk_id -> document_chunks:id [label=parent_chunk_id arrowhead=crow arrowtail=tee color="#9B59B6" dir=both penwidth=1.5 style=dotted]
+}

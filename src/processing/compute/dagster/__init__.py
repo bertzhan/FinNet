@@ -56,6 +56,16 @@ from .jobs import (
     manual_trigger_companies_sensor,
 )
 
+# 导入美股 Jobs、Schedules、Sensors
+from src.ingestion.us_stock.dagster_assets import (
+    update_us_companies_job_dagster,
+    crawl_us_reports_job,
+    weekly_update_us_companies_schedule,
+    weekly_crawl_us_reports_schedule,
+    manual_trigger_update_us_companies_sensor,
+    manual_trigger_crawl_us_reports_sensor,
+)
+
 # 导入 Software-Defined Assets（数据血缘）
 from .assets import all_assets
 
@@ -68,6 +78,9 @@ jobs_list = [
     # 港股
     update_hk_companies_job,
     crawl_hk_reports_job,
+    # 美股
+    update_us_companies_job_dagster,
+    crawl_us_reports_job,
     # 其他
     parse_pdf_job,
     chunk_documents_job,
@@ -84,6 +97,9 @@ schedules_list = [
     # 港股
     weekly_update_hk_companies_schedule,
     daily_crawl_hk_reports_schedule,
+    # 美股
+    weekly_update_us_companies_schedule,
+    weekly_crawl_us_reports_schedule,
     # 其他
     hourly_parse_schedule,
     daily_parse_schedule,
@@ -105,6 +121,9 @@ sensors_list = [
     # 港股
     manual_trigger_update_hk_companies_sensor,
     manual_trigger_hk_reports_sensor,
+    # 美股
+    manual_trigger_update_us_companies_sensor,
+    manual_trigger_crawl_us_reports_sensor,
     # 其他
     manual_trigger_parse_sensor,
     manual_trigger_chunk_sensor,
@@ -132,6 +151,9 @@ __all__ = [
     # 港股 Jobs
     "update_hk_companies_job",
     "crawl_hk_reports_job",
+    # 美股 Jobs
+    "update_us_companies_job_dagster",
+    "crawl_us_reports_job",
     # 其他 Jobs
     "parse_pdf_job",
     "chunk_documents_job",
@@ -145,6 +167,9 @@ __all__ = [
     # 港股 Schedules
     "weekly_update_hk_companies_schedule",
     "daily_crawl_hk_reports_schedule",
+    # 美股 Schedules
+    "weekly_update_us_companies_schedule",
+    "weekly_crawl_us_reports_schedule",
     # 其他 Schedules
     "hourly_parse_schedule",
     "daily_parse_schedule",
@@ -163,6 +188,9 @@ __all__ = [
     # 港股 Sensors
     "manual_trigger_update_hk_companies_sensor",
     "manual_trigger_hk_reports_sensor",
+    # 美股 Sensors
+    "manual_trigger_update_us_companies_sensor",
+    "manual_trigger_crawl_us_reports_sensor",
     # 其他 Sensors
     "manual_trigger_parse_sensor",
     "manual_trigger_chunk_sensor",

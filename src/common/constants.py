@@ -30,13 +30,16 @@ class DocType(Enum):
     HK_IPO_PROSPECTUS = "ipo_prospectus"
     EARNINGS_CALL = "earnings_calls"         # 财报电话会
 
-    # 美股文档类型
+    # 美股文档类型（SEC表单）
     FORM_10K = "10k"                         # 年报
     FORM_10Q = "10q"                         # 季报
+    FORM_20F = "20f"                         # 外国公司年报
+    FORM_40F = "40f"                         # 加拿大公司年报
+    FORM_6K = "6k"                           # 外国公司临时报告
     FORM_8K = "8k"                           # 临时公告
-    FORM_S1 = "s1_f1"                        # 招股书
+    FORM_S1 = "s1"                           # IPO招股书
+    FORM_DEF14A = "def14a"                   # 代理声明（股东大会）
     FORM_4 = "form4"                         # 内部人交易
-    PROXY = "proxy"                          # 代理声明
 
 
 class DataLayer(Enum):

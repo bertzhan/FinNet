@@ -189,6 +189,35 @@ class CrawlerConfig(BaseSettings):
         extra = "ignore"  # 忽略额外字段
 
 
+class SECConfig(BaseSettings):
+    """SEC EDGAR API 配置（美股爬虫）"""
+    # SEC API 必需配置（必须包含邮箱，格式：CompanyName email@domain.com）
+    SEC_USER_AGENT: str = os.getenv(
+        "SEC_USER_AGENT",
+        ""  # 默认为空，使用时必须配置
+    )
+
+    # SEC API 限流配置（SEC 要求最大 10 req/s）
+    SEC_RATE_LIMIT: int = int(os.getenv("SEC_RATE_LIMIT", "10"))
+    SEC_TIMEOUT: int = int(os.getenv("SEC_TIMEOUT", "30"))
+    SEC_RETRY_MAX: int = int(os.getenv("SEC_RETRY_MAX", "3"))
+
+    # SEC 缓存配置
+    SEC_CACHE_TTL_HOURS: int = int(os.getenv("SEC_CACHE_TTL_HOURS", "12"))
+
+    # 下载并发配置
+    SEC_HTML_WORKERS: int = int(os.getenv("SEC_HTML_WORKERS", "8"))
+    SEC_IMAGE_WORKERS: int = int(os.getenv("SEC_IMAGE_WORKERS", "4"))
+
+    # 批量处理配置
+    SEC_BATCH_SIZE: int = int(os.getenv("SEC_BATCH_SIZE", "50"))
+
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
+        extra = "ignore"  # 忽略额外字段
+
+
 class EmbeddingConfig(BaseSettings):
     """Embedding 向量化配置（plan.md 4.3.3）"""
     # 模式选择：local（本地模型）或 api（API 调用）
@@ -352,6 +381,11 @@ try:
     crawler_config = CrawlerConfig()
 except (PermissionError, FileNotFoundError, OSError):
     crawler_config = _init_config(CrawlerConfig)
+
+try:
+    sec_config = SECConfig()
+except (PermissionError, FileNotFoundError, OSError):
+    sec_config = _init_config(SECConfig)
 
 try:
     embedding_config = EmbeddingConfig()

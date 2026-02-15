@@ -498,7 +498,7 @@ class HKListedCompany(Base):
     """
     港股上市公司表
     存储港股上市公司的代码和名称信息
-    
+
     注意：使用 code（股票代码）作为主键，确保不会出现重复的公司记录
     数据来源：香港交易所证券列表 + 披露易 stockId + akshare stock_hk_company_profile_em
     """
@@ -507,21 +507,21 @@ class HKListedCompany(Base):
     # ==================== 基本信息 ====================
     code = Column(String(10), primary_key=True)  # 股票代码（如：00001），主键，5位数字
     name = Column(String(200), nullable=False)   # 公司名称（简体中文，存入前自动转换）
-    
+
     # ==================== 公司名称信息 ====================
     org_name_cn = Column(String(200), nullable=True)  # 公司全称（中文）
     org_name_en = Column(String(200), nullable=True)  # 公司全称（英文）
-    
+
     # ==================== 披露易信息 ====================
     org_id = Column(Integer, nullable=True, index=True)  # 披露易 orgId（用于查询报告）
-    
+
     # ==================== 分类信息 ====================
     category = Column(String(50), nullable=True)  # 分类（如：股本）
     sub_category = Column(String(100), nullable=True)  # 次分类（如：股本證券(主板)）
-    
+
     # ==================== 业务信息 ====================
     org_cn_introduction = Column(Text, nullable=True)  # 公司简介
-    
+
     # ==================== 联系信息 ====================
     telephone = Column(String(100), nullable=True)  # 电话（可能包含多个号码）
     fax = Column(String(100), nullable=True)  # 传真（可能包含多个号码）
@@ -530,17 +530,17 @@ class HKListedCompany(Base):
     reg_location = Column(String(100), nullable=True)  # 注册地
     reg_address = Column(String(200), nullable=True)  # 注册地址
     office_address_cn = Column(String(200), nullable=True)  # 办公地址
-    
+
     # ==================== 管理信息 ====================
     secretary = Column(String(100), nullable=True)  # 公司秘书
     chairman = Column(String(100), nullable=True)  # 董事长（可能有联席董事长）
-    
+
     # ==================== 财务信息 ====================
     established_date = Column(BigInteger, nullable=True)  # 成立日期（时间戳）
     listed_date = Column(BigInteger, nullable=True)  # 上市日期（时间戳）
     staff_num = Column(Integer, nullable=True)  # 员工人数
     fiscal_year_end = Column(String(20), nullable=True)  # 年结日（如：12-31）
-    
+
     # ==================== 证券信息 ====================
     security_type = Column(String(50), nullable=True)  # 证券类型（如：非H股）
     issue_price = Column(Float, nullable=True)  # 发行价
@@ -550,15 +550,58 @@ class HKListedCompany(Base):
     isin = Column(String(50), nullable=True)  # ISIN（国际证券识别编码）
     is_sh_hk_connect = Column(Boolean, nullable=True)  # 是否沪港通标的
     is_sz_hk_connect = Column(Boolean, nullable=True)  # 是否深港通标的
-    
+
     # ==================== 其他信息 ====================
     industry = Column(String(100), nullable=True)  # 所属行业
-    
+
     # ==================== 时间戳 ====================
     created_at = Column(DateTime, nullable=False, default=func.now())
     updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
-    
+
     # ==================== 索引 ====================
     __table_args__ = (
         Index('idx_hk_org_id', 'org_id'),
+    )
+
+
+class USListedCompany(Base):
+    """
+    美股上市公司表
+    存储NYSE/NASDAQ/NYSE American等美股上市公司信息
+
+    注意：使用 code（Ticker）作为主键
+    数据来源：SEC EDGAR API (company_tickers.json) + NASDAQ/NYSE官方列表
+    """
+    __tablename__ = 'us_listed_companies'
+
+    # ==================== 基本信息 ====================
+    code = Column(String(20), primary_key=True)  # Ticker（股票代码，如：AAPL），主键
+    name = Column(String(200), nullable=False)   # 公司名称（英文）
+
+    # ==================== SEC特定字段 ====================
+    cik = Column(String(10), nullable=False, index=True)  # CIK（中央索引键，SEC唯一标识符，注意：多个证券可能共享同一CIK）
+
+    # ==================== 公司名称信息 ====================
+    org_name_en = Column(String(200), nullable=True)  # 公司全称（英文）
+
+    # ==================== 行业信息 ====================
+    sic_code = Column(String(10), nullable=True)       # SIC行业代码（Standard Industrial Classification）
+    sic_description = Column(String(200), nullable=True)  # SIC行业描述
+
+    # ==================== 公司分类 ====================
+    is_foreign_filer = Column(Boolean, default=False, index=True)  # 是否为外国公司（提交20-F/40-F）
+    country = Column(String(100), nullable=True)  # 注册国家/地区（如：United States, Canada, China）
+
+    # ==================== 状态 ====================
+    is_active = Column(Boolean, default=True, index=True)  # 是否活跃（是否已退市）
+
+    # ==================== 时间戳 ====================
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+
+    # ==================== 索引 ====================
+    __table_args__ = (
+        Index('idx_us_cik', 'cik'),  # CIK索引（SEC API查询）
+        Index('idx_us_foreign', 'is_foreign_filer'),  # 外国公司索引
+        Index('idx_us_active', 'is_active'),  # 活跃状态索引
     )
