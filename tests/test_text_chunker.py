@@ -44,7 +44,7 @@ class TestTextChunker:
         return {
             "id": uuid.uuid4(),
             "document_id": sample_document["id"],
-            "markdown_path": "silver/text_cleaned/a_share/quarterly_reports/2023/Q3/000001/document.md",
+            "markdown_path": "silver/text_cleaned/a_share/000001/2023/Q3/document.md",
             "chunks_count": 0
         }
 

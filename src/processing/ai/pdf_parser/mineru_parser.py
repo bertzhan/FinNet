@@ -1378,14 +1378,17 @@ class MinerUParser(LoggerMixin):
             if all_files:
                 self.logger.info(f"开始上传 {len(all_files)} 个原始文件...")
                 
-                # 生成统一的存储路径：silver/{market}/mineru/{doc_type}/{stock_code}/
+                # 生成统一的存储路径（与 Bronze 一致）：silver/mineru/{market}/{stock_code}/{year}/{period}/
                 market = Market(doc.market)
                 doc_type = DocType(doc.doc_type)
-
-                if doc_type == DocType.IPO_PROSPECTUS:
-                    base_path = f"silver/{market.value}/mineru/{doc_type.value}/{doc.stock_code}"
-                else:
-                    base_path = f"silver/{market.value}/mineru/{doc_type.value}/{doc.year}/Q{doc.quarter if doc.quarter else 'Annual'}/{doc.stock_code}"
+                base_path = self.path_manager.get_silver_base_path(
+                    market=market,
+                    doc_type=doc_type,
+                    stock_code=doc.stock_code,
+                    year=doc.year,
+                    quarter=doc.quarter,
+                    subdir="mineru"
+                )
                 
                 # 所有文件都上传到同一个目录，保持相对路径结构
                 for file_info in all_files:
@@ -1470,15 +1473,18 @@ class MinerUParser(LoggerMixin):
                 if i < len(uploaded_image_paths):
                     img_meta["minio_path"] = uploaded_image_paths[i]
             
-            # 3. 生成 Silver 层基础路径（用于数据库记录，不创建汇总 JSON）
+            # 3. 生成 Silver 层基础路径（用于数据库记录，与 Bronze 格式一致）
             market = Market(doc.market)
             doc_type = DocType(doc.doc_type)
+            base_path = self.path_manager.get_silver_base_path(
+                market=market,
+                doc_type=doc_type,
+                stock_code=doc.stock_code,
+                year=doc.year,
+                quarter=doc.quarter,
+                subdir="mineru"
+            )
 
-            if doc_type == DocType.IPO_PROSPECTUS:
-                base_path = f"silver/{market.value}/mineru/{doc_type.value}/{doc.stock_code}"
-            else:
-                base_path = f"silver/{market.value}/mineru/{doc_type.value}/{doc.year}/Q{doc.quarter if doc.quarter else 'Annual'}/{doc.stock_code}"
-            
             # 使用 base_path 作为 output_path（用于数据库记录）
             silver_path = base_path
 

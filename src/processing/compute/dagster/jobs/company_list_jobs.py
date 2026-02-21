@@ -32,6 +32,28 @@ from src.storage.metadata import crud
 
 # ==================== 辅助函数 ====================
 
+def _df_to_info_dict(info_df) -> dict:
+    """将 akshare 返回的 DataFrame（item/value 列）转为字典"""
+    import math
+    info_dict = {}
+    for idx, row in info_df.iterrows():
+        item = str(row['item']).strip()
+        value = row['value']
+        if value is None:
+            value = None
+        elif isinstance(value, float):
+            value = None if math.isnan(value) else value
+        elif isinstance(value, (int, bool)):
+            value = value
+        elif isinstance(value, dict):
+            value = value
+        else:
+            value_str = str(value).strip()
+            value = None if value_str in ('', 'None', 'nan', 'NaN') else value_str
+        info_dict[item] = value
+    return info_dict
+
+
 def _safe_int(value):
     """安全地将值转换为整数"""
     if value is None:
@@ -332,38 +354,7 @@ def update_listed_companies_op(context) -> Dict:
                                 full_names_error += 1
                                 break
                         
-                        # 将 DataFrame 转换为字典（item 列是字段名，value 列是值）
-                        info_dict = {}
-                        for idx, row in info_df.iterrows():
-                            item = str(row['item']).strip()
-                            value = row['value']
-                            
-                            # 处理 None 和 NaN
-                            if value is None:
-                                value = None
-                            elif isinstance(value, float):
-                                # 检查是否是 NaN
-                                import math
-                                if math.isnan(value):
-                                    value = None
-                                else:
-                                    # 保留浮点数类型
-                                    value = value
-                            elif isinstance(value, (int, bool)):
-                                # 保留整数和布尔类型
-                                value = value
-                            elif isinstance(value, dict):
-                                # 保留字典类型
-                                value = value
-                            else:
-                                # 字符串类型，去除首尾空格
-                                value_str = str(value).strip()
-                                if value_str in ('', 'None', 'nan', 'NaN'):
-                                    value = None
-                                else:
-                                    value = value_str
-                            
-                            info_dict[item] = value
+                        info_dict = _df_to_info_dict(info_df)
                         
                         # 提取所有字段（映射到数据库字段）
                         update_kwargs = {

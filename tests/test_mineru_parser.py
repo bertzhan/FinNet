@@ -252,15 +252,14 @@ def test_silver_path_generation():
         )
         print(f"✅ 常规文档路径: {path1}")
         
-        # 测试 IPO 文档路径（手动构建）
-        path2 = "/".join([
-            "silver",
-            "text_cleaned",
-            "a_share",
-            "ipo_prospectus",
-            "000001",
-            "000001_IPO_parsed.json"
-        ])
+        # 测试 IPO 文档路径（与 Bronze 格式一致）
+        path2 = pm.get_silver_path(
+            market=Market.A_SHARE,
+            doc_type=DocType.IPO_PROSPECTUS,
+            stock_code="000001",
+            filename="000001_IPO_parsed.json",
+            subdir="text_cleaned"
+        )
         print(f"✅ IPO 文档路径: {path2}")
         
         return True

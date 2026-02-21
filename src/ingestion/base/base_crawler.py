@@ -306,9 +306,33 @@ class BaseCrawler(ABC, LoggerMixin):
             file_hash = None
             file_size = None
 
-        # 4. 生成 MinIO 路径
-        if task.doc_type == DocType.IPO_PROSPECTUS:
-            # IPO招股说明书：从下载的文件名中提取实际文件名
+        # 4. 生成 MinIO 路径（A股/港股/US格式一致：bronze/{market}/{stock_code}/{year}/{period}/{filename}）
+        if task.market == Market.A_SHARE:
+            if task.doc_type == DocType.IPO_PROSPECTUS:
+                actual_filename = os.path.basename(local_file_path)
+                minio_object_path = self.path_manager.get_a_share_bronze_path(
+                    stock_code=task.stock_code,
+                    period="ipo",
+                    filename=actual_filename
+                )
+            else:
+                period = "FY" if (task.quarter is None or task.quarter == 4) else f"Q{task.quarter}"
+                minio_object_path = self.path_manager.get_a_share_bronze_path(
+                    stock_code=task.stock_code,
+                    year=task.year,
+                    period=period,
+                    filename="document.pdf"
+                )
+        elif task.market == Market.HK_STOCK:
+            period = "FY" if (task.quarter is None or task.quarter == 4) else f"Q{task.quarter}"
+            minio_object_path = self.path_manager.get_hk_stock_bronze_path(
+                stock_code=task.stock_code,
+                year=task.year,
+                period=period,
+                filename="document.pdf"
+            )
+        elif task.doc_type == DocType.IPO_PROSPECTUS:
+            # 其他市场 IPO：沿用原 get_bronze_path
             actual_filename = os.path.basename(local_file_path)
             minio_object_path = self.path_manager.get_bronze_path(
                 market=task.market,

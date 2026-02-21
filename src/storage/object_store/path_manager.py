@@ -124,12 +124,89 @@ class PathManager:
             filename
         ])
 
+    def get_a_share_bronze_path(
+        self,
+        stock_code: str,
+        year: Optional[int] = None,
+        period: Optional[str] = None,
+        filename: str = "document.pdf"
+    ) -> str:
+        """
+        获取A股 Bronze 层路径（与US格式一致：stock_code 优先）
+
+        路径格式：
+        - 定期报告：bronze/a_share/{stock_code}/{year}/{period}/{filename}
+        - IPO招股书：bronze/a_share/{stock_code}/ipo/{filename}
+
+        Args:
+            stock_code: 股票代码
+            year: 年份（IPO类型不需要）
+            period: 报告期 Q1/Q2/Q3/FY（IPO类型不需要）
+            filename: 文件名
+
+        Returns:
+            对象存储路径
+
+        Example:
+            >>> pm = PathManager()
+            >>> pm.get_a_share_bronze_path("000001", 2023, "Q3", "document.pdf")
+            'bronze/a_share/000001/2023/Q3/document.pdf'
+            >>> pm.get_a_share_bronze_path("000001", period="ipo", filename="000001_IPO.pdf")
+            'bronze/a_share/000001/ipo/000001_IPO.pdf'
+        """
+        components = [
+            DataLayer.BRONZE.value,
+            Market.A_SHARE.value,
+            stock_code
+        ]
+        if period == "ipo":
+            components.append("ipo")
+        elif year is not None and period:
+            components.extend([str(year), period])
+        components.append(filename)
+        return "/".join(components)
+
+    def get_hk_stock_bronze_path(
+        self,
+        stock_code: str,
+        year: int,
+        period: str,
+        filename: str = "document.pdf"
+    ) -> str:
+        """
+        获取港股 Bronze 层路径（与US格式一致：stock_code 优先）
+
+        路径格式：bronze/hk_stock/{stock_code}/{year}/{period}/{filename}
+
+        Args:
+            stock_code: 股票代码（如 00700）
+            year: 年份
+            period: 报告期 Q1/Q2/Q3/FY
+            filename: 文件名（默认 document.pdf）
+
+        Returns:
+            对象存储路径
+
+        Example:
+            >>> pm = PathManager()
+            >>> pm.get_hk_stock_bronze_path("00700", 2023, "FY", "document.pdf")
+            'bronze/hk_stock/00700/2023/FY/document.pdf'
+        """
+        return "/".join([
+            DataLayer.BRONZE.value,
+            Market.HK_STOCK.value,
+            stock_code,
+            str(year),
+            period,
+            filename
+        ])
+
     def get_silver_path(
         self,
         market: Market,
         doc_type: DocType,
         stock_code: str,
-        year: int,
+        year: Optional[int] = None,
         quarter: Optional[int] = None,
         filename: Optional[str] = None,
         subdir: Optional[str] = None
@@ -137,7 +214,8 @@ class PathManager:
         """
         获取 Silver 层路径（清洗数据）
 
-        路径格式：silver/{subdir}/{market}/{doc_type}/{year}/{quarter}/{stock_code}/{filename}
+        三市场与 Bronze 一致：silver/{subdir}/{market}/{stock_code}/{year}/{period}/{filename}
+        IPO：silver/{subdir}/{market}/{stock_code}/ipo/{filename}
 
         Args:
             market: 市场类型
@@ -146,38 +224,61 @@ class PathManager:
             year: 年份
             quarter: 季度，可选
             filename: 文件名，可选
-            subdir: 子目录（如 text_cleaned, entities）
+            subdir: 子目录（如 mineru, text_cleaned）
 
         Returns:
             对象存储路径
-
-        Example:
-            >>> pm = PathManager()
-            >>> pm.get_silver_path(Market.A_SHARE, DocType.QUARTERLY_REPORT, "000001", 2023, 3,
-            ...                    "000001_2023_Q3_parsed.json", "text_cleaned")
-            'silver/text_cleaned/a_share/quarterly_reports/2023/Q3/000001/000001_2023_Q3_parsed.json'
         """
         components = [DataLayer.SILVER.value]
-
-        # 添加子目录（如果提供）
         if subdir:
             components.append(subdir)
+        components.append(market.value)
 
-        components.extend([
-            market.value,
-            doc_type.value,
-            str(year)
-        ])
-
-        if quarter is not None:
-            components.append(quarter_to_string(quarter))
-
-        components.append(stock_code)
-
-        if filename:
-            components.append(filename)
+        # 三市场与 Bronze 格式一致：stock_code 优先
+        if market in (Market.A_SHARE, Market.HK_STOCK, Market.US_STOCK):
+            components.append(stock_code)
+            if doc_type == DocType.IPO_PROSPECTUS or doc_type == DocType.HK_IPO_PROSPECTUS:
+                components.append("ipo")
+            else:
+                if year is None:
+                    raise ValueError(f"year is required for doc_type {doc_type}")
+                period = "FY" if (quarter is None or quarter == 4) else f"Q{quarter}"
+                components.extend([str(year), period])
+            if filename:
+                components.append(filename)
+        else:
+            # 其他市场沿用旧格式
+            components.extend([doc_type.value, str(year)])
+            if quarter is not None:
+                components.append(quarter_to_string(quarter))
+            components.append(stock_code)
+            if filename:
+                components.append(filename)
 
         return "/".join(components)
+
+    def get_silver_base_path(
+        self,
+        market: Market,
+        doc_type: DocType,
+        stock_code: str,
+        year: Optional[int] = None,
+        quarter: Optional[int] = None,
+        subdir: str = "mineru"
+    ) -> str:
+        """
+        获取 Silver 层基础目录路径（用于 mineru 等多文件上传）
+
+        格式与 Bronze 一致：silver/{subdir}/{market}/{stock_code}/{year}/{period}/ 或 .../ipo/
+        """
+        return self.get_silver_path(
+            market=market,
+            doc_type=doc_type,
+            stock_code=stock_code,
+            year=year,
+            quarter=quarter,
+            subdir=subdir
+        )
 
     def get_gold_path(
         self,
@@ -292,8 +393,8 @@ class PathManager:
         
         路径格式（基于 markdown_path）：
         - 从 markdown_path 提取目录，生成 structure.json 路径
-        - 例如: silver/a_share/mineru/annual_reports/2023/Q4/300542/document.md
-        - -> silver/a_share/mineru/annual_reports/2023/Q4/300542/structure.json
+        - 例如: silver/mineru/a_share/300542/2023/FY/document.md
+        - -> silver/mineru/a_share/300542/2023/FY/structure.json
         
         如果提供 markdown_path，则优先使用（推荐方式）
         否则使用传统的参数方式（向后兼容）
@@ -317,8 +418,10 @@ class PathManager:
             return f"{markdown_dir}/structure.json"
         
         # 向后兼容：使用传统参数方式
+        if market is None or doc_type is None or stock_code is None:
+            raise ValueError("market, doc_type, stock_code are required when markdown_path is not provided")
         if base_filename is None:
-            if doc_type == DocType.IPO_PROSPECTUS:
+            if doc_type in (DocType.IPO_PROSPECTUS, DocType.HK_IPO_PROSPECTUS):
                 base_filename = f"{stock_code}_IPO"
             elif quarter is not None:
                 base_filename = f"{stock_code}_{year}_Q{quarter}"
@@ -326,31 +429,17 @@ class PathManager:
                 base_filename = f"{stock_code}_{year}"
         
         filename = f"{base_filename}_structure.json"
-        
-        # IPO 文档不需要 year 和 quarter
-        if doc_type == DocType.IPO_PROSPECTUS:
-            components = [
-                DataLayer.SILVER.value,
-                "text_cleaned",
-                market.value,
-                doc_type.value,
-                stock_code,
-                filename
-            ]
-            return "/".join(components)
-        else:
-            # 常规文档需要 year
-            if year is None:
-                raise ValueError(f"year is required for doc_type {doc_type}")
-            return self.get_silver_path(
-                market=market,
-                doc_type=doc_type,
-                stock_code=stock_code,
-                year=year,
-                quarter=quarter,
-                filename=filename,
-                subdir="text_cleaned"
-            )
+        if year is None and doc_type not in (DocType.IPO_PROSPECTUS, DocType.HK_IPO_PROSPECTUS):
+            raise ValueError(f"year is required for doc_type {doc_type}")
+        return self.get_silver_path(
+            market=market,
+            doc_type=doc_type,
+            stock_code=stock_code,
+            year=year,
+            quarter=quarter,
+            filename=filename,
+            subdir="text_cleaned"
+        )
     
     def get_silver_chunks_path(
         self,
@@ -367,8 +456,8 @@ class PathManager:
         
         路径格式（基于 markdown_path）：
         - 从 markdown_path 提取目录，生成 chunks.json 路径
-        - 例如: silver/a_share/mineru/annual_reports/2023/Q4/300542/document.md
-        - -> silver/a_share/mineru/annual_reports/2023/Q4/300542/chunks.json
+        - 例如: silver/mineru/a_share/300542/2023/FY/document.md
+        - -> silver/mineru/a_share/300542/2023/FY/chunks.json
         
         如果提供 markdown_path，则优先使用（推荐方式）
         否则使用传统的参数方式（向后兼容）
@@ -392,8 +481,10 @@ class PathManager:
             return f"{markdown_dir}/chunks.json"
         
         # 向后兼容：使用传统参数方式
+        if market is None or doc_type is None or stock_code is None:
+            raise ValueError("market, doc_type, stock_code are required when markdown_path is not provided")
         if base_filename is None:
-            if doc_type == DocType.IPO_PROSPECTUS:
+            if doc_type in (DocType.IPO_PROSPECTUS, DocType.HK_IPO_PROSPECTUS):
                 base_filename = f"{stock_code}_IPO"
             elif quarter is not None:
                 base_filename = f"{stock_code}_{year}_Q{quarter}"
@@ -401,78 +492,70 @@ class PathManager:
                 base_filename = f"{stock_code}_{year}"
         
         filename = f"{base_filename}_chunks.json"
-        
-        # IPO 文档不需要 year 和 quarter
-        if doc_type == DocType.IPO_PROSPECTUS:
-            components = [
-                DataLayer.SILVER.value,
-                "text_cleaned",
-                market.value,
-                doc_type.value,
-                stock_code,
-                filename
-            ]
-            return "/".join(components)
-        else:
-            # 常规文档需要 year
-            if year is None:
-                raise ValueError(f"year is required for doc_type {doc_type}")
-            return self.get_silver_path(
-                market=market,
-                doc_type=doc_type,
-                stock_code=stock_code,
-                year=year,
-                quarter=quarter,
-                filename=filename,
-                subdir="text_cleaned"
-            )
+        if year is None and doc_type not in (DocType.IPO_PROSPECTUS, DocType.HK_IPO_PROSPECTUS):
+            raise ValueError(f"year is required for doc_type {doc_type}")
+        return self.get_silver_path(
+            market=market,
+            doc_type=doc_type,
+            stock_code=stock_code,
+            year=year,
+            quarter=quarter,
+            filename=filename,
+            subdir="text_cleaned"
+        )
 
     def parse_bronze_path(self, path: str) -> dict:
         """
         解析 Bronze 层路径，提取元数据
+
+        支持格式：
+        - 旧A股：bronze/a_share/{doc_type}/{year}/{quarter}/{stock_code}/{filename}
+        - 新A股/US：bronze/{market}/{stock_code}/{year}/{period}/{filename}
+        - A股IPO：bronze/a_share/{stock_code}/ipo/{filename}
 
         Args:
             path: Bronze 层路径
 
         Returns:
             元数据字典
-
-        Example:
-            >>> pm = PathManager()
-            >>> pm.parse_bronze_path("bronze/a_share/quarterly_reports/2023/Q3/000001/test.pdf")
-            {
-                'layer': 'bronze',
-                'market': 'a_share',
-                'doc_type': 'quarterly_reports',
-                'year': 2023,
-                'quarter': 3,
-                'stock_code': '000001',
-                'filename': 'test.pdf'
-            }
         """
         parts = path.split("/")
 
-        if len(parts) < 6:
+        if len(parts) < 5:
             raise ValueError(f"Invalid Bronze path format: {path}")
 
-        metadata = {
-            "layer": parts[0],
-            "market": parts[1],
-            "doc_type": parts[2],
-            "year": int(parts[3])
-        }
+        metadata = {"layer": parts[0], "market": parts[1]}
 
-        # 解析季度
-        if parts[4].startswith("Q"):
-            metadata["quarter"] = int(parts[4][1:])
-            metadata["stock_code"] = parts[5]
-            if len(parts) > 6:
-                metadata["filename"] = parts[6]
+        # 新格式：bronze/{market}/{stock_code}/{year}/{period}/{filename} 或 bronze/{market}/{stock_code}/ipo/{filename}
+        doc_types = ("quarterly_reports", "interim_reports", "annual_reports", "ipo_prospectus")
+        if parts[1] in ("a_share", "us_stock", "hk_stock") and parts[2] not in doc_types:
+            metadata["stock_code"] = parts[2]
+            if len(parts) >= 4 and parts[3] == "ipo":
+                metadata["doc_type"] = "ipo_prospectus"
+                metadata["year"] = None
+                metadata["quarter"] = None
+                metadata["filename"] = parts[4] if len(parts) > 4 else None
+            elif len(parts) >= 6 and parts[3].isdigit():
+                metadata["year"] = int(parts[3])
+                period = parts[4]
+                metadata["quarter"] = int(period[1:]) if period.startswith("Q") else (4 if period == "FY" else None)
+                metadata["doc_type"] = "interim_reports" if metadata["quarter"] == 2 else (
+                    "annual_reports" if period == "FY" else "quarterly_reports"
+                )
+                metadata["filename"] = parts[5] if len(parts) > 5 else None
+            else:
+                raise ValueError(f"Invalid Bronze path format: {path}")
         else:
-            # 没有季度信息（如年报）
-            metadata["quarter"] = None
-            metadata["stock_code"] = parts[4]
-            if len(parts) > 5:
-                metadata["filename"] = parts[5]
+            # 旧格式：bronze/{market}/{doc_type}/{year}/{quarter}/{stock_code}/{filename}
+            metadata["doc_type"] = parts[2]
+            metadata["year"] = int(parts[3])
+            if parts[4].startswith("Q"):
+                metadata["quarter"] = int(parts[4][1:])
+                metadata["stock_code"] = parts[5]
+                metadata["filename"] = parts[6] if len(parts) > 6 else None
+            else:
+                metadata["quarter"] = None
+                metadata["stock_code"] = parts[4]
+                metadata["filename"] = parts[5] if len(parts) > 5 else None
 
         return metadata

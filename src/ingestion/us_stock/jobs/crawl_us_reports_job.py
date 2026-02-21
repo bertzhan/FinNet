@@ -166,8 +166,9 @@ def crawl_us_reports_job(
                     logger.warning(f"  未知表单类型: {form_type}，跳过")
                     continue
 
-                # 确定年份和季度
-                year, quarter = _parse_fiscal_period(filing)
+                # 确定年份和季度（使用公司财年结束日正确映射季度）
+                fiscal_year_end = submissions_data.get('fiscalYearEnd') or '1231'
+                year, quarter = _parse_fiscal_period(filing, fiscal_year_end=fiscal_year_end)
 
                 # 创建任务
                 task = CrawlTask(
@@ -302,46 +303,94 @@ def _document_exists(source_url: str) -> bool:
         return result.fetchone() is not None
 
 
-def _parse_fiscal_period(filing: Dict) -> tuple:
+def _parse_fiscal_period(
+    filing: Dict,
+    fiscal_year_end: str = '1231'
+) -> tuple:
     """
     从财报元数据解析财年和季度
 
+    根据公司财年结束日（fiscalYearEnd）正确映射 10-Q 的季度和财年，解决非日历年公司
+    （如 AAPL 财年 9 月结束、NVDA 财年 1 月结束）的季度/年份错配问题。
+
     Args:
         filing: 财报元数据字典
+        fiscal_year_end: SEC fiscalYearEnd 格式 "MMDD"，如 "0926"=9 月 26 日,
+                        "1231"=12 月 31 日, "0125"=1 月 25 日
 
     Returns:
-        (year, quarter) 元组
+        (year, quarter) 元组，year 为财年（如 FY2026）
     """
-    # 从report_date提取年份
     report_date = filing.get('report_date')
-    if report_date:
-        year = report_date.year
-    else:
-        # 回退到filing_date
-        year = filing['filing_date'].year
-
-    # 根据表单类型确定季度
     form_type = filing['form_type']
+
     if '10-K' in form_type or '20-F' in form_type or '40-F' in form_type:
-        # 年报，quarter为None
+        # 年报：report_date 为财年结束日，财年命名规则：
+        # - 财年结束于 4-12 月（如 12/31、9/30）→ 财年 = report_date.year
+        # - 财年结束于 1-3 月（如 NVDA 1/25）→ 财年 = report_date.year - 1
+        #   例：NVDA 10-K report_date=2025-01-26，财年主体在 2024，应为 FY2024
         quarter = None
-    elif '10-Q' in form_type:
-        # 季报，根据report_date月份推断
         if report_date:
+            fye_month = int(fiscal_year_end[:2]) if len(fiscal_year_end) >= 2 else 12
+            if fye_month <= 3:
+                year = report_date.year - 1
+            else:
+                year = report_date.year
+        else:
+            year = filing['filing_date'].year
+    elif '10-Q' in form_type:
+        # 季报：需根据 fiscal_year_end 推断财年和季度
+        # 财年命名：FY2026 表示该财年结束于 2026 年
+        # 例：AAPL 财年 9 月结束，Dec 2025 的 10-Q 是 FY2026 Q1（非 2025 Q1）
+        if report_date:
+            fye_month = int(fiscal_year_end[:2]) if len(fiscal_year_end) >= 2 else 12
+            fy_start_month = (fye_month % 12) + 1
             month = report_date.month
-            if month <= 3:
+
+            # Q1/Q2/Q3 的 report_date 结束月份（1-12）
+            q1_end = ((fy_start_month + 2 - 1) % 12) + 1
+            q2_end = ((fy_start_month + 5 - 1) % 12) + 1
+            q3_end = ((fy_start_month + 8 - 1) % 12) + 1
+
+            if month == q1_end:
                 quarter = 1
-            elif month <= 6:
+            elif month == q2_end:
                 quarter = 2
-            elif month <= 9:
+            elif month == q3_end:
                 quarter = 3
             else:
-                quarter = 4
+                dist_q1 = min(abs(month - q1_end), 12 - abs(month - q1_end))
+                dist_q2 = min(abs(month - q2_end), 12 - abs(month - q2_end))
+                dist_q3 = min(abs(month - q3_end), 12 - abs(month - q3_end))
+                min_dist = min(dist_q1, dist_q2, dist_q3)
+                if min_dist <= 1:
+                    quarter = 1 if dist_q1 == min_dist else (2 if dist_q2 == min_dist else 3)
+                else:
+                    logger.warning(
+                        f"无法从 report_date.month={month} 推断季度 (fye={fiscal_year_end})，默认 Q1"
+                    )
+                    quarter = 1
+
+            # 财年计算（需区分两类公司）：
+            # 1) fye_month <= 3（1-3 月年结，如 NVDA）：10-Q 的 report_date 在 4/7/10 月，均 > fye_month，
+            #    但财年主体在 report_date.year（例：NVDA Apr 2025 = FY2025 Q1）
+            # 2) fye_month > 3（4-12 月年结，如 AAPL）：month > fye_month 表示下一财年的 Q1/Q2/Q3
+            #    例：AAPL Dec 2025 (month=12>9) → FY2026 Q1
+            if fye_month <= 3:
+                year = report_date.year
+            elif month > fye_month:
+                year = report_date.year + 1
+            else:
+                year = report_date.year
         else:
-            quarter = 1  # 默认Q1
+            year = filing['filing_date'].year
+            quarter = 1
     else:
-        # 其他类型（6-K等），quarter为None
         quarter = None
+        if report_date:
+            year = report_date.year
+        else:
+            year = filing['filing_date'].year
 
     return year, quarter
 
