@@ -84,7 +84,7 @@ class SECFilingsCrawler(BaseCrawler):
         下载SEC财报HTML文件（实现BaseCrawler抽象方法）
 
         Args:
-            task: 爬取任务（metadata需包含accession_number、primary_document、cik）
+            task: 爬取任务（metadata需包含accession_number、primary_document、org_id）
 
         Returns:
             (是否成功, 本地文件路径, 错误信息)
@@ -92,13 +92,13 @@ class SECFilingsCrawler(BaseCrawler):
         try:
             accession_number = task.metadata.get('accession_number')
             primary_document = task.metadata.get('primary_document')
-            cik = task.metadata.get('cik')
+            org_id = task.metadata.get('org_id') or task.metadata.get('cik')
 
-            if not accession_number or not cik:
-                return False, None, "缺少必需的元数据：accession_number或cik"
+            if not accession_number or not org_id:
+                return False, None, "缺少必需的元数据：accession_number或org_id"
 
             html_url = self.sec_client.construct_primary_html_url(
-                cik=cik,
+                cik=org_id,
                 accession=accession_number,
                 primary_document=primary_document
             )
@@ -149,10 +149,10 @@ class SECFilingsCrawler(BaseCrawler):
             # 1. 获取必需的元数据
             accession_number = task.metadata.get('accession_number')
             primary_document = task.metadata.get('primary_document')
-            cik = task.metadata.get('cik')
+            org_id = task.metadata.get('org_id') or task.metadata.get('cik')
 
-            if not accession_number or not cik:
-                error_msg = "缺少必需的元数据：accession_number或cik"
+            if not accession_number or not org_id:
+                error_msg = "缺少必需的元数据：accession_number或org_id"
                 logger.error(error_msg)
                 return CrawlResult(
                     task=task,
@@ -162,7 +162,7 @@ class SECFilingsCrawler(BaseCrawler):
 
             # 2. 构造HTML URL
             html_url = self.sec_client.construct_primary_html_url(
-                cik=cik,
+                cik=org_id,
                 accession=accession_number,
                 primary_document=primary_document
             )

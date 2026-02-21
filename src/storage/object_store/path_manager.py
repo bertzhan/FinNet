@@ -53,10 +53,10 @@ class PathManager:
 
         Example:
             >>> pm = PathManager()
-            >>> pm.get_bronze_path(Market.A_SHARE, DocType.QUARTERLY_REPORT, "000001", 2023, 3, "000001_2023_Q3.pdf")
-            'bronze/a_share/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf'
-            >>> pm.get_bronze_path(Market.A_SHARE, DocType.IPO_PROSPECTUS, "000001", filename="000001_IPO.pdf")
-            'bronze/a_share/ipo_prospectus/000001/000001_IPO.pdf'
+            >>> pm.get_bronze_path(Market.HS, DocType.QUARTERLY_REPORT, "000001", 2023, 3, "000001_2023_Q3.pdf")
+            'bronze/hs_stock/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf'
+            >>> pm.get_bronze_path(Market.HS, DocType.IPO_PROSPECTUS, "000001", filename="000001_IPO.pdf")
+            'bronze/hs_stock/ipo_prospectus/000001/000001_IPO.pdf'
         """
         # 构建路径组件
         components = [
@@ -124,7 +124,7 @@ class PathManager:
             filename
         ])
 
-    def get_a_share_bronze_path(
+    def get_hs_bronze_path(
         self,
         stock_code: str,
         year: Optional[int] = None,
@@ -135,8 +135,8 @@ class PathManager:
         获取A股 Bronze 层路径（与US格式一致：stock_code 优先）
 
         路径格式：
-        - 定期报告：bronze/a_share/{stock_code}/{year}/{period}/{filename}
-        - IPO招股书：bronze/a_share/{stock_code}/ipo/{filename}
+        - 定期报告：bronze/hs_stock/{stock_code}/{year}/{period}/{filename}
+        - IPO招股书：bronze/hs_stock/{stock_code}/ipo/{filename}
 
         Args:
             stock_code: 股票代码
@@ -149,14 +149,14 @@ class PathManager:
 
         Example:
             >>> pm = PathManager()
-            >>> pm.get_a_share_bronze_path("000001", 2023, "Q3", "document.pdf")
-            'bronze/a_share/000001/2023/Q3/document.pdf'
-            >>> pm.get_a_share_bronze_path("000001", period="ipo", filename="000001_IPO.pdf")
-            'bronze/a_share/000001/ipo/000001_IPO.pdf'
+            >>> pm.get_hs_bronze_path("000001", 2023, "Q3", "document.pdf")
+            'bronze/hs_stock/000001/2023/Q3/document.pdf'
+            >>> pm.get_hs_bronze_path("000001", period="ipo", filename="000001_IPO.pdf")
+            'bronze/hs_stock/000001/ipo/000001_IPO.pdf'
         """
         components = [
             DataLayer.BRONZE.value,
-            Market.A_SHARE.value,
+            Market.HS.value,
             stock_code
         ]
         if period == "ipo":
@@ -235,7 +235,7 @@ class PathManager:
         components.append(market.value)
 
         # 三市场与 Bronze 格式一致：stock_code 优先
-        if market in (Market.A_SHARE, Market.HK_STOCK, Market.US_STOCK):
+        if market in (Market.HS, Market.HK_STOCK, Market.US_STOCK):
             components.append(stock_code)
             if doc_type == DocType.IPO_PROSPECTUS or doc_type == DocType.HK_IPO_PROSPECTUS:
                 components.append("ipo")
@@ -303,8 +303,8 @@ class PathManager:
 
         Example:
             >>> pm = PathManager()
-            >>> pm.get_gold_path("company_profiles", Market.A_SHARE, "000001", "profile.json")
-            'gold/company_profiles/a_share/000001/profile.json'
+            >>> pm.get_gold_path("company_profiles", Market.HS, "000001", "profile.json")
+            'gold/company_profiles/hs_stock/000001/profile.json'
         """
         components = [DataLayer.GOLD.value, category]
 
@@ -373,8 +373,8 @@ class PathManager:
         Example:
             >>> pm = PathManager()
             >>> pm.get_quarantine_path(QuarantineReason.VALIDATION_FAILED,
-            ...                        "bronze/a_share/quarterly_reports/2023/Q3/000001/test.pdf")
-            'quarantine/validation_failed/bronze/a_share/quarterly_reports/2023/Q3/000001/test.pdf'
+            ...                        "bronze/hs_stock/quarterly_reports/2023/Q3/000001/test.pdf")
+            'quarantine/validation_failed/bronze/hs_stock/quarterly_reports/2023/Q3/000001/test.pdf'
         """
         return f"{DataLayer.QUARANTINE.value}/{reason.value}/{original_path}"
 
@@ -393,8 +393,8 @@ class PathManager:
         
         路径格式（基于 markdown_path）：
         - 从 markdown_path 提取目录，生成 structure.json 路径
-        - 例如: silver/mineru/a_share/300542/2023/FY/document.md
-        - -> silver/mineru/a_share/300542/2023/FY/structure.json
+        - 例如: silver/mineru/hs_stock/300542/2023/FY/document.md
+        - -> silver/mineru/hs_stock/300542/2023/FY/structure.json
         
         如果提供 markdown_path，则优先使用（推荐方式）
         否则使用传统的参数方式（向后兼容）
@@ -456,8 +456,8 @@ class PathManager:
         
         路径格式（基于 markdown_path）：
         - 从 markdown_path 提取目录，生成 chunks.json 路径
-        - 例如: silver/mineru/a_share/300542/2023/FY/document.md
-        - -> silver/mineru/a_share/300542/2023/FY/chunks.json
+        - 例如: silver/mineru/hs_stock/300542/2023/FY/document.md
+        - -> silver/mineru/hs_stock/300542/2023/FY/chunks.json
         
         如果提供 markdown_path，则优先使用（推荐方式）
         否则使用传统的参数方式（向后兼容）
@@ -509,9 +509,9 @@ class PathManager:
         解析 Bronze 层路径，提取元数据
 
         支持格式：
-        - 旧A股：bronze/a_share/{doc_type}/{year}/{quarter}/{stock_code}/{filename}
+        - 旧A股：bronze/hs_stock/{doc_type}/{year}/{quarter}/{stock_code}/{filename}
         - 新A股/US：bronze/{market}/{stock_code}/{year}/{period}/{filename}
-        - A股IPO：bronze/a_share/{stock_code}/ipo/{filename}
+        - A股IPO：bronze/hs_stock/{stock_code}/ipo/{filename}
 
         Args:
             path: Bronze 层路径
@@ -528,7 +528,7 @@ class PathManager:
 
         # 新格式：bronze/{market}/{stock_code}/{year}/{period}/{filename} 或 bronze/{market}/{stock_code}/ipo/{filename}
         doc_types = ("quarterly_reports", "interim_reports", "annual_reports", "ipo_prospectus")
-        if parts[1] in ("a_share", "us_stock", "hk_stock") and parts[2] not in doc_types:
+        if parts[1] in ("hs_stock", "us_stock", "hk_stock") and parts[2] not in doc_types:
             metadata["stock_code"] = parts[2]
             if len(parts) >= 4 and parts[3] == "ipo":
                 metadata["doc_type"] = "ipo_prospectus"

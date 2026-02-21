@@ -62,7 +62,7 @@ class QuarantineManager(LoggerMixin):
 
         Args:
             document_id: 文档ID（可选，如果文档还未入库）
-            source_type: 数据来源（a_share/hk_stock/us_stock）
+            source_type: 数据来源（hs_stock/hk_stock/us_stock）
             doc_type: 文档类型
             original_path: 原始文件路径（MinIO 对象名）
             failure_stage: 失败阶段（ingestion_failed/validation_failed/content_failed）
@@ -77,9 +77,9 @@ class QuarantineManager(LoggerMixin):
             >>> manager = QuarantineManager()
             >>> record = manager.quarantine_document(
             ...     document_id=123,
-            ...     source_type="a_share",
+            ...     source_type="hs_stock",
             ...     doc_type="quarterly_report",
-            ...     original_path="bronze/a_share/quarterly_reports/2023/Q3/000001/report.pdf",
+            ...     original_path="bronze/hs_stock/quarterly_reports/2023/Q3/000001/report.pdf",
             ...     failure_stage="validation_failed",
             ...     failure_reason="文件大小异常（小于1KB）",
             ...     failure_details="文件大小: 512 bytes，小于最小阈值 1024 bytes"

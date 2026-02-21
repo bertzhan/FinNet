@@ -245,7 +245,7 @@ def test_dagster_ops():
     try:
         from src.processing.compute.dagster.jobs.vectorize_jobs import (
             scan_unvectorized_chunks_op,
-            vectorize_chunks_op,
+            doc_vectorize_op,
             validate_vectorize_results_op,
         )
         from dagster import build_op_context
@@ -270,13 +270,13 @@ def test_dagster_ops():
         
         # 如果有分块，测试向量化
         if scan_result.get("success") and scan_result.get("total_chunks", 0) > 0:
-            print("测试 vectorize_chunks_op...")
+            print("测试 doc_vectorize_op...")
             context = build_op_context(
                 config={
                     "force_revectorize": False,
                 }
             )
-            vectorize_result = vectorize_chunks_op(context, scan_result)
+            vectorize_result = doc_vectorize_op(context, scan_result)
             
             if vectorize_result.get("success"):
                 print(f"✅ 向量化成功")

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 上市公司列表更新作业测试脚本
-用于测试 update_listed_companies_job 是否正常工作
+用于测试 get_hs_companies_job 是否正常工作
 """
 
 import os
@@ -14,14 +14,14 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from dagster import build_op_context
-from src.processing.compute.dagster.jobs.company_list_jobs import update_listed_companies_op
+from src.processing.compute.dagster.jobs.company_list_jobs import get_hs_companies_op
 from src.storage.metadata import get_postgres_client, crud
 
 
 def test_company_list_job():
     """测试上市公司列表更新Job"""
     print("=" * 60)
-    print("测试: update_listed_companies_job")
+    print("测试: get_hs_companies_job")
     print("=" * 60)
     print()
     
@@ -39,7 +39,7 @@ def test_company_list_job():
         context = build_op_context(op_config=config)
         
         print("开始执行 Op...")
-        result = update_listed_companies_op(context)
+        result = get_hs_companies_op(context)
         
         print(f"\n✅ Job 执行完成")
         success = result.get('success', False)

@@ -29,7 +29,7 @@ from dagster import (
     MetadataValue,
 )
 
-from src.ingestion.us_stock.jobs.update_us_companies_job import update_us_companies_job
+from src.ingestion.us_stock.jobs.update_us_companies_job import update_us_companies_job as get_us_companies_job_fn
 from src.ingestion.us_stock.jobs.crawl_us_reports_job import crawl_us_reports_job as crawl_us_reports_job_fn
 from src.common.config import common_config
 
@@ -39,16 +39,21 @@ PROJECT_ROOT = Path(common_config.PROJECT_ROOT)
 
 # ==================== 配置 Schema ====================
 
-# 公司列表同步配置
+# 公司列表同步配置（与 A股/港股 统一为两个参数）
 SYNC_COMPANIES_CONFIG_SCHEMA = {
-    "force_refresh": Field(
+    "clear_before_update": Field(
         bool,
         default_value=False,
-        description="Force refresh all companies (normally only new/updated companies are synced)"
+        description="是否在更新前清空除 org_id 外的所有字段（默认 False，使用 upsert 策略；org_id 为主键）"
+    ),
+    "basic_info_only": Field(
+        bool,
+        default_value=False,
+        description="是否仅获取基础信息，跳过 submissions 详情拉取"
     ),
 }
 
-# 财报爬取配置（与 crawl_a_share_reports_op 对齐）
+# 财报爬取配置（与 crawl_hs_reports_op 对齐）
 FILINGS_CRAWL_CONFIG_SCHEMA = {
     "output_root": Field(
         str,
@@ -86,7 +91,7 @@ FILINGS_CRAWL_CONFIG_SCHEMA = {
 # ==================== Ops ====================
 
 @op(config_schema=SYNC_COMPANIES_CONFIG_SCHEMA)
-def update_us_companies_op(context) -> Dict:
+def get_us_companies_op(context) -> Dict:
     """
     更新美股公司列表
 
@@ -103,14 +108,25 @@ def update_us_companies_op(context) -> Dict:
     logger = get_dagster_logger()
     config = context.op_config
 
-    force_refresh = config.get("force_refresh", False)
+    clear_before_update = config.get("clear_before_update", False)
+    basic_info_only = config.get("basic_info_only", False)
 
-    logger.info("开始更新美股公司列表")
-    logger.info(f"  强制刷新: {force_refresh}")
+    logger.info(
+        f"[get_us_companies] 开始更新美股公司列表 | "
+        f"clear_before_update={clear_before_update}, basic_info_only={basic_info_only}"
+    )
+
+    def progress_callback(current: int, total: int, code: str) -> None:
+        progress_pct = (current / total) * 100
+        logger.info(f"📦 [{current}/{total}] {progress_pct:.1f}% | 写入数据库 | {code}")
 
     try:
         # 调用更新 Job
-        result = update_us_companies_job()
+        result = get_us_companies_job_fn(
+            clear_before_update=clear_before_update,
+            basic_info_only=basic_info_only,
+            progress_callback=progress_callback,
+        )
 
         # 记录 Asset Materialization
         context.log_event(
@@ -126,16 +142,16 @@ def update_us_companies_op(context) -> Dict:
             )
         )
 
-        logger.info("✅ 美股公司列表更新完成")
-        logger.info(f"  总公司数: {result['total_companies']}")
-        logger.info(f"  新增: {result['companies_added']}")
-        logger.info(f"  更新: {result['companies_updated']}")
-        logger.info(f"  耗时: {result['duration_seconds']}秒")
+        logger.info(
+            f"[get_us_companies] 更新完成 | "
+            f"总={result['total_companies']}, 新增={result['companies_added']}, "
+            f"更新={result['companies_updated']}, 耗时={result['duration_seconds']}s"
+        )
 
         return result
 
     except Exception as e:
-        logger.error(f"❌ 美股公司列表更新失败: {e}", exc_info=True)
+        logger.error(f"[get_us_companies] 更新失败: {e}", exc_info=True)
         return {
             "success": False,
             "error": str(e)
@@ -249,7 +265,7 @@ def crawl_us_reports_op(context) -> Dict:
 # ==================== Jobs ====================
 
 @job
-def update_us_companies_job_dagster():
+def get_us_companies_job():
     """
     美股公司列表更新作业
 
@@ -257,7 +273,7 @@ def update_us_companies_job_dagster():
     1. 从 SEC API 获取所有公司列表
     2. Upsert 到 us_listed_companies 表
     """
-    update_us_companies_op()
+    get_us_companies_op()
 
 
 @job
@@ -280,7 +296,7 @@ def crawl_us_reports_job():
 # ==================== Schedules ====================
 
 @schedule(
-    job=update_us_companies_job_dagster,
+    job=get_us_companies_job,
     cron_schedule="0 1 * * 0",  # 每周日凌晨1点执行（美股公司列表变化较慢）
     default_status=DefaultScheduleStatus.STOPPED,
 )
@@ -321,7 +337,7 @@ def weekly_crawl_us_reports_schedule(context):
 # ==================== Sensors ====================
 
 @sensor(
-    job=update_us_companies_job_dagster,
+    job=get_us_companies_job,
     default_status=DefaultSensorStatus.STOPPED,
 )
 def manual_trigger_update_us_companies_sensor(context):
@@ -352,7 +368,7 @@ def manual_trigger_crawl_us_reports_sensor(context):
 
 __all__ = [
     # Jobs
-    "update_us_companies_job_dagster",
+    "get_us_companies_job",
     "crawl_us_reports_job",
     # Schedules
     "weekly_update_us_companies_schedule",

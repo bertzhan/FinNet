@@ -40,7 +40,7 @@ def find_or_create_document(minio_path: str):
         doc = Document(
             stock_code=stock_code,
             company_name=f"测试公司_{stock_code}",
-            market=Market.A_SHARE.value,
+            market=Market.HS.value,
             doc_type=DocType.IPO_PROSPECTUS.value if "ipo" in minio_path.lower() else DocType.QUARTERLY_REPORT.value,
             year=2023,
             quarter=None,
@@ -71,7 +71,7 @@ def test_parse_first_10_pages():
     minio_client = MinIOClient()
     objects = list(minio_client.client.list_objects(
         minio_client.bucket,
-        prefix="bronze/a_share/",
+        prefix="bronze/hs_stock/",
         recursive=True
     ))
     

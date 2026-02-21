@@ -37,7 +37,7 @@ src/
 #### `constants.py` - 全局常量定义
 ```python
 # 市场类型
-Market.A_SHARE, Market.HK_STOCK, Market.US_STOCK
+Market.HS, Market.HK_STOCK, Market.US_STOCK
 
 # 文档类型
 DocType.ANNUAL_REPORT, DocType.QUARTERLY_REPORT, DocType.IPO_PROSPECTUS
@@ -111,18 +111,18 @@ pm = PathManager()
 
 # Bronze 层路径（原始数据）
 bronze_path = pm.get_bronze_path(
-    market=Market.A_SHARE,
+    market=Market.HS,
     doc_type=DocType.QUARTERLY_REPORT,
     stock_code="000001",
     year=2023,
     quarter=3,
     filename="000001_2023_Q3.pdf"
 )
-# 输出: bronze/a_share/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf
+# 输出: bronze/hs/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf
 
 # Silver 层路径（清洗数据）
 silver_path = pm.get_silver_path(
-    market=Market.A_SHARE,
+    market=Market.HS,
     doc_type=DocType.QUARTERLY_REPORT,
     stock_code="000001",
     year=2023,
@@ -130,16 +130,16 @@ silver_path = pm.get_silver_path(
     filename="000001_2023_Q3_parsed.json",
     subdir="text_cleaned"
 )
-# 输出: silver/text_cleaned/a_share/quarterly_reports/2023/Q3/000001/000001_2023_Q3_parsed.json
+# 输出: silver/text_cleaned/hs/quarterly_reports/2023/Q3/000001/000001_2023_Q3_parsed.json
 
 # Gold 层路径（聚合数据）
 gold_path = pm.get_gold_path(
     category="company_profiles",
-    market=Market.A_SHARE,
+    market=Market.HS,
     stock_code="000001",
     filename="profile.json"
 )
-# 输出: gold/company_profiles/a_share/000001/profile.json
+# 输出: gold/company_profiles/hs/000001/profile.json
 
 # Application 层路径（AI 应用数据）
 app_path = pm.get_application_path(
@@ -153,9 +153,9 @@ app_path = pm.get_application_path(
 from src.common.constants import QuarantineReason
 quarantine_path = pm.get_quarantine_path(
     reason=QuarantineReason.VALIDATION_FAILED,
-    original_path="bronze/a_share/quarterly_reports/2023/Q3/000001/bad.pdf"
+    original_path="bronze/hs/quarterly_reports/2023/Q3/000001/bad.pdf"
 )
-# 输出: quarantine/validation_failed/bronze/a_share/quarterly_reports/2023/Q3/000001/bad.pdf
+# 输出: quarantine/validation_failed/bronze/hs/quarterly_reports/2023/Q3/000001/bad.pdf
 ```
 
 ---
@@ -243,7 +243,7 @@ pm = PathManager()
 
 # 生成 Bronze 层路径
 path = pm.get_bronze_path(
-    market=Market.A_SHARE,
+    market=Market.HS,
     doc_type=DocType.QUARTERLY_REPORT,
     stock_code="000001",
     year=2023,
@@ -252,7 +252,7 @@ path = pm.get_bronze_path(
 )
 
 logger.info(f"Generated path: {path}")
-# 输出: Generated path: bronze/a_share/quarterly_reports/2023/Q3/000001/report.pdf
+# 输出: Generated path: bronze/hs/quarterly_reports/2023/Q3/000001/report.pdf
 ```
 
 ### 示例 3：使用工具函数

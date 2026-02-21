@@ -2,7 +2,7 @@
 
 ## 概述
 
-本文档介绍如何测试 `update_listed_companies_job` 作业，该作业使用 akshare 获取 A 股上市公司列表并更新到数据库。
+本文档介绍如何测试 `get_hs_companies_job` 作业，该作业使用 akshare 获取 A 股上市公司列表并更新到数据库。
 
 ## 前置条件
 
@@ -76,7 +76,7 @@ python examples/test_company_list_job.py
    打开浏览器访问：http://localhost:3000
 
 3. **查找作业**：
-   - 在 Jobs 列表中查找 `update_listed_companies_job`
+   - 在 Jobs 列表中查找 `get_hs_companies_job`
    - 点击作业名称进入详情页
 
 4. **手动触发**：
@@ -84,9 +84,10 @@ python examples/test_company_list_job.py
    - 配置参数（可选）：
      ```yaml
      ops:
-       update_listed_companies_op:
+       get_hs_companies_op:
          config:
            clear_before_update: false  # false=upsert策略, true=清空后重新导入
+           basic_info_only: false      # false=获取详情, true=仅 code/name
      ```
    - 点击 "Launch" 执行
 
@@ -103,13 +104,14 @@ export PYTHONPATH=".:$PYTHONPATH"
 
 # 执行更新作业
 dagster job execute \
-  -j update_listed_companies_job \
+  -j get_hs_companies_job \
   -m src.processing.compute.dagster \
   --config '{
     "ops": {
-      "update_listed_companies_op": {
+      "get_hs_companies_op": {
         "config": {
-          "clear_before_update": false
+          "clear_before_update": false,
+          "basic_info_only": false
         }
       }
     }

@@ -450,8 +450,10 @@ class HKEXClient:
             for _, row in equity_df.iterrows():
                 code = row['code']
                 excel_name = row['name']
-                category = row.get('category', '')
                 sub_category = row.get('sub_category', '')
+                # 从 sub_category 提取括号内文字（如 股本證券(主板) -> 主板）
+                match = re.search(r'\(([^)]*)\)', str(sub_category)) if sub_category else None
+                category = match.group(1) if match else (sub_category or None)
                 stock_info = stock_info_map.get(code)
                 
                 if stock_info:
@@ -460,7 +462,6 @@ class HKEXClient:
                         'name': excel_name,  # 使用 Excel 中的名称（更准确）
                         'org_id': stock_info['org_id'],
                         'category': category,
-                        'sub_category': sub_category,
                     }
                     # 添加英文名称（如果有）
                     if stock_info.get('name_en'):
@@ -478,7 +479,6 @@ class HKEXClient:
                     'name': stock_info['name'],
                     'org_id': stock_info['org_id'],
                     'category': None,
-                    'sub_category': None,
                 }
                 # 添加英文名称（如果有）
                 if stock_info.get('name_en'):

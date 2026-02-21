@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 class Market(Enum):
     """市场类型枚举"""
-    A_SHARE = "zh_stock"  # A股（中文股票市场）
+    HS = "hs_stock"  # A股（中文股票市场）
     HK_STOCK = "hk_stock"  # 港股
     US_STOCK = "us_stock"  # 美股
 
@@ -35,7 +35,7 @@ class CrawlTask:
     year: int  # 年份
     quarter: Optional[int] = None  # 季度 (1-4)，None表示年报
     doc_type: DocType = DocType.QUARTERLY_REPORT  # 文档类型
-    market: Market = Market.A_SHARE  # 市场类型
+    market: Market = Market.HS  # 市场类型
 
 
 @dataclass

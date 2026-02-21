@@ -46,7 +46,7 @@ GRAPH_CONFIG_SCHEMA = {
     "market": Field(
         str,
         is_required=False,
-        description="市场过滤（a_share/hk_stock/us_stock），None 表示所有市场"
+        description="市场过滤（hs_stock/hk_stock/us_stock），None 表示所有市场"
     ),
     "doc_type": Field(
         str,
@@ -275,7 +275,7 @@ def scan_chunked_documents_for_graph_op(context) -> Dict:
         ),
     }
 )
-def build_graph_op(context, scan_result: Dict) -> Dict:
+def doc_toc_graph_op(context, scan_result: Dict) -> Dict:
     """
     执行图构建
     
@@ -440,7 +440,7 @@ def validate_graph_op(context, build_results: Dict) -> Dict:
     检查图构建结果的质量，记录统计信息
     
     Args:
-        build_results: build_graph_op 的返回结果
+        build_results: doc_toc_graph_op 的返回结果
         
     Returns:
         验证结果统计
@@ -551,7 +551,7 @@ def validate_graph_op(context, build_results: Dict) -> Dict:
                     # limit 不设置表示处理全部，market 和 doc_type 是可选的，不设置表示所有类型
                 }
             },
-            "build_graph_op": {
+            "doc_toc_graph_op": {
                 "config": {
                     "force_rebuild": False,
                 }
@@ -560,7 +560,7 @@ def validate_graph_op(context, build_results: Dict) -> Dict:
     },
     description="图构建作业 - 默认配置"
 )
-def build_graph_job():
+def doc_toc_graph_job():
     """
     图构建作业
 
@@ -573,18 +573,18 @@ def build_graph_job():
     - scan_chunked_documents_for_graph_op:
         - batch_size: 50 (每批处理50个文档)
         - limit: 100 (最多处理100个文档)
-    - build_graph_op:
+    - doc_toc_graph_op:
         - force_rebuild: False (不强制重新构建)
     """
     scan_result = scan_chunked_documents_for_graph_op()
-    build_results = build_graph_op(scan_result)
+    build_results = doc_toc_graph_op(scan_result)
     validate_graph_op(build_results)
 
 
 # ==================== Schedules ====================
 
 @schedule(
-    job=build_graph_job,
+    job=doc_toc_graph_job,
     cron_schedule="0 */4 * * *",  # 每4小时执行一次
     default_status=DefaultScheduleStatus.STOPPED,  # 默认停止，需要手动启用
 )
@@ -596,7 +596,7 @@ def hourly_graph_schedule(context):
 
 
 @schedule(
-    job=build_graph_job,
+    job=doc_toc_graph_job,
     cron_schedule="0 7 * * *",  # 每天凌晨7点执行（分块完成后）
     default_status=DefaultScheduleStatus.STOPPED,  # 默认停止
 )
@@ -610,7 +610,7 @@ def daily_graph_schedule(context):
 # ==================== Sensors ====================
 
 @sensor(
-    job=build_graph_job,
+    job=doc_toc_graph_job,
     default_status=DefaultSensorStatus.STOPPED,
 )
 def manual_trigger_graph_sensor(context):

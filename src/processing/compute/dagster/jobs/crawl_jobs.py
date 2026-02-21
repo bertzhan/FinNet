@@ -29,7 +29,7 @@ from dagster import (
 )
 
 # 导入新的爬虫模块
-from src.ingestion.a_share import ReportCrawler, CninfoIPOProspectusCrawler
+from src.ingestion.hs_stock import ReportCrawler, CninfoIPOProspectusCrawler
 from src.ingestion.hk_stock import HKReportCrawler
 from src.ingestion.base.base_crawler import CrawlTask, CrawlResult
 from src.common.constants import Market, DocType
@@ -155,27 +155,17 @@ HK_REPORT_CRAWL_CONFIG_SCHEMA = {
     ),
 }
 
-# 港股公司列表更新配置 Schema
+# 港股公司列表更新配置 Schema（与 A股/美股 统一为两个参数）
 HK_COMPANY_UPDATE_CONFIG_SCHEMA = {
-    "enable_postgres": Field(
-        bool,
-        default_value=True,
-        description="Enable PostgreSQL metadata recording"
-    ),
-    "include_inactive": Field(
+    "clear_before_update": Field(
         bool,
         default_value=False,
-        description="Include inactive (delisted) stocks"
+        description="是否在更新前清空除 org_id 外的所有字段（默认 False，使用 upsert 策略；org_id 为主键）"
     ),
-    "equity_only": Field(
-        bool,
-        default_value=True,
-        description="Only include equity stocks (filter out bonds, warrants, derivatives)"
-    ),
-    "enrich_with_akshare": Field(
+    "basic_info_only": Field(
         bool,
         default_value=False,
-        description="Enrich company data with akshare stock_hk_company_profile_em API (slower but more detailed)"
+        description="是否仅获取基础信息，跳过 akshare 详情拉取"
     ),
 }
 
@@ -325,7 +315,7 @@ def load_hk_company_list_from_db(
 # ==================== Dagster Ops ====================
 
 @op(config_schema=REPORT_CRAWL_CONFIG_SCHEMA)
-def crawl_a_share_reports_op(context) -> Dict:
+def crawl_hs_reports_op(context) -> Dict:
     """
     爬取A股定期报告（年报/季报）
     
@@ -400,10 +390,10 @@ def crawl_a_share_reports_op(context) -> Dict:
                     "results": []
                 }
             else:
-                logger.warning("⚠️ 公司列表为空，请先运行 update_listed_companies_job 更新公司列表")
+                logger.warning("⚠️ 公司列表为空，请先运行 get_hs_companies_job 更新公司列表")
                 return {
                     "success": False,
-                    "error": "公司列表为空，请先运行 update_listed_companies_job 更新公司列表",
+                    "error": "公司列表为空，请先运行 get_hs_companies_job 更新公司列表",
                     "total": 0,
                     "success_count": 0,
                     "fail_count": 0,
@@ -465,7 +455,7 @@ def crawl_a_share_reports_op(context) -> Dict:
             tasks.append(CrawlTask(
                 stock_code=company['code'],
                 company_name=company['name'],
-                market=Market.A_SHARE,
+                market=Market.HS,
                 doc_type=task_doc_type,
                 year=y,
                 quarter=q
@@ -512,7 +502,7 @@ def crawl_a_share_reports_op(context) -> Dict:
                     try:
                         context.log_event(
                             AssetMaterialization(
-                                asset_key=["bronze", "a_share", doc_type_str, str(result.task.year), f"Q{result.task.quarter}"],
+                                asset_key=["bronze", "hs_stock", doc_type_str, str(result.task.year), f"Q{result.task.quarter}"],
                                 description=f"{result.task.company_name} {result.task.year} Q{result.task.quarter}",
                                 metadata={
                                     "stock_code": MetadataValue.text(result.task.stock_code),
@@ -610,7 +600,7 @@ def crawl_a_share_reports_op(context) -> Dict:
 
 
 @op(config_schema=IPO_CRAWL_CONFIG_SCHEMA)
-def crawl_a_share_ipo_op(context) -> Dict:
+def crawl_hs_ipo_op(context) -> Dict:
     """
     爬取A股IPO招股说明书
     
@@ -661,10 +651,10 @@ def crawl_a_share_ipo_op(context) -> Dict:
                     "results": []
                 }
             else:
-                logger.warning("⚠️ 公司列表为空，请先运行 update_listed_companies_job 更新公司列表")
+                logger.warning("⚠️ 公司列表为空，请先运行 get_hs_companies_job 更新公司列表")
                 return {
                     "success": False,
-                    "error": "公司列表为空，请先运行 update_listed_companies_job 更新公司列表",
+                    "error": "公司列表为空，请先运行 get_hs_companies_job 更新公司列表",
                     "total": 0,
                     "success_count": 0,
                     "fail_count": 0,
@@ -701,7 +691,7 @@ def crawl_a_share_ipo_op(context) -> Dict:
         CrawlTask(
             stock_code=company['code'],
             company_name=company['name'],
-            market=Market.A_SHARE,
+            market=Market.HS,
             doc_type=DocType.IPO_PROSPECTUS,
             year=None,
             quarter=None
@@ -749,7 +739,7 @@ def crawl_a_share_ipo_op(context) -> Dict:
                     try:
                         context.log_event(
                             AssetMaterialization(
-                                asset_key=["bronze", "a_share", "ipo_prospectus"],
+                                asset_key=["bronze", "hs_stock", "ipo_prospectus"],
                                 description=f"{result.task.company_name} IPO招股说明书",
                                 metadata={
                                     "stock_code": MetadataValue.text(result.task.stock_code),
@@ -904,7 +894,7 @@ def validate_crawl_results_op(context, crawl_results: Dict) -> Dict:
                 try:
                     quarantine_manager.quarantine_document(
                         document_id=doc_id,
-                        source_type="a_share",
+                        source_type="hs_stock",
                         doc_type=doc_type,
                         original_path=minio_path,
                         failure_stage="ingestion_failed",
@@ -969,7 +959,7 @@ def validate_crawl_results_op(context, crawl_results: Dict) -> Dict:
                                 session=session,
                                 stock_code=stock_code,
                                 company_name=company_name,
-                                market=Market.A_SHARE.value,
+                                market=Market.HS.value,
                                 doc_type=doc_type_enum.value,
                                 year=year,
                                 quarter=quarter,
@@ -1001,7 +991,7 @@ def validate_crawl_results_op(context, crawl_results: Dict) -> Dict:
                     try:
                         quarantine_manager.quarantine_document(
                             document_id=None,
-                            source_type="a_share",
+                            source_type="hs_stock",
                             doc_type=doc_type,
                             original_path=minio_path,
                             failure_stage="validation_failed",
@@ -1068,7 +1058,7 @@ def validate_crawl_results_op(context, crawl_results: Dict) -> Dict:
 # ==================== Dagster Jobs ====================
 
 @job
-def crawl_a_share_reports_job():
+def crawl_hs_reports_job():
     """
     A股定期报告爬取作业
     
@@ -1076,12 +1066,12 @@ def crawl_a_share_reports_job():
     1. 爬取季度报告/年报
     2. 验证爬取结果
     """
-    crawl_results = crawl_a_share_reports_op()
+    crawl_results = crawl_hs_reports_op()
     validate_crawl_results_op(crawl_results)
 
 
 @job
-def crawl_a_share_ipo_job():
+def crawl_hs_ipo_job():
     """
     A股IPO招股说明书爬取作业
     
@@ -1089,14 +1079,14 @@ def crawl_a_share_ipo_job():
     1. 爬取IPO招股说明书
     2. 验证爬取结果
     """
-    crawl_results = crawl_a_share_ipo_op()
+    crawl_results = crawl_hs_ipo_op()
     validate_crawl_results_op(crawl_results)
 
 
 # ==================== Schedules ====================
 
 @schedule(
-    job=crawl_a_share_reports_job,
+    job=crawl_hs_reports_job,
     cron_schedule="0 2 * * *",  # 每天凌晨2点执行
     default_status=DefaultScheduleStatus.STOPPED,  # 默认停止，需要手动启用
 )
@@ -1108,7 +1098,7 @@ def daily_crawl_reports_schedule(context):
 
 
 @schedule(
-    job=crawl_a_share_ipo_job,
+    job=crawl_hs_ipo_job,
     cron_schedule="0 3 * * *",  # 每天凌晨3点执行
     default_status=DefaultScheduleStatus.STOPPED,  # 默认停止
 )
@@ -1122,7 +1112,7 @@ def daily_crawl_ipo_schedule(context):
 # ==================== Sensors ====================
 
 @sensor(
-    job=crawl_a_share_reports_job,
+    job=crawl_hs_reports_job,
     default_status=DefaultSensorStatus.STOPPED,
 )
 def manual_trigger_reports_sensor(context):
@@ -1134,7 +1124,7 @@ def manual_trigger_reports_sensor(context):
 
 
 @sensor(
-    job=crawl_a_share_ipo_job,
+    job=crawl_hs_ipo_job,
     default_status=DefaultSensorStatus.STOPPED,
 )
 def manual_trigger_ipo_sensor(context):
@@ -1148,7 +1138,7 @@ def manual_trigger_ipo_sensor(context):
 # ==================== 港股 Dagster Ops ====================
 
 @op(config_schema=HK_COMPANY_UPDATE_CONFIG_SCHEMA)
-def update_hk_companies_op(context) -> Dict:
+def get_hk_companies_op(context) -> Dict:
     """
     更新港股公司列表
     
@@ -1157,25 +1147,28 @@ def update_hk_companies_op(context) -> Dict:
     """
     config = context.op_config
     logger = get_dagster_logger()
-    
-    enable_postgres = config.get("enable_postgres", True)
-    include_inactive = config.get("include_inactive", False)
-    equity_only = config.get("equity_only", True)
-    
-    logger.info(f"开始更新港股公司列表 (include_inactive={include_inactive}, equity_only={equity_only})")
+    start_time = datetime.now()
+
+    clear_before_update = config.get("clear_before_update", False)
+    basic_info_only = config.get("basic_info_only", False)
+
+    logger.info(
+        f"[get_hk_companies] 开始更新港股公司列表 | "
+        f"clear_before_update={clear_before_update}, basic_info_only={basic_info_only}"
+    )
     
     try:
-        # 使用 HKEX 客户端获取股票列表
+        # 使用 HKEX 客户端获取股票列表（硬编码：仅股本证券，不含已退市）
         from src.ingestion.hk_stock import HKEXClient
         
         hkex_client = HKEXClient()
         stocks = hkex_client.get_stock_list(
-            include_inactive=include_inactive,
-            equity_only=equity_only
+            include_inactive=False,
+            equity_only=True
         )
         
         if not stocks:
-            logger.warning("未获取到港股公司列表")
+            logger.error("[get_hk_companies] 更新失败: 未获取到港股公司列表")
             return {
                 "success": False,
                 "error": "未获取到港股公司列表",
@@ -1184,39 +1177,65 @@ def update_hk_companies_op(context) -> Dict:
         
         logger.info(f"从披露易获取了 {len(stocks)} 家股本证券公司")
         
-        # 使用 akshare 获取公司详细信息（可选）
-        enrich_with_akshare = config.get("enrich_with_akshare", False)
-        if enrich_with_akshare:
-            logger.info(f"开始使用 akshare 获取 {len(stocks)} 家公司的详细信息...")
+        pg_client = get_postgres_client()
+        
+        # 使用 akshare 获取公司详细信息（basic_info_only=False 时执行，增量：仅新公司或 org_name_cn 缺失/变化时拉取）
+        if not basic_info_only:
             from src.ingestion.hk_stock.utils.akshare_helper import batch_get_company_profiles
+            with pg_client.get_session() as session:
+                existing_list = crud.get_all_hk_listed_companies(session)
+                # 在 session 内提取字段，避免 DetachedInstanceError（ORM 对象在 session 关闭后无法访问属性）
+                existing_by_code = {
+                    c.code: {"org_name_cn": c.org_name_cn, "name": c.name}
+                    for c in existing_list if c.code
+                }
             
-            stock_codes = [s['code'] for s in stocks]
-            total_codes = len(stock_codes)
+            # 增量：仅对新公司或 org_name_cn 为空/变化时拉取
+            # org_name_cn 是否变化：拉取后与 DB 比较，若不同则更新；拉取前用 name 作为代理（name 变更常伴随 org_name_cn 变更）
+            def _need_fetch_profile(stock: dict, existing: dict | None) -> bool:
+                if existing is None:
+                    return True
+                if not (existing.get("org_name_cn") or '').strip():
+                    return True
+                # org_name_cn 是否变化（代理：HKEX name 与 DB name 不同）
+                return (existing.get("name") or '').strip() != (stock.get('name') or '').strip()
             
-            # 定义进度回调函数
-            last_logged_pct = -1
-            def progress_callback(current: int, total: int, code: str):
-                """进度回调函数，记录进度信息"""
-                nonlocal last_logged_pct
-                progress_pct_int = int((current / total) * 100)
+            stocks_to_fetch = [
+                s for s in stocks
+                if _need_fetch_profile(s, existing_by_code.get(s.get('code')))
+            ]
+            stock_codes_to_fetch = [s['code'] for s in stocks_to_fetch]
+            skipped_count = len(stocks) - len(stock_codes_to_fetch)
+            
+            if stock_codes_to_fetch:
+                logger.info(f"增量拉取 akshare 详情: {len(stock_codes_to_fetch)} 家（跳过 {skipped_count} 家 org_name_cn 未变）")
                 
-                # 每 10% 或每 50 个记录一次进度，避免日志过多
-                if progress_pct_int % 10 == 0 and progress_pct_int != last_logged_pct:
-                    logger.info(f"[akshare 进度] {current}/{total} ({progress_pct_int}%) - 正在处理: {code}")
-                    last_logged_pct = progress_pct_int
-                elif current % 50 == 0:
-                    logger.info(f"[akshare 进度] {current}/{total} ({progress_pct_int}%) - 正在处理: {code}")
-                elif current == total:
-                    logger.info(f"[akshare 进度] 完成 {current}/{total} (100%)")
+                last_logged_pct = -1
+
+                def progress_callback(current: int, total: int, code: str) -> None:
+                    nonlocal last_logged_pct
+                    progress_pct = (current / total) * 100
+                    progress_pct_int = int(progress_pct)
+                    if (
+                        progress_pct_int % 5 == 0
+                        and progress_pct_int != last_logged_pct
+                    ) or current == total:
+                        logger.info(
+                            f"📦 [{current}/{total}] {progress_pct:.1f}% | 获取公司详情 | {code}"
+                        )
+                        last_logged_pct = progress_pct_int
+                
+                profiles = batch_get_company_profiles(
+                    stock_codes_to_fetch,
+                    delay=0.1,
+                    max_workers=10,
+                    progress_callback=progress_callback
+                )
+            else:
+                profiles = {}
+                logger.info(f"无需拉取 akshare 详情（{len(stocks)} 家 org_name_cn 均未变）")
             
-            profiles = batch_get_company_profiles(
-                stock_codes, 
-                delay=0.1,  # 减少延迟到 0.1 秒
-                max_workers=10,  # 使用 10 个并发线程
-                progress_callback=progress_callback
-            )
-            
-            # 合并详细信息到 stocks
+            # 合并详细信息到 stocks（仅对拉取过的）
             enriched_count = 0
             company_info_count = 0
             security_info_count = 0
@@ -1224,17 +1243,10 @@ def update_hk_companies_op(context) -> Dict:
             for stock in stocks:
                 code = stock['code']
                 profile = profiles.get(code)
-                # profile 可能是字典（包括空字典 {}）或 None
-                # 如果是字典（即使是空的），也要更新，因为空字典表示获取成功但无数据
                 if profile is not None:
-                    # 统计公司信息字段和证券信息字段
-                    company_fields = ['org_name_cn', 'org_name_en', 'reg_location', 'reg_address',
-                                    'office_address_cn', 'telephone', 'fax', 'email', 'org_website',
-                                    'org_cn_introduction', 'chairman', 'secretary', 'established_date',
-                                    'staff_num', 'industry']
-                    security_fields = ['listed_date', 'security_type', 'issue_price', 'issue_amount',
-                                     'lot_size', 'par_value', 'isin', 'is_sh_hk_connect', 'is_sz_hk_connect',
-                                     'fiscal_year_end']
+                    company_fields = ['org_name_cn', 'org_name_en', 'org_cn_introduction',
+                                    'established_date', 'staff_num', 'industry']
+                    security_fields = ['listed_date', 'fiscal_year_end', 'is_sh_hk_connect', 'is_sz_hk_connect']
                     
                     has_company_info = any(k in profile for k in company_fields)
                     has_security_info = any(k in profile for k in security_fields)
@@ -1245,30 +1257,30 @@ def update_hk_companies_op(context) -> Dict:
                         security_info_count += 1
                     
                     stock.update(profile)
-                    # 统计有实际数据的数量（至少有一个非空字段）
                     if len(profile) > 0:
                         enriched_count += 1
             
-            logger.info(f"✅ 成功获取 {enriched_count}/{len(stocks)} 家公司的详细信息")
-            logger.info(f"   其中：公司信息 {company_info_count} 家，证券信息 {security_info_count} 家")
-            
-            # 调试：打印一些示例数据，确认数据是否正确获取
             if enriched_count > 0:
-                sample_stock = next((s for s in stocks if profiles.get(s.get('code')) and len(profiles.get(s.get('code'), {})) > 0), None)
-                if sample_stock:
-                    sample_code = sample_stock['code']
-                    sample_profile = profiles.get(sample_code, {})
-                    logger.info(f"示例数据 ({sample_code}): 获取到 {len(sample_profile)} 个字段")
-                    logger.info(f"示例字段: {list(sample_profile.keys())[:15]}")
-        
+                logger.info(
+                    f"获取详情完成: {enriched_count}/{len(stocks)} 家 "
+                    f"（公司信息 {company_info_count} 家，证券信息 {security_info_count} 家）"
+                )
+
         # 保存到数据库
-        if enable_postgres:
-            pg_client = get_postgres_client()
+        if clear_before_update:
             with pg_client.get_session() as session:
-                count = crud.batch_upsert_hk_listed_companies(session, stocks)
+                count = crud.clear_hk_listed_companies_except_org_id(session)
                 session.commit()
-                logger.info(f"✅ 成功更新 {count} 家港股公司到数据库")
-        
+            logger.info(f"已清空 hk_listed_companies 中 {count} 条记录的非主键字段")
+        with pg_client.get_session() as session:
+            count = crud.batch_upsert_hk_listed_companies(session, stocks)
+            session.commit()
+
+        duration_seconds = int((datetime.now() - start_time).total_seconds())
+        logger.info(
+            f"[get_hk_companies] 更新完成 | 总={len(stocks)}, 耗时={duration_seconds}s"
+        )
+
         # 记录 Asset Materialization
         context.log_event(
             AssetMaterialization(
@@ -1276,8 +1288,8 @@ def update_hk_companies_op(context) -> Dict:
                 description=f"更新港股公司列表: {len(stocks)} 家股本证券",
                 metadata={
                     "total_count": MetadataValue.int(len(stocks)),
-                    "include_inactive": MetadataValue.bool(include_inactive),
-                    "equity_only": MetadataValue.bool(equity_only),
+                    "clear_before_update": MetadataValue.bool(clear_before_update),
+                    "basic_info_only": MetadataValue.bool(basic_info_only),
                 }
             )
         )
@@ -1289,7 +1301,7 @@ def update_hk_companies_op(context) -> Dict:
         }
         
     except Exception as e:
-        logger.error(f"更新港股公司列表失败: {e}", exc_info=True)
+        logger.error(f"[get_hk_companies] 更新失败: {e}", exc_info=True)
         return {
             "success": False,
             "error": str(e),
@@ -1350,7 +1362,7 @@ def crawl_hk_reports_op(context) -> Dict:
         )
         
         if not companies:
-            logger.warning("未找到港股公司，请先运行 update_hk_companies_op 更新公司列表")
+            logger.warning("未找到港股公司，请先运行 get_hk_companies_op 更新公司列表")
             return {
                 "success": False,
                 "error": "未找到港股公司列表",
@@ -1467,13 +1479,13 @@ def crawl_hk_reports_op(context) -> Dict:
 # ==================== 港股 Dagster Jobs ====================
 
 @job
-def update_hk_companies_job():
+def get_hk_companies_job():
     """
     港股公司列表更新作业
     
     从披露易获取最新的股票列表并同步到数据库
     """
-    update_hk_companies_op()
+    get_hk_companies_op()
 
 
 @job
@@ -1492,7 +1504,7 @@ def crawl_hk_reports_job():
 # ==================== 港股 Schedules ====================
 
 @schedule(
-    job=update_hk_companies_job,
+    job=get_hk_companies_job,
     cron_schedule="0 1 * * 1",  # 每周一凌晨1点执行
     default_status=DefaultScheduleStatus.STOPPED,
 )
@@ -1518,7 +1530,7 @@ def daily_crawl_hk_reports_schedule(context):
 # ==================== 港股 Sensors ====================
 
 @sensor(
-    job=update_hk_companies_job,
+    job=get_hk_companies_job,
     default_status=DefaultSensorStatus.STOPPED,
 )
 def manual_trigger_update_hk_companies_sensor(context):

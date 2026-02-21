@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-数据库迁移脚本：为 listed_companies 表添加 stock_individual_basic_info_xq 接口的所有字段
+数据库迁移脚本：为 hs_listed_companies 表添加 stock_individual_basic_info_xq 接口的所有字段
 
 新增字段来自 akshare stock_individual_basic_info_xq 接口返回的所有字段
 """
@@ -23,19 +23,19 @@ logger = get_logger(__name__)
 def migrate():
     """执行迁移"""
     print("=" * 60)
-    print("数据库迁移：为 listed_companies 表添加 stock_individual_basic_info_xq 字段")
+    print("数据库迁移：为 hs_listed_companies 表添加 stock_individual_basic_info_xq 字段")
     print("=" * 60)
     print()
     
     pg_client = get_postgres_client()
     
-    # 检查表是否存在
-    if not pg_client.table_exists('listed_companies'):
-        print("❌ listed_companies 表不存在")
+    # 检查表是否存在（支持 hs_listed_companies 或旧名 listed_companies）
+    table_name = 'hs_listed_companies' if pg_client.table_exists('hs_listed_companies') else ('listed_companies' if pg_client.table_exists('listed_companies') else None)
+    if not table_name:
+        print("❌ hs_listed_companies 或 listed_companies 表不存在")
         print("   请先运行: python scripts/migrate_listed_companies_table.py")
         return False
-    
-    print("✅ listed_companies 表存在")
+    print(f"✅ 表 {table_name} 存在")
     
     # 要添加的字段（来自 stock_individual_basic_info_xq 接口）
     new_columns = [
@@ -90,7 +90,8 @@ def migrate():
         # 其他信息
         ("currency_encode", "VARCHAR(50)", "货币编码"),
         ("currency", "VARCHAR(10)", "货币"),
-        ("affiliate_industry", "JSONB", "所属行业（JSON格式）"),
+        ("industry_code", "VARCHAR(50)", "行业代码（如：BK0055）"),
+        ("industry", "VARCHAR(200)", "行业名称（如：银行）"),
     ]
     
     with pg_client.get_session() as session:
@@ -100,18 +101,30 @@ def migrate():
                 check_sql = text("""
                     SELECT column_name 
                     FROM information_schema.columns 
-                    WHERE table_name = 'listed_companies' 
+                    WHERE table_name = :table_name 
                     AND column_name = :col_name
                 """)
-                result = session.execute(check_sql, {"col_name": col_name})
+                result = session.execute(check_sql, {"col_name": col_name, "table_name": table_name})
                 
                 if result.fetchone():
                     print(f"⏭️  字段 {col_name} 已存在，跳过")
                     continue
                 
+                # industry_code/industry 特殊处理：若存在 affiliate_industry 或 industry(JSON)，跳过，需先运行 split 迁移
+                if col_name in ("industry_code", "industry"):
+                    skip_industry = False
+                    for legacy in ("affiliate_industry", "industry"):
+                        legacy_check = session.execute(check_sql, {"col_name": legacy, "table_name": table_name})
+                        if legacy_check.fetchone():
+                            print(f"⏭️  表有 {legacy}，跳过添加 {col_name}（请先运行 migrations/split_hs_listed_companies_industry_to_columns.sql）")
+                            skip_industry = True
+                            break
+                    if skip_industry:
+                        continue
+                
                 # 添加字段
                 alter_sql = text(f"""
-                    ALTER TABLE listed_companies 
+                    ALTER TABLE {table_name} 
                     ADD COLUMN {col_name} {col_type}
                 """)
                 session.execute(alter_sql)
@@ -133,10 +146,10 @@ def migrate():
     print("  - 管理信息：legal_representative, general_manager, secretary, chairman, executives_nums")
     print("  - 地区信息：district_encode, provincial_name, actual_controller, classi_name")
     print("  - 财务信息：established_date, listed_date, reg_asset, staff_num, 等")
-    print("  - 其他信息：currency_encode, currency, affiliate_industry")
+    print("  - 其他信息：currency_encode, currency, industry_code, industry")
     print()
-    print("下一步：运行 update_listed_companies_job 来填充这些字段")
-    print("  dagster job execute -j update_listed_companies_job -m src.processing.compute.dagster")
+    print("下一步：运行 get_hs_companies_job 来填充这些字段")
+    print("  dagster job execute -j get_hs_companies_job -m src.processing.compute.dagster")
     
     return True
 

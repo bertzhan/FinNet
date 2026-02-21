@@ -67,7 +67,7 @@ CRAWLER_CONFIG_SCHEMA = {
 
 
 @op(config_schema=CRAWLER_CONFIG_SCHEMA)
-def crawl_a_share_quarterly_reports(context) -> Dict:
+def crawl_hs_quarterly_reports(context) -> Dict:
     """
     爬取A股季度报告
     
@@ -167,7 +167,7 @@ def crawl_a_share_quarterly_reports(context) -> Dict:
                     year=prev_year,
                     quarter=prev_quarter,
                     doc_type=DocType.QUARTERLY_REPORT,
-                    market=Market.A_SHARE
+                    market=Market.HS
                 ))
                 tasks.append(CrawlTask(
                     stock_code=code,
@@ -175,7 +175,7 @@ def crawl_a_share_quarterly_reports(context) -> Dict:
                     year=current_year,
                     quarter=current_quarter,
                     doc_type=DocType.QUARTERLY_REPORT,
-                    market=Market.A_SHARE
+                    market=Market.HS
                 ))
     
     logger.info(f"生成 {len(tasks)} 个爬取任务")
@@ -194,7 +194,7 @@ def crawl_a_share_quarterly_reports(context) -> Dict:
         if result.success:
             context.log_event(
                 AssetMaterialization(
-                    asset_key="a_share_report",
+                    asset_key="hs_stock_report",
                     description=f"{result.task.company_name} {result.task.year} Q{result.task.quarter}",
                     metadata={
                         "stock_code": MetadataValue.text(result.task.stock_code),
@@ -239,7 +239,7 @@ def validate_crawled_data(context, crawl_result: Dict) -> Dict:
         return {"validated": False, "reason": "爬取失败"}
     
     results = crawl_result.get("results", [])
-    validator = DataValidator(Market.A_SHARE)
+    validator = DataValidator(Market.HS)
     # 从爬取结果中获取 output_root，如果没有则使用默认值
     output_root = crawl_result.get("output_root", DEFAULT_OUTPUT_ROOT)
     storage_manager = StorageManager(output_root)
@@ -266,7 +266,7 @@ def validate_crawled_data(context, crawl_result: Dict) -> Dict:
                 year=result_info["year"],
                 quarter=result_info["quarter"],
                 doc_type=DocType.QUARTERLY_REPORT,
-                market=Market.A_SHARE
+                market=Market.HS
             ),
             file_path=file_path,
             file_size=os.path.getsize(file_path) if os.path.exists(file_path) else None,
@@ -318,7 +318,7 @@ def validate_crawled_data(context, crawl_result: Dict) -> Dict:
 
 
 @job
-def crawl_a_share_reports_job():
+def crawl_hs_reports_job():
     """
     A股报告爬取作业
     
@@ -326,12 +326,12 @@ def crawl_a_share_reports_job():
     1. 爬取季度报告
     2. 验证爬取数据
     """
-    crawl_result = crawl_a_share_quarterly_reports()
+    crawl_result = crawl_hs_quarterly_reports()
     validate_crawled_data(crawl_result)
 
 
 @schedule(
-    job=crawl_a_share_reports_job,
+    job=crawl_hs_reports_job,
     cron_schedule="0 2 * * *",  # 每天凌晨2点执行
     default_status=DefaultScheduleStatus.STOPPED,
 )
@@ -343,7 +343,7 @@ def daily_crawl_schedule(context):
 
 
 @sensor(
-    job=crawl_a_share_reports_job,
+    job=crawl_hs_reports_job,
     default_status=DefaultSensorStatus.STOPPED,
 )
 def manual_trigger_sensor(context):

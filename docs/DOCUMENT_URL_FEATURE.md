@@ -71,7 +71,7 @@ python tests/test_document_url_save.py
 ### 在爬虫中使用
 
 ```python
-from src.ingestion.a_share.crawlers.ipo_crawler import CninfoIPOProspectusCrawler
+from src.ingestion.hs_stock.crawlers.ipo_crawler import CninfoIPOProspectusCrawler
 from src.ingestion.base.base_crawler import CrawlTask
 from src.common.constants import Market, DocType
 
@@ -83,7 +83,7 @@ crawler = CninfoIPOProspectusCrawler(
 task = CrawlTask(
     stock_code="688111",
     company_name="金山办公",
-    market=Market.A_SHARE,
+    market=Market.HS,
     doc_type=DocType.IPO_PROSPECTUS
 )
 
@@ -103,11 +103,11 @@ with pg_client.get_session() as session:
         session=session,
         stock_code="000001",
         company_name="平安银行",
-        market="a_share",
+        market="hs",
         doc_type="quarterly_reports",
         year=2024,
         quarter=1,
-        minio_object_path="bronze/a_share/quarterly_reports/2024/Q1/000001/report.pdf",
+        minio_object_path="bronze/hs/quarterly_reports/2024/Q1/000001/report.pdf",
         source_url="https://www.cninfo.com.cn/new/disclosure/detail?plate=&orgId=xxx&stockCode=000001&announcementId=xxx"
     )
     print(f"文档ID: {doc.id}, URL: {doc.source_url}")

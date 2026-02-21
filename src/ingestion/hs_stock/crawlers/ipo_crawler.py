@@ -17,7 +17,7 @@ from concurrent.futures import ThreadPoolExecutor
 try:
     from .base_cninfo_crawler import CninfoBaseCrawler
 except ImportError:
-    from src.ingestion.a_share.crawlers.base_cninfo_crawler import CninfoBaseCrawler
+    from src.ingestion.hs_stock.crawlers.base_cninfo_crawler import CninfoBaseCrawler
 
 from src.ingestion.base.base_crawler import CrawlTask, CrawlResult
 from src.common.constants import Market, DocType
@@ -47,7 +47,7 @@ class CninfoIPOProspectusCrawler(CninfoBaseCrawler):
             workers: 并行进程数（1 表示单线程）
         """
         super().__init__(
-            market=Market.A_SHARE,
+            market=Market.HS,
             enable_minio=enable_minio,
             enable_postgres=enable_postgres
         )
@@ -68,7 +68,7 @@ class CninfoIPOProspectusCrawler(CninfoBaseCrawler):
             try:
                 from ..processor.ipo_processor import process_single_ipo_task
             except ImportError:
-                from src.ingestion.a_share.processor.ipo_processor import process_single_ipo_task
+                from src.ingestion.hs_stock.processor.ipo_processor import process_single_ipo_task
 
             # 创建临时目录用于下载
             temp_dir = tempfile.mkdtemp(prefix='cninfo_ipo_download_')
@@ -149,7 +149,7 @@ class CninfoIPOProspectusCrawler(CninfoBaseCrawler):
         Returns:
             文件路径，如果未找到则返回 None
         """
-        # IPO文件格式（与MinIO一致）：{output_root}/bronze/a_share/ipo_prospectus/{code}/document.pdf 或 document.html
+        # IPO文件格式（与MinIO一致）：{output_root}/bronze/hs_stock/ipo_prospectus/{code}/document.pdf 或 document.html
         from src.storage.object_store.path_manager import PathManager
         from src.common.constants import Market, DocType
         
@@ -159,7 +159,7 @@ class CninfoIPOProspectusCrawler(CninfoBaseCrawler):
         ipo_dir = os.path.join(
             output_root,
             "bronze",
-            Market.A_SHARE.value,
+            Market.HS.value,
             DocType.IPO_PROSPECTUS.value,
             task.stock_code
         )
@@ -292,7 +292,7 @@ class CninfoIPOProspectusCrawler(CninfoBaseCrawler):
             try:
                 from ..processor.ipo_processor import run_ipo_multiprocessing
             except ImportError:
-                from src.ingestion.a_share.processor.ipo_processor import run_ipo_multiprocessing
+                from src.ingestion.hs_stock.processor.ipo_processor import run_ipo_multiprocessing
 
             # 0. 检查数据库，过滤已存在的任务（避免重复爬取）
             tasks_to_crawl = []
@@ -674,7 +674,7 @@ def main():
     task = CrawlTask(
         stock_code="688111",
         company_name="金山办公",
-        market=Market.A_SHARE,
+        market=Market.HS,
         doc_type=DocType.IPO_PROSPECTUS,
         year=None,
         quarter=None

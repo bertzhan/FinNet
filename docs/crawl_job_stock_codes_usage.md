@@ -6,8 +6,8 @@
 
 ## 适用的 Jobs
 
-- `crawl_a_share_reports_job` - A股定期报告爬虫
-- `crawl_a_share_ipo_job` - A股IPO招股说明书爬虫
+- `crawl_hs_reports_job` - A股定期报告爬虫
+- `crawl_hs_ipo_job` - A股IPO招股说明书爬虫
 
 ## 配置参数
 
@@ -141,7 +141,7 @@ ops:
 
 **解决方法：**
 1. 检查股票代码是否正确
-2. 确保已运行 `update_listed_companies_job` 更新公司列表
+2. 确保已运行 `get_hs_companies_job` 更新公司列表
 3. 验证股票代码是否在数据库中存在
 
 ### 部分股票代码不存在
@@ -230,7 +230,7 @@ stock_codes:
 当指定 `stock_codes` 参数时，使用以下 SQL 查询：
 
 ```sql
-SELECT * FROM listed_companies
+SELECT * FROM hs_listed_companies
 WHERE code IN ('000001', '000002', '600000')
 ```
 

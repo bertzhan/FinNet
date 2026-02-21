@@ -63,7 +63,7 @@ dagster dev -m src.processing.compute.dagster
 ```bash
 # 执行 Job 并查看输出
 dagster job execute \
-  -j crawl_a_share_reports_job \
+  -j crawl_hs_reports_job \
   -m src.processing.compute.dagster \
   --log-level DEBUG
 ```

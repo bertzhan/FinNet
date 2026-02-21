@@ -18,7 +18,7 @@ class FilterParams(BaseModel):
         None, 
         description="文档类型（单个字符串或字符串列表）。支持的文档类型：年报(annual_reports)、季报(quarterly_reports)、半年报(interim_reports)、招股书(ipo_prospectus)、公告(announcements)等"
     )
-    market: Optional[str] = Field(None, description="市场（a_share/hk_stock/us_stock）")
+    market: Optional[str] = Field(None, description="市场（hs_stock/hk_stock/us_stock）")
     company_name: Optional[str] = Field(None, description="公司名称")
 
     @validator('doc_type')
@@ -52,7 +52,7 @@ class FilterParams(BaseModel):
                 "year": 2023,
                 "quarter": 3,
                 "doc_type": "quarterly_reports",
-                "market": "a_share"
+                "market": "hs_stock"
             }
         }
 
@@ -215,7 +215,7 @@ class RetrievalResultResponse(BaseModel):
                     "doc_type": "quarterly_reports",
                     "year": 2023,
                     "quarter": 3,
-                    "market": "a_share",
+                    "market": "hs_stock",
                     "chunk_index": 0
                 }
             }

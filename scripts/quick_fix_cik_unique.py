@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-快速修复：删除 us_listed_companies.cik 的 UNIQUE 约束
+快速修复：删除 us_listed_companies.org_id 的 UNIQUE 约束
 
-这是一个简化的修复脚本，专门用于删除 CIK UNIQUE 约束
+这是一个简化的修复脚本，专门用于删除 org_id (原 cik) UNIQUE 约束
 """
 import sys
 from pathlib import Path
@@ -37,7 +37,7 @@ def main():
                     ON tc.constraint_name = ccu.constraint_name
                     AND tc.table_schema = ccu.table_schema
                 WHERE tc.table_name = 'us_listed_companies'
-                    AND ccu.column_name = 'cik'
+                    AND ccu.column_name IN ('cik', 'org_id')
                     AND tc.constraint_type = 'UNIQUE';
             """))
 
@@ -59,22 +59,22 @@ def main():
             logger.info(f"✅ 约束 {constraint_name} 已删除")
 
             # 3. 确保索引存在（用于查询性能）
-            logger.info("检查 CIK 索引...")
+            logger.info("检查 org_id 索引...")
             result = session.execute(text("""
                 SELECT EXISTS (
                     SELECT 1 FROM pg_indexes
-                    WHERE indexname = 'idx_us_cik'
+                    WHERE indexname IN ('idx_us_cik', 'idx_us_org_id')
                 );
             """))
             has_index = result.scalar()
 
             if not has_index:
-                logger.info("创建 CIK 索引...")
-                session.execute(text("CREATE INDEX idx_us_cik ON us_listed_companies(cik);"))
+                logger.info("创建 org_id 索引...")
+                session.execute(text("CREATE INDEX idx_us_org_id ON us_listed_companies(org_id);"))
                 session.commit()
-                logger.info("✅ 索引 idx_us_cik 已创建")
+                logger.info("✅ 索引 idx_us_org_id 已创建")
             else:
-                logger.info("✅ 索引 idx_us_cik 已存在")
+                logger.info("✅ 索引已存在")
 
             # 4. 验证结果
             logger.info("\n验证修复结果...")

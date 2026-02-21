@@ -242,7 +242,7 @@ def test_silver_path_generation():
         
         # 测试常规文档路径
         path1 = pm.get_silver_path(
-            market=Market.A_SHARE,
+            market=Market.HS,
             doc_type=DocType.QUARTERLY_REPORT,
             stock_code="000001",
             year=2023,
@@ -254,7 +254,7 @@ def test_silver_path_generation():
         
         # 测试 IPO 文档路径（与 Bronze 格式一致）
         path2 = pm.get_silver_path(
-            market=Market.A_SHARE,
+            market=Market.HS,
             doc_type=DocType.IPO_PROSPECTUS,
             stock_code="000001",
             filename="000001_IPO_parsed.json",

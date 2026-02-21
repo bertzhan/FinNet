@@ -114,7 +114,7 @@ python tests/test_vectorize_job.py
 ### 步骤5：在 Dagster UI 中测试
 
 1. 启动 Dagster UI：`dagster dev`
-2. 运行作业：`vectorize_documents_job`
+2. 运行作业：`doc_vectorize_job`
 3. 或使用传感器：`manual_trigger_vectorize_sensor`
 
 ## 代码实现状态

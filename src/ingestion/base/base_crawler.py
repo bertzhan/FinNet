@@ -307,17 +307,17 @@ class BaseCrawler(ABC, LoggerMixin):
             file_size = None
 
         # 4. 生成 MinIO 路径（A股/港股/US格式一致：bronze/{market}/{stock_code}/{year}/{period}/{filename}）
-        if task.market == Market.A_SHARE:
+        if task.market == Market.HS:
             if task.doc_type == DocType.IPO_PROSPECTUS:
                 actual_filename = os.path.basename(local_file_path)
-                minio_object_path = self.path_manager.get_a_share_bronze_path(
+                minio_object_path = self.path_manager.get_hs_bronze_path(
                     stock_code=task.stock_code,
                     period="ipo",
                     filename=actual_filename
                 )
             else:
                 period = "FY" if (task.quarter is None or task.quarter == 4) else f"Q{task.quarter}"
-                minio_object_path = self.path_manager.get_a_share_bronze_path(
+                minio_object_path = self.path_manager.get_hs_bronze_path(
                     stock_code=task.stock_code,
                     year=task.year,
                     period=period,

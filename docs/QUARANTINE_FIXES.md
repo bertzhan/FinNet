@@ -111,7 +111,7 @@ python scripts/update_quarantine_table.py
 # MinIO metadata contains only ASCII
 ✅ Object metadata:
    - x-amz-meta-failure_stage: validation_failed
-   - x-amz-meta-original_path: bronze/a_share/ipo_prospectus/300552/300552.pdf
+   - x-amz-meta-original_path: bronze/hs/ipo_prospectus/300552/300552.pdf
    - x-amz-meta-quarantine_time: 2026-01-16T18:46:44.737201
    # No Chinese characters! ✅
 ```

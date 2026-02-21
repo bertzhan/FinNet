@@ -53,7 +53,7 @@
   - 完整的错误处理和重试机制
 
 #### 1.4 Dagster 向量化作业
-- ✅ 实现 `vectorize_documents_job` - 向量化作业（428行）
+- ✅ 实现 `doc_vectorize_job` - 向量化作业（428行）
 - ✅ 实现定时调度：
   - `hourly_vectorize_schedule` - 每2小时向量化调度
   - `daily_vectorize_schedule` - 每日向量化调度
@@ -97,7 +97,7 @@
   - 保持文档层次结构
 
 #### 2.4 Dagster 分块作业
-- ✅ 实现 `chunk_documents_job` - 文本分块作业（468行）
+- ✅ 实现 `doc_chunk_job` - 文本分块作业（468行）
 - ✅ 实现定时调度：
   - `hourly_chunk_schedule` - 每小时分块调度
   - `daily_chunk_schedule` - 每日分块调度
@@ -217,7 +217,7 @@
   - 过滤搜索
 
 #### 6.2 Dagster 作业集成
-- ✅ 实现 `elasticsearch_index_job` - Elasticsearch 索引作业
+- ✅ 实现 `doc_index_job` - Elasticsearch 索引作业
 - ✅ 实现定时调度：
   - `hourly_elasticsearch_schedule` - 每小时执行一次
   - `daily_elasticsearch_schedule` - 每天执行一次
@@ -311,12 +311,12 @@
 ### 5. Dagster 统一调度 ✅
 
 **已实现作业（6个）**:
-- ✅ `crawl_a_share_reports_job` - A股定期报告爬取
-- ✅ `crawl_a_share_ipo_job` - A股IPO招股书爬取
-- ✅ `parse_pdf_job` - PDF 解析作业
-- ✅ `chunk_documents_job` - 文本分块作业
-- ✅ `vectorize_documents_job` - 向量化作业
-- ✅ `elasticsearch_index_job` - Elasticsearch 索引作业
+- ✅ `crawl_hs_reports_job` - A股定期报告爬取
+- ✅ `crawl_hs_ipo_job` - A股IPO招股书爬取
+- ✅ `doc_parse_job` - PDF 解析作业
+- ✅ `doc_chunk_job` - 文本分块作业
+- ✅ `doc_vectorize_job` - 向量化作业
+- ✅ `doc_index_job` - Elasticsearch 索引作业
 
 **已实现调度（10个）**:
 - ✅ 爬取调度（每日）

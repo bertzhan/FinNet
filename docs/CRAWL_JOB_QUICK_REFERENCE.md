@@ -130,7 +130,7 @@ ops:
 
 **解决方法**:
 1. 检查股票代码是否正确
-2. 运行 `update_listed_companies_job` 更新公司列表
+2. 运行 `get_hs_companies_job` 更新公司列表
 3. 使用以下脚本查看可用的股票代码：
 
 ```python
@@ -147,11 +147,11 @@ with pg_client.get_session() as session:
 
 **错误信息**:
 ```
-⚠️ 公司列表为空，请先运行 update_listed_companies_job 更新公司列表
+⚠️ 公司列表为空，请先运行 get_hs_companies_job 更新公司列表
 ```
 
 **解决方法**:
-在 Dagster UI 中运行 `update_listed_companies_job`
+在 Dagster UI 中运行 `get_hs_companies_job`
 
 ## 相关文档
 

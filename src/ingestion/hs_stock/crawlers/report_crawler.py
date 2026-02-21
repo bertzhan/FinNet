@@ -17,7 +17,7 @@ from concurrent.futures import ThreadPoolExecutor
 try:
     from .base_cninfo_crawler import CninfoBaseCrawler
 except ImportError:
-    from src.ingestion.a_share.crawlers.base_cninfo_crawler import CninfoBaseCrawler
+    from src.ingestion.hs_stock.crawlers.base_cninfo_crawler import CninfoBaseCrawler
 
 from src.ingestion.base.base_crawler import CrawlTask, CrawlResult
 from src.common.constants import Market, DocType
@@ -47,7 +47,7 @@ class ReportCrawler(CninfoBaseCrawler):
             workers: 并行进程数（1 表示单线程）
         """
         super().__init__(
-            market=Market.A_SHARE,
+            market=Market.HS,
             enable_minio=enable_minio,
             enable_postgres=enable_postgres
         )
@@ -68,7 +68,7 @@ class ReportCrawler(CninfoBaseCrawler):
             try:
                 from ..processor.report_processor import process_single_task
             except ImportError:
-                from src.ingestion.a_share.processor.report_processor import process_single_task
+                from src.ingestion.hs_stock.processor.report_processor import process_single_task
 
             # 创建临时目录用于下载
             temp_dir = tempfile.mkdtemp(prefix='cninfo_download_')
@@ -199,7 +199,7 @@ class ReportCrawler(CninfoBaseCrawler):
         path_manager = PathManager()
         quarter_for_path = quarter_num if quarter_num not in [2, 4] else None
         minio_path = path_manager.get_bronze_path(
-            market=Market.A_SHARE,
+            market=Market.HS,
             doc_type=doc_type,
             stock_code=task.stock_code,
             year=task.year,
@@ -241,7 +241,7 @@ class ReportCrawler(CninfoBaseCrawler):
         path_manager = PathManager()
         quarter_for_path = quarter_num if quarter_num not in [2, 4] else None
         minio_path = path_manager.get_bronze_path(
-            market=Market.A_SHARE,
+            market=Market.HS,
             doc_type=doc_type,
             stock_code=task.stock_code,
             year=task.year,
@@ -313,7 +313,7 @@ class ReportCrawler(CninfoBaseCrawler):
             try:
                 from ..processor.report_processor import run_multiprocessing
             except ImportError:
-                from src.ingestion.a_share.processor.report_processor import run_multiprocessing
+                from src.ingestion.hs_stock.processor.report_processor import run_multiprocessing
 
             # 0. 检查数据库，过滤已存在的任务（避免重复爬取）
             tasks_to_crawl = []
@@ -648,7 +648,7 @@ def main():
     task = CrawlTask(
         stock_code="000001",
         company_name="平安银行",
-        market=Market.A_SHARE,
+        market=Market.HS,
         doc_type=DocType.ANNUAL_REPORT,
         year=2023,
         quarter=4

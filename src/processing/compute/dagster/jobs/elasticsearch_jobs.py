@@ -45,7 +45,7 @@ ELASTICSEARCH_CONFIG_SCHEMA = {
     "market": Field(
         str,
         is_required=False,
-        description="市场过滤（a_share/hk_stock/us_stock），None 表示所有市场"
+        description="市场过滤（hs_stock/hk_stock/us_stock），None 表示所有市场"
     ),
     "doc_type": Field(
         str,
@@ -198,7 +198,7 @@ def scan_chunked_documents_op(context) -> Dict:
         ),
     }
 )
-def index_chunks_to_elasticsearch_op(context, scan_result: Dict) -> Dict:
+def doc_index_op(context, scan_result: Dict) -> Dict:
     """
     批量索引分块到 Elasticsearch
     
@@ -458,7 +458,7 @@ def validate_elasticsearch_results_op(context, index_results: Dict) -> Dict:
     检查索引结果的质量，记录统计信息
     
     Args:
-        index_results: index_chunks_to_elasticsearch_op 的返回结果
+        index_results: doc_index_op 的返回结果
         
     Returns:
         验证结果统计
@@ -547,7 +547,7 @@ def validate_elasticsearch_results_op(context, index_results: Dict) -> Dict:
                     # limit 不设置则处理全部，market 和 doc_type 是可选的，不设置表示所有类型
                 }
             },
-            "index_chunks_to_elasticsearch_op": {
+            "doc_index_op": {
                 "config": {
                     "force_reindex": False,
                 }
@@ -556,7 +556,7 @@ def validate_elasticsearch_results_op(context, index_results: Dict) -> Dict:
     },
     description="Elasticsearch 索引作业 - 默认配置"
 )
-def elasticsearch_index_job():
+def doc_index_job():
     """
     Elasticsearch 索引作业
 
@@ -569,18 +569,18 @@ def elasticsearch_index_job():
     - scan_chunked_documents_op:
         - batch_size: 50 (每批处理50个分块)
         - limit: 不设置 (处理全部分块)
-    - index_chunks_to_elasticsearch_op:
+    - doc_index_op:
         - force_reindex: False (不强制重新索引)
     """
     scan_result = scan_chunked_documents_op()
-    index_results = index_chunks_to_elasticsearch_op(scan_result)
+    index_results = doc_index_op(scan_result)
     validate_elasticsearch_results_op(index_results)
 
 
 # ==================== Schedules ====================
 
 @schedule(
-    job=elasticsearch_index_job,
+    job=doc_index_job,
     cron_schedule="0 */3 * * *",  # 每3小时执行一次
     default_status=DefaultScheduleStatus.STOPPED,  # 默认停止，需要手动启用
 )
@@ -592,7 +592,7 @@ def hourly_elasticsearch_schedule(context):
 
 
 @schedule(
-    job=elasticsearch_index_job,
+    job=doc_index_job,
     cron_schedule="0 6 * * *",  # 每天凌晨6点执行（在分块作业之后）
     default_status=DefaultScheduleStatus.STOPPED,  # 默认停止
 )
@@ -606,7 +606,7 @@ def daily_elasticsearch_schedule(context):
 # ==================== Sensors ====================
 
 @sensor(
-    job=elasticsearch_index_job,
+    job=doc_index_job,
     default_status=DefaultSensorStatus.STOPPED,
 )
 def manual_trigger_elasticsearch_sensor(context):

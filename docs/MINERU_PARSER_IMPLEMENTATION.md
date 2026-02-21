@@ -106,7 +106,7 @@
   "document_id": 123,
   "stock_code": "000001",
   "company_name": "平安银行",
-  "market": "a_share",
+  "market": "hs",
   "doc_type": "quarterly_report",
   "year": 2023,
   "quarter": 3,
@@ -137,12 +137,12 @@
 
 **常规文档**：
 ```
-silver/text_cleaned/a_share/quarterly_reports/2023/Q3/000001/000001_2023_Q3_parsed.json
+silver/text_cleaned/hs/quarterly_reports/2023/Q3/000001/000001_2023_Q3_parsed.json
 ```
 
 **IPO 文档**：
 ```
-silver/text_cleaned/a_share/ipo_prospectus/000001/000001_IPO_parsed.json
+silver/text_cleaned/hs/ipo_prospectus/000001/000001_IPO_parsed.json
 ```
 
 ---

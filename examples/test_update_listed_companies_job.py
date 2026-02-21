@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-直接测试 update_listed_companies_job
+直接测试 get_hs_companies_job
 模拟执行作业的核心逻辑，不依赖完整的 Dagster 环境
 """
 
@@ -97,15 +97,15 @@ def test_database_upsert(stock_df):
         print("✅ 数据库连接成功")
         
         # 检查表是否存在
-        if not pg_client.table_exists('listed_companies'):
-            print("❌ listed_companies 表不存在")
+        if not pg_client.table_exists('hs_listed_companies'):
+            print("❌ hs_listed_companies 表不存在")
             print("   提示: 请先运行 python scripts/migrate_listed_companies_table.py")
             return False
         
-        print("✅ listed_companies 表存在")
+        print("✅ hs_listed_companies 表存在")
         
         # 获取更新前的记录数
-        before_count = pg_client.get_table_count('listed_companies')
+        before_count = pg_client.get_table_count('hs_listed_companies')
         print(f"   更新前记录数: {before_count} 家")
         
         # 执行更新操作（只更新前10条作为测试）
@@ -143,7 +143,7 @@ def test_database_upsert(stock_df):
             session.commit()
         
         # 获取更新后的记录数
-        after_count = pg_client.get_table_count('listed_companies')
+        after_count = pg_client.get_table_count('hs_listed_companies')
         
         print(f"   ✅ 更新完成")
         print(f"   新增: {inserted_count} 家")
@@ -211,7 +211,7 @@ def test_dagster_job_execution():
     
     try:
         from dagster import build_op_context
-        from src.processing.compute.dagster.jobs.company_list_jobs import update_listed_companies_op
+        from src.processing.compute.dagster.jobs.company_list_jobs import get_hs_companies_op
         
         print("配置作业参数...")
         config = {
@@ -222,7 +222,7 @@ def test_dagster_job_execution():
         context = build_op_context(op_config=config)
         
         print("开始执行 Op...")
-        result = update_listed_companies_op(context)
+        result = get_hs_companies_op(context)
         
         if result.get('success'):
             print("✅ 作业执行成功")
@@ -256,7 +256,7 @@ def test_dagster_job_execution():
 def main():
     """运行所有测试"""
     print("\n" + "=" * 60)
-    print("update_listed_companies_job 完整测试")
+    print("get_hs_companies_job 完整测试")
     print("=" * 60)
     print()
     

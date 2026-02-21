@@ -11,18 +11,18 @@ from dagster import Definitions
 
 from .jobs import (
     # A股 Jobs
-    crawl_a_share_reports_job,
-    crawl_a_share_ipo_job,
+    crawl_hs_reports_job,
+    crawl_hs_ipo_job,
     # 港股 Jobs
-    update_hk_companies_job,
+    get_hk_companies_job,
     crawl_hk_reports_job,
     # 其他 Jobs
-    parse_pdf_job,
-    chunk_documents_job,
-    vectorize_documents_job,
-    build_graph_job,
-    elasticsearch_index_job,
-    update_listed_companies_job,
+    doc_parse_job,
+    doc_chunk_job,
+    doc_vectorize_job,
+    doc_toc_graph_job,
+    doc_index_job,
+    get_hs_companies_job,
     # A股 Schedules
     daily_crawl_reports_schedule,
     daily_crawl_ipo_schedule,
@@ -58,7 +58,7 @@ from .jobs import (
 
 # 导入美股 Jobs、Schedules、Sensors
 from src.ingestion.us_stock.dagster_assets import (
-    update_us_companies_job_dagster,
+    get_us_companies_job,
     crawl_us_reports_job,
     weekly_update_us_companies_schedule,
     weekly_crawl_us_reports_schedule,
@@ -73,21 +73,21 @@ from .assets import all_assets
 # 这允许模块中有多个 Jobs、Schedules、Sensors 和 Assets
 jobs_list = [
     # A股
-    crawl_a_share_reports_job,
-    crawl_a_share_ipo_job,
+    crawl_hs_reports_job,
+    crawl_hs_ipo_job,
     # 港股
-    update_hk_companies_job,
+    get_hk_companies_job,
     crawl_hk_reports_job,
     # 美股
-    update_us_companies_job_dagster,
+    get_us_companies_job,
     crawl_us_reports_job,
     # 其他
-    parse_pdf_job,
-    chunk_documents_job,
-    vectorize_documents_job,
-    build_graph_job,
-    elasticsearch_index_job,
-    update_listed_companies_job,
+    doc_parse_job,
+    doc_chunk_job,
+    doc_vectorize_job,
+    doc_toc_graph_job,
+    doc_index_job,
+    get_hs_companies_job,
 ]
 
 schedules_list = [
@@ -146,21 +146,21 @@ defs = Definitions(
 __all__ = [
     "defs",  # Definitions 对象（Dagster UI 会使用这个）
     # A股 Jobs
-    "crawl_a_share_reports_job",
-    "crawl_a_share_ipo_job",
+    "crawl_hs_reports_job",
+    "crawl_hs_ipo_job",
     # 港股 Jobs
-    "update_hk_companies_job",
+    "get_hk_companies_job",
     "crawl_hk_reports_job",
     # 美股 Jobs
-    "update_us_companies_job_dagster",
+    "get_us_companies_job",
     "crawl_us_reports_job",
     # 其他 Jobs
-    "parse_pdf_job",
-    "chunk_documents_job",
-    "vectorize_documents_job",
-    "build_graph_job",
-    "elasticsearch_index_job",
-    "update_listed_companies_job",
+    "doc_parse_job",
+    "doc_chunk_job",
+    "doc_vectorize_job",
+    "doc_toc_graph_job",
+    "doc_index_job",
+    "get_hs_companies_job",
     # A股 Schedules
     "daily_crawl_reports_schedule",
     "daily_crawl_ipo_schedule",

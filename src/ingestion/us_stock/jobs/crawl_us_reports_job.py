@@ -121,13 +121,13 @@ def crawl_us_reports_job(
     for idx, company in enumerate(companies, 1):
         ticker = company['code']
         company_name = company['name']
-        cik = company['cik']
+        org_id = company['org_id']
 
         logger.info(f"\n[{idx}/{len(companies)}] 处理公司: {ticker} ({company_name})")
 
         try:
             # 5.1 获取公司的所有提交记录
-            submissions_data = sec_client.fetch_company_submissions(cik=cik)
+            submissions_data = sec_client.fetch_company_submissions(cik=org_id)
 
             # 5.2 解析财报列表
             filings = sec_client.parse_filings(
@@ -149,7 +149,7 @@ def crawl_us_reports_job(
                 # 检查是否已存在（通过source_url去重）
                 accession = filing['accession_number']
                 source_url = sec_client.construct_primary_html_url(
-                    cik=cik,
+                    cik=org_id,
                     accession=accession,
                     primary_document=filing['primary_document']
                 )
@@ -182,7 +182,7 @@ def crawl_us_reports_job(
                         'accession_number': accession,
                         'primary_document': filing['primary_document'],
                         'filing_date': filing['filing_date'],
-                        'cik': cik
+                        'org_id': org_id
                     }
                 )
                 tasks.append(task)
@@ -209,7 +209,7 @@ def crawl_us_reports_job(
                 f"处理公司失败: {ticker}",
                 extra={
                     "ticker": ticker,
-                    "cik": cik,
+                    "org_id": org_id,
                     "error": str(e)
                 },
                 exc_info=True
@@ -253,18 +253,18 @@ def _get_target_companies(
         limit: 限制数量
 
     Returns:
-        公司信息列表 [{'code': 'AAPL', 'name': 'Apple Inc.', 'cik': '0000320193'}, ...]
+        公司信息列表 [{'code': 'AAPL', 'name': 'Apple Inc.', 'org_id': '0000320193'}, ...]
     """
     pg_client = get_postgres_client()
 
     # 构造SQL
-    sql = "SELECT code, name, cik FROM us_listed_companies WHERE is_active = true"
+    sql = "SELECT code, name, org_id FROM us_listed_companies"
 
     params = {}
 
     # 条件：指定股票代码
     if tickers:
-        sql += " AND code = ANY(:tickers)"
+        sql += " WHERE code = ANY(:tickers)"
         params['tickers'] = tickers
 
     # 排序和限制
@@ -277,7 +277,7 @@ def _get_target_companies(
     with pg_client.get_session() as session:
         result = session.execute(text(sql), params)
         companies = [
-            {'code': row[0], 'name': row[1], 'cik': row[2]}
+            {'code': row[0], 'name': row[1], 'org_id': row[2]}
             for row in result
         ]
 

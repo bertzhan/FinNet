@@ -172,7 +172,7 @@ if current_file_count > last_file_count or completed_count % 10 == 0:
 ### 在 Dagster UI 中查看进度
 
 1. 打开 Dagster UI
-2. 启动爬取 job (如 `crawl_a_share_reports_job`)
+2. 启动爬取 job (如 `crawl_hs_reports_job`)
 3. 点击运行中的任务
 4. 在 "Logs" 标签页中查看实时进度
 
@@ -180,7 +180,7 @@ if current_file_count > last_file_count or completed_count % 10 == 0:
 
 ```bash
 # 运行爬取 job
-dagster job execute -f src/processing/compute/dagster/jobs/crawl_jobs.py -j crawl_a_share_reports_job
+dagster job execute -f src/processing/compute/dagster/jobs/crawl_jobs.py -j crawl_hs_reports_job
 
 # 查看日志输出
 tail -f /path/to/dagster/logs/*.log | grep "📦"

@@ -50,7 +50,7 @@ CHUNK_CONFIG_SCHEMA = {
     "market": Field(
         str,
         is_required=False,
-        description="市场过滤（a_share/hk_stock/us_stock），None 表示所有市场"
+        description="市场过滤（hs_stock/hk_stock/us_stock），None 表示所有市场"
     ),
     "doc_type": Field(
         str,
@@ -194,7 +194,7 @@ def scan_parsed_documents_op(context) -> Dict:
         ),
     }
 )
-def chunk_documents_op(context, scan_result: Dict) -> Dict:
+def doc_chunk_op(context, scan_result: Dict) -> Dict:
     """
     批量执行分块
     
@@ -387,7 +387,7 @@ def validate_chunk_results_op(context, chunk_results: Dict) -> Dict:
     检查分块结果的质量，记录统计信息
     
     Args:
-        chunk_results: chunk_documents_op 的返回结果
+        chunk_results: doc_chunk_op 的返回结果
         
     Returns:
         验证结果统计
@@ -478,7 +478,7 @@ def validate_chunk_results_op(context, chunk_results: Dict) -> Dict:
                     # limit 不设置表示处理全部，doc_type 是可选的，不设置表示所有类型
                 }
             },
-            "chunk_documents_op": {
+            "doc_chunk_op": {
                 "config": {
                     "force_rechunk": False,
                 }
@@ -487,7 +487,7 @@ def validate_chunk_results_op(context, chunk_results: Dict) -> Dict:
     },
     description="文本分块作业 - 默认配置"
 )
-def chunk_documents_job():
+def doc_chunk_job():
     """
     文本分块作业
 
@@ -500,18 +500,18 @@ def chunk_documents_job():
     - scan_parsed_documents_op:
         - batch_size: 5 (每批处理5个文档)
         - limit: 20 (最多处理20个文档)
-    - chunk_documents_op:
+    - doc_chunk_op:
         - force_rechunk: False (不强制重新分块)
     """
     scan_result = scan_parsed_documents_op()
-    chunk_results = chunk_documents_op(scan_result)
+    chunk_results = doc_chunk_op(scan_result)
     validate_chunk_results_op(chunk_results)
 
 
 # ==================== Schedules ====================
 
 @schedule(
-    job=chunk_documents_job,
+    job=doc_chunk_job,
     cron_schedule="0 */2 * * *",  # 每2小时执行一次
     default_status=DefaultScheduleStatus.STOPPED,  # 默认停止，需要手动启用
 )
@@ -523,7 +523,7 @@ def hourly_chunk_schedule(context):
 
 
 @schedule(
-    job=chunk_documents_job,
+    job=doc_chunk_job,
     cron_schedule="0 5 * * *",  # 每天凌晨5点执行（解析完成后）
     default_status=DefaultScheduleStatus.STOPPED,  # 默认停止
 )
@@ -537,7 +537,7 @@ def daily_chunk_schedule(context):
 # ==================== Sensors ====================
 
 @sensor(
-    job=chunk_documents_job,
+    job=doc_chunk_job,
     default_status=DefaultSensorStatus.STOPPED,
 )
 def manual_trigger_chunk_sensor(context):

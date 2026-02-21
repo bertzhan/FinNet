@@ -192,7 +192,7 @@ Downloading (100%): 1.3GB/1.3GB [00:30<00:00, 45MB/s]
    ```bash
    # 在 Dagster UI 中运行
    dagster dev
-   # 然后运行 vectorize_documents_job
+   # 然后运行 doc_vectorize_job
    ```
 
 2. **查看文档**：

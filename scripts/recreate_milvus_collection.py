@@ -122,7 +122,7 @@ def recreate_milvus_collection():
     logger.info("")
     logger.info("=" * 80)
     logger.info("下一步: 运行向量化作业重新生成向量数据")
-    logger.info("  命令: dagster job launch -j vectorize_documents_job")
+    logger.info("  命令: dagster job launch -j doc_vectorize_job")
     logger.info("=" * 80)
     
     return True

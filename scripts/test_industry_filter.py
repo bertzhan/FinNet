@@ -40,7 +40,7 @@ def test_industry_filter():
 
             print(f"找到 {len(companies)} 家公司:")
             for company in companies[:5]:  # 显示前5个
-                ind_name = company.affiliate_industry.get('ind_name') if company.affiliate_industry else 'N/A'
+                ind_name = company.industry or 'N/A'
                 print(f"  - {company.code}: {company.name} (行业: {ind_name})")
 
             # 查询这些公司的文档数量
@@ -69,8 +69,8 @@ def test_industry_filter():
 
         industry_counts = {}
         for company in companies_with_docs:
-            if company.affiliate_industry:
-                ind_name = company.affiliate_industry.get('ind_name', 'Unknown')
+            if company.industry:
+                ind_name = company.industry
                 industry_counts[ind_name] = industry_counts.get(ind_name, 0) + 1
 
         print(f"\n行业分布:")

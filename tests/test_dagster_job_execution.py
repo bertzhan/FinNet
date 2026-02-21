@@ -13,14 +13,14 @@ sys.path.insert(0, str(project_root))
 
 from src.processing.compute.dagster.jobs.parse_jobs import (
     scan_pending_documents_op,
-    parse_documents_op,
+    doc_parse_op,
     validate_parse_results_op,
 )
 from dagster import build_op_context
 from src.storage.metadata import get_postgres_client, crud
 
 
-def test_parse_pdf_job():
+def test_doc_parse_job():
     """测试 PDF 解析 Job"""
     print("=" * 60)
     print("测试 Dagster PDF 解析 Job")
@@ -36,7 +36,7 @@ def test_parse_pdf_job():
                     "limit": 5,
                 }
             },
-            "parse_documents_op": {
+            "doc_parse_op": {
                 "config": {
                     "enable_silver_upload": True,
                     "start_page_id": 0,
@@ -79,9 +79,9 @@ def test_parse_pdf_job():
             'total_documents': 1,
         }
         
-        parse_config = config['ops']['parse_documents_op']['config']
+        parse_config = config['ops']['doc_parse_op']['config']
         parse_context = build_op_context(op_config=parse_config)
-        parse_result = parse_documents_op(parse_context, test_scan_result)
+        parse_result = doc_parse_op(parse_context, test_scan_result)
         
         print(f"  成功: {parse_result.get('success')}")
         print(f"  解析成功: {parse_result.get('parsed_count', 0)}")
@@ -149,7 +149,7 @@ def test_parse_pdf_job():
 
 def main():
     """主函数"""
-    success = test_parse_pdf_job()
+    success = test_doc_parse_job()
     
     print("\n" + "=" * 60)
     if success:

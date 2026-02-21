@@ -120,7 +120,7 @@ FinNet 严格遵循 `plan.md` 的四层架构设计：
 
 将现有 `src/crawler/` 重构为：
 - `ingestion/base/` - 爬虫基类、验证器
-- `ingestion/a_share/` - A股爬虫（整合现有 cninfo_crawler）
+- `ingestion/hs/` - A股爬虫（整合现有 cninfo_crawler）
 - `ingestion/hk_stock/` - 港股爬虫（待实现）
 - `ingestion/us_stock/` - 美股爬虫（待实现）
 
@@ -202,18 +202,18 @@ pm = PathManager()
 
 # 1. 爬虫下载 PDF → Bronze 层
 bronze_path = pm.get_bronze_path(
-    market=Market.A_SHARE,
+    market=Market.HS,
     doc_type=DocType.QUARTERLY_REPORT,
     stock_code="000001",
     year=2023,
     quarter=3,
     filename="000001_2023_Q3.pdf"
 )
-# 输出: bronze/a_share/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf
+# 输出: bronze/hs/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf
 
 # 2. MinerU 解析 → Silver 层
 silver_path = pm.get_silver_path(
-    market=Market.A_SHARE,
+    market=Market.HS,
     doc_type=DocType.QUARTERLY_REPORT,
     stock_code="000001",
     year=2023,
@@ -221,16 +221,16 @@ silver_path = pm.get_silver_path(
     filename="000001_2023_Q3_parsed.json",
     subdir="text_cleaned"
 )
-# 输出: silver/text_cleaned/a_share/quarterly_reports/2023/Q3/000001/000001_2023_Q3_parsed.json
+# 输出: silver/text_cleaned/hs/quarterly_reports/2023/Q3/000001/000001_2023_Q3_parsed.json
 
 # 3. 公司画像 → Gold 层
 gold_path = pm.get_gold_path(
     category="company_profiles",
-    market=Market.A_SHARE,
+    market=Market.HS,
     stock_code="000001",
     filename="profile.json"
 )
-# 输出: gold/company_profiles/a_share/000001/profile.json
+# 输出: gold/company_profiles/hs/000001/profile.json
 
 # 4. 训练语料 → Application 层
 app_path = pm.get_application_path(

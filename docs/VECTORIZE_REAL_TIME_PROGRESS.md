@@ -3,14 +3,14 @@
 ## 问题描述
 
 **修改前**：
-- `vectorize_chunks_op` 在 Dagster UI 中无法显示实时进度
+- `doc_vectorize_op` 在 Dagster UI 中无法显示实时进度
 - 后端日志显示批次进度（如 `📦 批次 [95/132]`），但前端看不到
 - 用户在整个向量化过程中（可能需要10-30分钟）看不到任何进度反馈
 - 只有向量化完成后，所有 AssetMaterialization 事件才会一次性显示
 
 ## 解决方案
 
-通过**进度回调机制**，让 `Vectorizer` 在每个批次完成后通知 `vectorize_chunks_op`，从而实时记录 AssetMaterialization 事件。
+通过**进度回调机制**，让 `Vectorizer` 在每个批次完成后通知 `doc_vectorize_op`，从而实时记录 AssetMaterialization 事件。
 
 ### 技术实现
 
@@ -64,14 +64,14 @@ for i in range(0, len(chunks_data), batch_size):
 
 **位置**: 第221-236行
 
-#### 3. 修改 `vectorize_chunks_op` 提供回调实现
+#### 3. 修改 `doc_vectorize_op` 提供回调实现
 
 **文件**: `src/processing/compute/dagster/jobs/vectorize_jobs.py`
 
 定义回调函数，在每个批次完成后立即记录 AssetMaterialization：
 
 ```python
-def vectorize_chunks_op(context, scan_result: Dict) -> Dict:
+def doc_vectorize_op(context, scan_result: Dict) -> Dict:
     # ...
 
     # 定义进度回调函数（第280-330行）
@@ -220,7 +220,7 @@ def vectorize_chunks_op(context, scan_result: Dict) -> Dict:
 
 1. **启动作业**:
    ```bash
-   # 在 Dagster UI Launchpad 中启动 vectorize_documents_job
+   # 在 Dagster UI Launchpad 中启动 doc_vectorize_job
    ```
 
 2. **观察 Dagster UI**:
@@ -282,7 +282,7 @@ def vectorize_chunks_op(context, scan_result: Dict) -> Dict:
 允许在 Dagster 配置中调整批次大小，平衡进度更新频率和性能：
 ```yaml
 ops:
-  vectorize_chunks_op:
+  doc_vectorize_op:
     config:
       embedding_batch_size: 64  # 自定义批次大小
 ```

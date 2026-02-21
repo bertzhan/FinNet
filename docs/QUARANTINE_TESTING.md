@@ -403,7 +403,7 @@ bash scripts/start_dagster.sh
 # http://localhost:3000
 
 # 3. 运行爬虫作业
-# 在 UI 中手动触发 crawl_a_share_reports_job
+# 在 UI 中手动触发 crawl_hs_reports_job
 
 # 4. 查看验证结果
 # 检查 Asset Materialization 中的隔离数量

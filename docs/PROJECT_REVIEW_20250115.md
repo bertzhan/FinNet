@@ -158,10 +158,10 @@
 | 作业导出 | `processing/compute/dagster/__init__.py` | ✅ | Definitions 对象 |
 
 **已实现作业**:
-- ✅ `crawl_a_share_reports_job` - A股定期报告爬取
-- ✅ `crawl_a_share_ipo_job` - A股IPO招股书爬取
-- ✅ `parse_pdf_job` - PDF 解析作业（支持部分页解析）
-- ✅ `chunk_documents_job` - 文本分块作业
+- ✅ `crawl_hs_reports_job` - A股定期报告爬取
+- ✅ `crawl_hs_ipo_job` - A股IPO招股书爬取
+- ✅ `doc_parse_job` - PDF 解析作业（支持部分页解析）
+- ✅ `doc_chunk_job` - 文本分块作业
 
 **已实现调度**:
 - ✅ `daily_crawl_reports_schedule` - 每日爬取调度
@@ -243,7 +243,7 @@
 
 - ✅ 实现基于规则的文档结构识别算法（5级标题层级）
 - ✅ 实现智能文本分块工具（保持语义完整性）
-- ✅ 集成到 Dagster 调度系统（`chunk_documents_job`）
+- ✅ 集成到 Dagster 调度系统（`doc_chunk_job`）
 
 **技术亮点**:
 - 完全基于规则，无需训练数据

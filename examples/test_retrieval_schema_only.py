@@ -43,7 +43,7 @@ try:
         year=2023,
         quarter=3,
         doc_type="quarterly_reports",
-        market="a_share"
+        market="hs_stock"
     )
     assert filter1.stock_code == "000001"
     assert filter1.year == 2023

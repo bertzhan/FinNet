@@ -1,7 +1,7 @@
 # Stock Codes 过滤参数功能
 
 ## 概述
-为所有 Dagster 作业（除 `update_listed_companies_job` 外）添加了 `stock_codes` 参数，允许用户按股票代码列表过滤要处理的文档。
+为所有 Dagster 作业（除 `get_hs_companies_job` 外）添加了 `stock_codes` 参数，允许用户按股票代码列表过滤要处理的文档。
 
 ## 修改的文件
 
@@ -152,7 +152,7 @@ limit: 100
 
 ## 注意事项
 
-1. **参数验证**: 确保 `stock_codes` 中的代码在 `listed_companies` 表中存在
+1. **参数验证**: 确保 `stock_codes` 中的代码在 `hs_listed_companies` 表中存在
 2. **性能考虑**:
    - 少量股票代码（< 10）: 使用 `IN` 查询性能良好
    - 大量股票代码（> 100）: 可能需要优化查询或分批处理

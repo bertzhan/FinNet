@@ -291,7 +291,7 @@ class DataValidator:
 
         # 2. 语言匹配检查（根据市场类型）
         # 这里只是占位，实际需要PDF解析后检查文本语言
-        if self.market == Market.A_SHARE:
+        if self.market == Market.HS:
             # A股文档应该是中文
             pass  # 实际实现需要PDF解析
         elif self.market == Market.US_STOCK:

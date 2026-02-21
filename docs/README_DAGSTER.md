@@ -145,7 +145,7 @@ dagster dev
 **快速配置**:
 ```yaml
 ops:
-  crawl_a_share_reports_op:
+  crawl_hs_reports_op:
     config:
       stock_codes: ["000001", "000002", "600000"]
       year: 2024
@@ -198,7 +198,7 @@ dagster instance info
 dagster job list
 
 # 4. 测试单个 job（命令行）
-dagster job execute -j parse_pdf_job
+dagster job execute -j doc_parse_job
 ```
 
 ### 性能分析

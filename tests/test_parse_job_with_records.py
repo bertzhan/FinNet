@@ -13,7 +13,7 @@ sys.path.insert(0, str(project_root))
 
 from src.processing.compute.dagster.jobs.parse_jobs import (
     scan_pending_documents_op,
-    parse_documents_op,
+    doc_parse_op,
     validate_parse_results_op,
 )
 from src.storage.metadata import get_postgres_client, crud
@@ -83,7 +83,7 @@ def test_parse_documents(scan_result):
     }
     
     context = build_op_context(op_config=config)
-    result = parse_documents_op(context, test_scan_result)
+    result = doc_parse_op(context, test_scan_result)
     
     print(f"\n解析结果:")
     print(f"  成功: {result.get('success')}")

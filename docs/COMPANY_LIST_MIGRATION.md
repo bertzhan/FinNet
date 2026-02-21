@@ -2,7 +2,7 @@
 
 ## 概述
 
-本文档说明如何将新创建的 `listed_companies` 表迁移到现有数据库中。
+本文档说明如何将新创建的 `hs_listed_companies` 表迁移到现有数据库中。
 
 ## 迁移方式
 
@@ -31,7 +31,7 @@ python scripts/init_database.py
 
 这个脚本会：
 - 检查所有必需的表
-- 创建缺失的表（包括 `listed_companies`）
+- 创建缺失的表（包括 `hs_listed_companies`）
 - 不会删除现有数据（使用 `checkfirst=True`）
 
 ### 方式3：手动创建表（使用 SQLAlchemy）
@@ -50,10 +50,10 @@ ListedCompany.__table__.create(bind=pg_client.engine, checkfirst=True)
 
 ## 表结构
 
-`listed_companies` 表的结构：
+`hs_listed_companies` 表的结构：
 
 ```sql
-CREATE TABLE listed_companies (
+CREATE TABLE hs_listed_companies (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     code VARCHAR(20) NOT NULL UNIQUE,
     name VARCHAR(200) NOT NULL,
@@ -62,7 +62,7 @@ CREATE TABLE listed_companies (
     CONSTRAINT idx_code UNIQUE (code)
 );
 
-CREATE INDEX idx_code ON listed_companies(code);
+CREATE INDEX idx_code ON hs_listed_companies(code);
 ```
 
 字段说明：
@@ -82,11 +82,11 @@ from src.storage.metadata import get_postgres_client, crud
 pg_client = get_postgres_client()
 
 # 检查表是否存在
-if pg_client.table_exists('listed_companies'):
+if pg_client.table_exists('hs_listed_companies'):
     print("✅ 表已创建")
     
     # 获取记录数
-    count = pg_client.get_table_count('listed_companies')
+    count = pg_client.get_table_count('hs_listed_companies')
     print(f"当前记录数: {count} 家")
     
     # 查看表结构
@@ -130,7 +130,7 @@ else:
 
 2. **或使用 Dagster UI**：
    - 启动 UI: `bash scripts/start_dagster.sh`
-   - 手动触发 `update_listed_companies_job`
+   - 手动触发 `get_hs_companies_job`
 
 3. **验证数据**：
    ```python
@@ -152,7 +152,7 @@ from sqlalchemy import text
 
 pg_client = get_postgres_client()
 with pg_client.get_session() as session:
-    session.execute(text("DROP TABLE IF EXISTS listed_companies CASCADE"))
+    session.execute(text("DROP TABLE IF EXISTS hs_listed_companies CASCADE"))
     session.commit()
 ```
 

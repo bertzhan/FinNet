@@ -1,7 +1,7 @@
 # Vectorize Job 进度显示功能
 
 ## 问题描述
-`vectorize_documents_job` 在 Dagster UI 中没有显示进度信息，只有日志输出，用户无法直观地看到向量化的进度。
+`doc_vectorize_job` 在 Dagster UI 中没有显示进度信息，只有日志输出，用户无法直观地看到向量化的进度。
 
 ## 解决方案
 参考 `crawl_jobs.py` 的实现，在 `vectorize_jobs.py` 中添加了 `AssetMaterialization` 事件记录功能。
@@ -17,7 +17,7 @@ from dagster import (
 )
 ```
 
-#### 2. 在 `vectorize_chunks_op` 中记录每个成功向量化的分块
+#### 2. 在 `doc_vectorize_op` 中记录每个成功向量化的分块
 位置：`src/processing/compute/dagster/jobs/vectorize_jobs.py:283-331`
 
 为每个成功向量化的分块记录 `AssetMaterialization` 事件，包含以下元数据：
@@ -68,7 +68,7 @@ from dagster import (
 
 ## 测试建议
 
-1. 运行 `vectorize_documents_job` 作业
+1. 运行 `doc_vectorize_job` 作业
 2. 在 Dagster UI 中查看 Run Details
 3. 检查是否显示 AssetMaterialization 事件
 4. 查看 Assets 页面，确认资产已正确组织

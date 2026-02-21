@@ -32,8 +32,8 @@ IPO 文档的 `extra_metadata` 包含以下字段：
 - `source_url`: 文档的原始下载URL
 
 **代码位置**:
-- 保存位置: `src/ingestion/a_share/processor/ipo_processor.py` (第273-280行)
-- 读取位置: `src/ingestion/a_share/crawlers/ipo_crawler.py` (第117-122行)
+- 保存位置: `src/ingestion/hs/processor/ipo_processor.py` (第273-280行)
+- 读取位置: `src/ingestion/hs/crawlers/ipo_crawler.py` (第117-122行)
 
 ### 2. 定期报告 (Quarterly/Annual/Interim Reports)
 
@@ -55,8 +55,8 @@ IPO 文档的 `extra_metadata` 包含以下字段：
 - `stock_code`, `year`, `quarter`: 从 MinIO 上传时的 metadata 中获取
 
 **代码位置**:
-- 保存位置: `src/ingestion/a_share/processor/report_processor.py` (第252-258行)
-- 读取位置: `src/ingestion/a_share/crawlers/base_cninfo_crawler.py` (第93-107行)
+- 保存位置: `src/ingestion/hs/processor/report_processor.py` (第252-258行)
+- 读取位置: `src/ingestion/hs/crawlers/base_cninfo_crawler.py` (第93-107行)
 
 ## 数据流程
 

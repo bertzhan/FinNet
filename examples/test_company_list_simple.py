@@ -142,15 +142,15 @@ def test_dagster_op():
     try:
         # 只导入 company_list_jobs，不导入整个 dagster 模块
         from src.processing.compute.dagster.jobs.company_list_jobs import (
-            update_listed_companies_op,
-            update_listed_companies_job,
+            get_hs_companies_op,
+            get_hs_companies_job,
             daily_update_companies_schedule,
             manual_trigger_companies_sensor,
         )
         
         print("✅ Dagster Op 导入成功")
-        print(f"   Op: update_listed_companies_op")
-        print(f"   Job: update_listed_companies_job")
+        print(f"   Op: get_hs_companies_op")
+        print(f"   Job: get_hs_companies_job")
         print(f"   Schedule: daily_update_companies_schedule")
         print(f"   Sensor: manual_trigger_companies_sensor")
         
@@ -179,14 +179,14 @@ def test_database_connection():
             print("✅ 数据库连接成功")
             
             # 检查表是否存在
-            if pg_client.table_exists('listed_companies'):
-                print("✅ listed_companies 表已存在")
+            if pg_client.table_exists('hs_listed_companies'):
+                print("✅ hs_listed_companies 表已存在")
                 
                 # 获取记录数
-                count = pg_client.get_table_count('listed_companies')
+                count = pg_client.get_table_count('hs_listed_companies')
                 print(f"   当前记录数: {count} 家")
             else:
-                print("⚠️  listed_companies 表不存在")
+                print("⚠️  hs_listed_companies 表不存在")
                 print("   提示: 运行 python scripts/init_database.py 创建表")
             
             return True

@@ -35,13 +35,13 @@ def find_or_create_document(minio_path: str):
         # 如果不存在，创建一个测试文档记录
         # 从路径中提取信息
         parts = minio_path.split('/')
-        # bronze/a_share/ipo_prospectus/300542/300542.pdf
+        # bronze/hs_stock/ipo_prospectus/300542/300542.pdf
         stock_code = parts[3] if len(parts) > 3 else "300542"
         
         doc = Document(
             stock_code=stock_code,
             company_name=f"测试公司_{stock_code}",
-            market=Market.A_SHARE.value,
+            market=Market.HS.value,
             doc_type=DocType.IPO_PROSPECTUS.value,
             year=2023,
             quarter=None,
@@ -71,7 +71,7 @@ def test_parse_real_document():
     minio_client = MinIOClient()
     objects = list(minio_client.client.list_objects(
         minio_client.bucket,
-        prefix="bronze/a_share/ipo_prospectus/",
+        prefix="bronze/hs_stock/ipo_prospectus/",
         recursive=True
     ))
     

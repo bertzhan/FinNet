@@ -84,7 +84,7 @@ python tests/test_vectorize_job.py
    ```
 
 2. **运行向量化作业**：
-   - 在 UI 中找到 `vectorize_documents_job`
+   - 在 UI 中找到 `doc_vectorize_job`
    - 点击 "Launch Run"
    - 配置参数（可选）：
      ```yaml
@@ -93,7 +93,7 @@ python tests/test_vectorize_job.py
          config:
            batch_size: 10
            limit: 50
-       vectorize_chunks_op:
+       doc_vectorize_op:
          config:
            force_revectorize: false
      ```
@@ -152,7 +152,7 @@ python tests/test_vectorize_job.py
 ### 常见问题
 
 1. **没有未向量化的分块**
-   - 解决：先运行分块作业 `chunk_documents_job`
+   - 解决：先运行分块作业 `doc_chunk_job`
 
 2. **Milvus 连接失败**
    - 解决：检查 Milvus 服务是否启动

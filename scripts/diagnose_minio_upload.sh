@@ -151,7 +151,7 @@ echo -e "${BLUE}[5/6] 检查爬虫 MinIO 配置...${NC}"
 python3 << EOF
 import sys
 sys.path.insert(0, '.')
-from src.ingestion.a_share import ReportCrawler
+from src.ingestion.hs_stock import ReportCrawler
 
 try:
     # 创建爬虫实例（启用 MinIO）

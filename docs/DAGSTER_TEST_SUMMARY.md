@@ -10,8 +10,8 @@
 ### 2. 代码结构检查
 
 **定义的 Jobs (2个)**:
-- ✅ `crawl_a_share_reports_job` - A股定期报告爬取作业
-- ✅ `crawl_a_share_ipo_job` - A股IPO招股说明书爬取作业
+- ✅ `crawl_hs_reports_job` - A股定期报告爬取作业
+- ✅ `crawl_hs_ipo_job` - A股IPO招股说明书爬取作业
 
 **定义的 Ops (3个)**:
 - ✅ `crawl_a_share_reports_op` - 爬取定期报告
@@ -69,7 +69,7 @@ bash scripts/start_dagster.sh
 
 ### 步骤4: 手动触发测试
 
-1. 在 UI 中点击 `crawl_a_share_reports_job`
+1. 在 UI 中点击 `crawl_hs_reports_job`
 2. 点击 "Launch Run"
 3. 配置参数（测试用少量数据）：
    ```yaml

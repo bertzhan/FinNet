@@ -79,7 +79,7 @@ def test_search_by_name():
         count = session.query(crud.ListedCompany).count()
         if count == 0:
             print("⚠️  数据库中暂无数据，跳过搜索测试")
-            print("   请先运行 update_listed_companies_job 填充数据")
+            print("   请先运行 get_hs_companies_job 填充数据")
             return True
         
         print(f"数据库中有 {count} 家公司")

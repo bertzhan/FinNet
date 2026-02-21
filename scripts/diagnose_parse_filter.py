@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-诊断 parse_pdf_job 的行业过滤问题
+诊断 doc_parse_job 的行业过滤问题
 """
 
 import sys
@@ -26,7 +26,7 @@ def diagnose_filter():
 
     with pg_client.get_session() as session:
         print("=" * 80)
-        print("诊断 parse_pdf_job 行业过滤问题")
+        print("诊断 doc_parse_job 行业过滤问题")
         print("=" * 80)
         print(f"配置: industry_filter='{industry_filter}', force_reparse={force_reparse}, limit={limit}")
 
@@ -87,8 +87,8 @@ def diagnose_filter():
 
             # 查询符合行业的公司列表
             companies = session.query(ListedCompany).filter(
-                text("affiliate_industry->>'ind_name' LIKE :industry")
-            ).params(industry=f'%{industry_filter}%').all()
+                text("industry LIKE :industry_filter")
+            ).params(industry_filter=f'%{industry_filter}%').all()
 
             company_codes = {c.code for c in companies}
             print(f"\n  找到符合行业的公司: {len(company_codes)} 家")
@@ -96,7 +96,7 @@ def diagnose_filter():
             if companies:
                 print(f"  公司列表:")
                 for company in companies[:10]:
-                    ind_name = company.affiliate_industry.get('ind_name') if company.affiliate_industry else 'N/A'
+                    ind_name = company.industry or 'N/A'
                     print(f"    - {company.code}: {company.name} (行业: {ind_name})")
 
                 # 检查这些公司是否在 documents 中
@@ -184,8 +184,8 @@ def diagnose_filter():
 
         # 查询光伏设备公司
         pv_companies = session.query(ListedCompany).filter(
-            text("affiliate_industry->>'ind_name' LIKE :industry")
-        ).params(industry=f'%{industry_filter}%').all()
+            text("industry->>'ind_name' LIKE :industry_filter")
+        ).params(industry_filter=f'%{industry_filter}%').all()
 
         if pv_companies:
             pv_codes = [c.code for c in pv_companies]

@@ -46,7 +46,7 @@ def fetch_and_test(limit: int = 100, offset: int = 0, random_sample: bool = Fals
             companies = [{"code": r.code, "name": r.name, "org_id": r.org_id} for r in rows]
 
     if not companies:
-        print("❌ 未找到港股公司，请先运行 update_hk_companies_op 更新公司列表")
+        print("❌ 未找到港股公司，请先运行 get_hk_companies_op 更新公司列表")
         return []
 
     report_types = ['年报', '中期报告', '季度报告']

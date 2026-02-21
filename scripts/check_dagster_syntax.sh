@@ -58,7 +58,7 @@ sys.path.insert(0, '.')
 
 # 检查爬虫模块
 try:
-    from src.ingestion.a_share import ReportCrawler, CninfoIPOProspectusCrawler
+    from src.ingestion.hs_stock import ReportCrawler, CninfoIPOProspectusCrawler
     print("✅ 爬虫模块导入成功")
 except ImportError as e:
     print(f"❌ 爬虫模块导入失败: {e}")
@@ -107,11 +107,11 @@ def check_file_structure(filepath):
     
     # 检查关键函数是否存在
     required_functions = [
-        'crawl_a_share_reports_op',
-        'crawl_a_share_ipo_op',
+        'crawl_hs_reports_op',
+        'crawl_hs_ipo_op',
         'validate_crawl_results_op',
-        'crawl_a_share_reports_job',
-        'crawl_a_share_ipo_job',
+        'crawl_hs_reports_job',
+        'crawl_hs_ipo_job',
     ]
     
     missing = [f for f in required_functions if f not in functions]

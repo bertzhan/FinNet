@@ -63,7 +63,7 @@ python scripts/check_vectorized_chunks.py > postgres_backup_$(date +%Y%m%d).txt
 #### 2. 删除旧 Collection
 ```bash
 # 停止所有向量化作业
-# 在 Dagster UI 中停止 vectorize_documents_job
+# 在 Dagster UI 中停止 doc_vectorize_job
 
 # 删除 Milvus 中的所有 collections
 ./scripts/delete_milvus_collections.sh
@@ -90,7 +90,7 @@ EOF
 ```bash
 # 方法1：通过 Dagster UI
 # 访问 http://localhost:3000
-# 运行 vectorize_documents_job
+# 运行 doc_vectorize_job
 
 # 方法2：通过 Python 脚本
 python scripts/init_milvus_collection.py  # 创建新 Collection（可选）
@@ -258,7 +258,7 @@ for field in collection.schema.fields:
 python scripts/check_vectorized_chunks.py
 
 # 3. 测试向量化
-# 在 Dagster UI 中运行 vectorize_documents_job
+# 在 Dagster UI 中运行 doc_vectorize_job
 # 配置 force_revectorize=true 并运行少量数据测试
 
 # 4. 测试 RAG 查询

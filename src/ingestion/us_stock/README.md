@@ -41,12 +41,15 @@ src/ingestion/us_stock/
 ```python
 - code (PK)              # Ticker（如：AAPL），主键
 - name                   # 公司名称
-- cik (INDEXED)          # SEC CIK（10位，注意：多个证券可能共享同一CIK）
-- org_name_en            # 公司全称
-- sic_code               # SIC行业代码
-- is_foreign_filer       # 是否外国公司（20-F/40-F）
-- country                # 注册国家
-- is_active              # 是否活跃
+- org_id (INDEXED)       # SEC CIK（10位，用于SEC API查询）
+- entity_type            # SEC entityType（来自 submissions API）
+- sic                    # SIC行业代码
+- industry               # SIC行业描述
+- exchanges              # 交易所列表，逗号分隔
+- fiscal_year_end        # 财年结束日 MMDD
+- state_of_incorporation # 注册州/国家代码
+- state_of_incorporation_description # stateOfIncorporationDescription
+- tickers                # 同一 CIK 下所有证券代码，逗号分隔
 ```
 
 **注意**：CIK 是公司级别的标识符，同一家公司可能有多个证券（普通股、认股权证、单位等），它们共享同一个 CIK 但有不同的 Ticker。例如：

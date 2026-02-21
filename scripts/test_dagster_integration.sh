@@ -81,7 +81,7 @@ echo ""
 
 # 测试3: 检查爬虫模块是否可以导入
 echo -e "${BLUE}[3/6] 检查爬虫模块...${NC}"
-IMPORT_ERROR=$(python3 -c "from src.ingestion.a_share import ReportCrawler, CninfoIPOProspectusCrawler; print('OK')" 2>&1)
+IMPORT_ERROR=$(python3 -c "from src.ingestion.hs_stock import ReportCrawler, CninfoIPOProspectusCrawler; print('OK')" 2>&1)
 if [ $? -ne 0 ]; then
     echo -e "${RED}❌ 爬虫模块导入失败${NC}"
     echo "$IMPORT_ERROR"
@@ -92,7 +92,7 @@ if [ $? -ne 0 ]; then
         pip3 install pydantic-settings
         if [ $? -eq 0 ]; then
             echo -e "${GREEN}   pydantic-settings 安装成功，重试导入...${NC}"
-            python3 -c "from src.ingestion.a_share import ReportCrawler, CninfoIPOProspectusCrawler; print('OK')" 2>&1
+            python3 -c "from src.ingestion.hs_stock import ReportCrawler, CninfoIPOProspectusCrawler; print('OK')" 2>&1
             if [ $? -eq 0 ]; then
                 echo -e "${GREEN}✅ 爬虫模块导入成功${NC}"
             else
@@ -111,9 +111,9 @@ echo ""
 
 # 测试4: 检查 Dagster Jobs 是否可以导入
 echo -e "${BLUE}[4/6] 检查 Dagster Jobs 模块...${NC}"
-if ! python3 -c "from src.processing.compute.dagster.jobs import crawl_a_share_reports_job, crawl_a_share_ipo_job; print('OK')" 2>/dev/null; then
+if ! python3 -c "from src.processing.compute.dagster.jobs import crawl_hs_reports_job, crawl_hs_ipo_job; print('OK')" 2>/dev/null; then
     echo -e "${RED}❌ Dagster Jobs 导入失败${NC}"
-    python3 -c "from src.processing.compute.dagster.jobs import crawl_a_share_reports_job" 2>&1
+    python3 -c "from src.processing.compute.dagster.jobs import crawl_hs_reports_job" 2>&1
     exit 1
 fi
 echo -e "${GREEN}✅ Dagster Jobs 导入成功${NC}"
@@ -125,15 +125,15 @@ python3 << 'EOF'
 import sys
 sys.path.insert(0, '.')
 from src.processing.compute.dagster.jobs import (
-    crawl_a_share_reports_job,
-    crawl_a_share_ipo_job,
+    crawl_hs_reports_job,
+    crawl_hs_ipo_job,
     daily_crawl_reports_schedule,
     daily_crawl_ipo_schedule,
 )
 
 # 检查 Jobs
-assert crawl_a_share_reports_job is not None, "crawl_a_share_reports_job 未定义"
-assert crawl_a_share_ipo_job is not None, "crawl_a_share_ipo_job 未定义"
+assert crawl_hs_reports_job is not None, "crawl_hs_reports_job 未定义"
+assert crawl_hs_ipo_job is not None, "crawl_hs_ipo_job 未定义"
 assert daily_crawl_reports_schedule is not None, "daily_crawl_reports_schedule 未定义"
 assert daily_crawl_ipo_schedule is not None, "daily_crawl_ipo_schedule 未定义"
 
@@ -155,8 +155,8 @@ sys.path.insert(0, '.')
 try:
     # 尝试导入所有定义
     from src.processing.compute.dagster import (
-        crawl_a_share_reports_job,
-        crawl_a_share_ipo_job,
+        crawl_hs_reports_job,
+        crawl_hs_ipo_job,
         daily_crawl_reports_schedule,
         daily_crawl_ipo_schedule,
         manual_trigger_reports_sensor,
@@ -164,8 +164,8 @@ try:
     )
     
     # 验证所有对象都存在
-    assert crawl_a_share_reports_job is not None, "crawl_a_share_reports_job 未定义"
-    assert crawl_a_share_ipo_job is not None, "crawl_a_share_ipo_job 未定义"
+    assert crawl_hs_reports_job is not None, "crawl_hs_reports_job 未定义"
+    assert crawl_hs_ipo_job is not None, "crawl_hs_ipo_job 未定义"
     assert daily_crawl_reports_schedule is not None, "daily_crawl_reports_schedule 未定义"
     assert daily_crawl_ipo_schedule is not None, "daily_crawl_ipo_schedule 未定义"
     assert manual_trigger_reports_sensor is not None, "manual_trigger_reports_sensor 未定义"
@@ -174,7 +174,7 @@ try:
     # 尝试创建 Definitions（Dagster 会验证所有定义）
     from dagster import Definitions
     defs = Definitions(
-        jobs=[crawl_a_share_reports_job, crawl_a_share_ipo_job],
+        jobs=[crawl_hs_reports_job, crawl_hs_ipo_job],
         schedules=[daily_crawl_reports_schedule, daily_crawl_ipo_schedule],
         sensors=[manual_trigger_reports_sensor, manual_trigger_ipo_sensor],
     )

@@ -383,24 +383,24 @@ def truncate_text(text: str, max_length: int = 100, suffix: str = "...") -> str:
     return text[:max_length] + suffix
 
 
-def is_valid_stock_code(code: str, market: str = "a_share") -> bool:
+def is_valid_stock_code(code: str, market: str = "hs_stock") -> bool:
     """
     验证股票代码格式
 
     Args:
         code: 股票代码
-        market: 市场类型 (a_share, hk_stock, us_stock)
+        market: 市场类型 (hs_stock, hk_stock, us_stock)
 
     Returns:
         是否有效
 
     Example:
-        >>> is_valid_stock_code("000001", "a_share")
+        >>> is_valid_stock_code("000001", "hs_stock")
         True
         >>> is_valid_stock_code("AAPL", "us_stock")
         True
     """
-    if market == "a_share":
+    if market == "hs_stock":
         # A股：6位数字
         return bool(re.match(r'^\d{6}$', code))
     elif market == "hk_stock":

@@ -124,7 +124,7 @@ def check_database():
             
             if total_chunks == 0:
                 print("⚠️  数据库中没有分块数据")
-                print("   需要先运行分块作业: chunk_documents_job")
+                print("   需要先运行分块作业: doc_chunk_job")
             elif unvectorized == 0:
                 print("✅ 所有分块都已向量化")
             else:
@@ -253,7 +253,7 @@ def main():
         print("下一步:")
         print("  1. 运行快速测试: python tests/test_vectorize_quick.py")
         print("  2. 运行完整测试: python tests/test_vectorize_job.py")
-        print("  3. 在 Dagster UI 中运行: vectorize_documents_job")
+        print("  3. 在 Dagster UI 中运行: doc_vectorize_job")
     else:
         print("⚠️  部分检查未通过，请根据上述信息修复问题")
     print()

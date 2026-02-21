@@ -36,10 +36,10 @@ quarantine/{failure_stage}/{original_path}
 **示例**：
 ```
 # 入湖验证失败
-quarantine/validation_failed/bronze/a_share/quarterly_reports/2023/Q3/000001/bad.pdf
+quarantine/validation_failed/bronze/hs/quarterly_reports/2023/Q3/000001/bad.pdf
 
 # 内容验证失败
-quarantine/content_failed/silver/text_cleaned/a_share/quarterly_reports/2023/Q3/000001/empty.txt
+quarantine/content_failed/silver/text_cleaned/hs/quarterly_reports/2023/Q3/000001/empty.txt
 ```
 
 ### 3. 隔离记录数据库管理
@@ -355,7 +355,7 @@ if validation_failed:
         failure_stage="validation_failed",
         failure_reason="文件大小异常（小于1KB）",
         failure_details="文件大小: 512 bytes，小于最小阈值 1024 bytes",
-        original_path="bronze/a_share/quarterly_reports/2023/Q3/000001/report.pdf"
+        original_path="bronze/hs/quarterly_reports/2023/Q3/000001/report.pdf"
     )
     print(f"已隔离: {record.quarantine_path}")
 ```
@@ -456,9 +456,9 @@ manager = QuarantineManager()
 # 隔离验证失败的文档
 record = manager.quarantine_document(
     document_id=123,
-    source_type="a_share",
+    source_type="hs",
     doc_type="quarterly_report",
-    original_path="bronze/a_share/quarterly_reports/2023/Q3/000001/report.pdf",
+    original_path="bronze/hs/quarterly_reports/2023/Q3/000001/report.pdf",
     failure_stage="validation_failed",
     failure_reason="文件大小异常（小于1KB）",
     failure_details="文件大小: 512 bytes，小于最小阈值 1024 bytes"

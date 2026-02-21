@@ -236,7 +236,7 @@ digraph "FinNet Database ER Diagram" {
 	}
 	subgraph cluster_base {
 		color="#9B59B6" fontcolor="#8E44AD" fontsize=13 label="上市公司基础数据" style=dashed
-		listed_companies [label=<
+		hs_listed_companies [label=<
     <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
         <TR><TD COLSPAN="2" BGCOLOR="#9B59B6"><FONT COLOR="white"><B>ListedCompany</B></FONT></TD></TR>
         <TR><TD COLSPAN="2" BGCOLOR="#9B59B6AA"><FONT COLOR="white" POINT-SIZE="10">(A股上市公司表)</FONT></TD></TR>
@@ -280,7 +280,8 @@ digraph "FinNet Database ER Diagram" {
 <TR><TD ALIGN="LEFT" PORT="online_success_rate_of_issue">online_success_rate_of_issue</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">FLOAT · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="currency_encode">currency_encode</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="currency">currency</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="affiliate_industry">affiliate_industry</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">JSON · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="industry_code">industry_code</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="industry">industry</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="created_at">created_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="updated_at">updated_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
     </TABLE>

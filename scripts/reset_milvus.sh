@@ -113,6 +113,6 @@ echo "✅ Milvus 重置完成！"
 echo "=================================================================================="
 echo
 echo "下一步："
-echo "  1. 在 Dagster UI (http://localhost:3000) 运行 vectorize_documents_job"
+echo "  1. 在 Dagster UI (http://localhost:3000) 运行 doc_vectorize_job"
 echo "  2. 或使用 force_revectorize=true 重新向量化所有分块"
 echo

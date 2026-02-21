@@ -89,7 +89,7 @@ crawler = CninfoAShareCrawler(
 task = CrawlTask(
     stock_code="000001",
     company_name="平安银行",
-    market=Market.A_SHARE,
+    market=Market.HS,
     doc_type=DocType.QUARTERLY_REPORT,
     year=2023,
     quarter=3
@@ -125,7 +125,7 @@ crawler = CninfoAShareCrawler()
 task = CrawlTask(
     stock_code="000001",
     company_name="平安银行",
-    market=Market.A_SHARE,
+    market=Market.HS,
     doc_type=DocType.QUARTERLY_REPORT,
     year=2023,
     quarter=3,
@@ -150,7 +150,7 @@ tasks = [
     CrawlTask(
         stock_code="000001",
         company_name="平安银行",
-        market=Market.A_SHARE,
+        market=Market.HS,
         doc_type=DocType.QUARTERLY_REPORT,
         year=2023,
         quarter=3
@@ -158,7 +158,7 @@ tasks = [
     CrawlTask(
         stock_code="600519",
         company_name="贵州茅台",
-        market=Market.A_SHARE,
+        market=Market.HS,
         doc_type=DocType.QUARTERLY_REPORT,
         year=2023,
         quarter=3
@@ -189,7 +189,7 @@ with open("companies.csv", "r", encoding="utf-8") as f:
         task = CrawlTask(
             stock_code=row["code"],
             company_name=row["name"],
-            market=Market.A_SHARE,
+            market=Market.HS,
             doc_type=DocType.QUARTERLY_REPORT,
             year=int(row["year"]),
             quarter=int(row["quarter"])
@@ -247,7 +247,7 @@ from src.common.constants import DocType
 task = CrawlTask(
     stock_code="000001",
     company_name="平安银行",
-    market=Market.A_SHARE,
+    market=Market.HS,
     doc_type=DocType.ANNUAL_REPORT,  # 年报
     year=2023,
     quarter=None  # 年报不需要季度
@@ -257,7 +257,7 @@ task = CrawlTask(
 task = CrawlTask(
     stock_code="000001",
     company_name="平安银行",
-    market=Market.A_SHARE,
+    market=Market.HS,
     doc_type=DocType.INTERIM_REPORT,  # 半年报
     year=2023,
     quarter=2  # 第二季度 = 半年报
@@ -267,7 +267,7 @@ task = CrawlTask(
 task = CrawlTask(
     stock_code="000001",
     company_name="平安银行",
-    market=Market.A_SHARE,
+    market=Market.HS,
     doc_type=DocType.QUARTERLY_REPORT,  # 季报
     year=2023,
     quarter=1  # 第一季度
@@ -291,7 +291,7 @@ task = CrawlTask(
    ↓
 4. MinIOClient.upload_file()
    - 上传到 Bronze 层
-   - 路径: bronze/a_share/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf
+   - 路径: bronze/hs/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf
    ↓
 5. PostgreSQLClient + crud.create_document()
    - 记录文档元数据
@@ -315,7 +315,7 @@ task = CrawlTask(
 遵循 plan.md 5.2 规范：
 
 ```
-bronze/a_share/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf
+bronze/hs/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf
 └─┬─┘ └──┬──┘ └────────┬────────┘ └┬┘ └┬┘ └──┬──┘ └──────┬──────┘
   │      │             │           │   │     │            │
   │      │             │           │   │     │            └─ 文件名

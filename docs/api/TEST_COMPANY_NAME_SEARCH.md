@@ -192,7 +192,7 @@ PYTHONPATH=/Users/han/PycharmProjects/FinNet python examples/create_elasticsearc
 
 ```bash
 # 方式1: 使用 Dagster Job（推荐）
-dagster job execute -j elasticsearch_index_job
+dagster job execute -j doc_index_job
 
 # 方式2: 使用测试脚本
 PYTHONPATH=/Users/han/PycharmProjects/FinNet python examples/test_elasticsearch_job_simple.py

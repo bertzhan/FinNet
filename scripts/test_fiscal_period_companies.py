@@ -33,23 +33,23 @@ def fetch_and_test(tickers: list[str], limit_per_company: int = 5):
     # 获取公司 CIK
     with pg.get_session() as session:
         result = session.execute(
-            text("SELECT code, cik FROM us_listed_companies WHERE code = ANY(:codes)"),
+            text("SELECT code, org_id FROM us_listed_companies WHERE code = ANY(:codes)"),
             {"codes": tickers}
         )
         companies = {row[0]: row[1] for row in result}
 
     missing = [t for t in tickers if t not in companies]
     if missing:
-        print(f"⚠️ 未找到公司: {missing}，请先运行 update_us_companies_job")
+        print(f"⚠️ 未找到公司: {missing}，请先运行 get_us_companies_job")
         tickers = [t for t in tickers if t in companies]
 
     form_types = ['10-K', '10-Q']
     all_results = []
 
     for ticker in tickers:
-        cik = companies[ticker]
+        org_id = companies[ticker]
         try:
-            data = sec_client.fetch_company_submissions(cik=cik)
+            data = sec_client.fetch_company_submissions(cik=org_id)
         except Exception as e:
             print(f"❌ {ticker}: 获取 SEC 数据失败 - {e}")
             continue

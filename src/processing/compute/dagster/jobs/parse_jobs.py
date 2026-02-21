@@ -56,7 +56,7 @@ PARSE_CONFIG_SCHEMA = {
     "market": Field(
         str,
         is_required=False,
-        description="市场过滤（a_share/hk_stock/us_stock），None 表示所有市场"
+        description="市场过滤（hs_stock/hk_stock/us_stock），None 表示所有市场"
     ),
     "doc_type": Field(
         str,
@@ -270,7 +270,7 @@ def scan_pending_documents_op(context) -> Dict:
         ),
     }
 )
-def parse_documents_op(context, scan_result: Dict) -> Dict:
+def doc_parse_op(context, scan_result: Dict) -> Dict:
     """
     批量解析文档
     
@@ -490,7 +490,7 @@ def validate_parse_results_op(context, parse_results: Dict) -> Dict:
     检查解析结果的质量，记录统计信息
     
     Args:
-        parse_results: parse_documents_op 的返回结果
+        parse_results: doc_parse_op 的返回结果
         
     Returns:
         验证结果统计
@@ -581,7 +581,7 @@ def validate_parse_results_op(context, parse_results: Dict) -> Dict:
                     # limit 不设置表示处理全部，doc_type 是可选的，不设置表示所有类型
                 }
             },
-            "parse_documents_op": {
+            "doc_parse_op": {
                 "config": {
                     "enable_silver_upload": True,
                     "start_page_id": 0,
@@ -591,7 +591,7 @@ def validate_parse_results_op(context, parse_results: Dict) -> Dict:
     },
     description="PDF 解析作业"
 )
-def parse_pdf_job():
+def doc_parse_job():
     """
     PDF 解析作业（解析全部页面）
 
@@ -604,20 +604,20 @@ def parse_pdf_job():
     - scan_pending_documents_op:
         - batch_size: 2 (并发解析2个文档)
         - limit: 10 (最多处理10个文档)
-    - parse_documents_op:
+    - doc_parse_op:
         - start_page_id: 0
         - enable_silver_upload: True
 
     如需指定页面范围，请在 Launchpad 中配置 end_page_id：
     ops:
-      parse_documents_op:
+      doc_parse_op:
         config:
           enable_silver_upload: true
           start_page_id: 0
           end_page_id: 4  # 例如：只解析前5页（0-4）
     """
     scan_result = scan_pending_documents_op()
-    parse_results = parse_documents_op(scan_result)
+    parse_results = doc_parse_op(scan_result)
     validate_parse_results_op(parse_results)
 
 
@@ -630,7 +630,7 @@ def parse_pdf_job():
                     # limit 不设置表示处理全部，doc_type 是可选的，不设置表示所有类型
                 }
             },
-            "parse_documents_op": {
+            "doc_parse_op": {
                 "config": {
                     "enable_silver_upload": True,
                     "start_page_id": 0,
@@ -654,21 +654,21 @@ def parse_pdf_full_job():
     - scan_pending_documents_op:
         - batch_size: 5 (并发解析5个文档)
         - limit: 100 (最多处理100个文档)
-    - parse_documents_op:
+    - doc_parse_op:
         - start_page_id: 0
         - end_page_id: None (解析所有页面)
 
     ⚠️ 注意：解析完整文档可能需要较长时间
     """
     scan_result = scan_pending_documents_op()
-    parse_results = parse_documents_op(scan_result)
+    parse_results = doc_parse_op(scan_result)
     validate_parse_results_op(parse_results)
 
 
 # ==================== Schedules ====================
 
 @schedule(
-    job=parse_pdf_job,
+    job=doc_parse_job,
     cron_schedule="0 */2 * * *",  # 每2小时执行一次
     default_status=DefaultScheduleStatus.STOPPED,  # 默认停止，需要手动启用
 )
@@ -680,7 +680,7 @@ def hourly_parse_schedule(context):
 
 
 @schedule(
-    job=parse_pdf_job,
+    job=doc_parse_job,
     cron_schedule="0 4 * * *",  # 每天凌晨4点执行（爬取完成后）
     default_status=DefaultScheduleStatus.STOPPED,  # 默认停止
 )
@@ -694,7 +694,7 @@ def daily_parse_schedule(context):
 # ==================== Sensors ====================
 
 @sensor(
-    job=parse_pdf_job,
+    job=doc_parse_job,
     default_status=DefaultSensorStatus.STOPPED,
 )
 def manual_trigger_parse_sensor(context):

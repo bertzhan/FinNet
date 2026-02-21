@@ -26,14 +26,14 @@ path_mgr = PathManager()
 
 # 生成路径
 object_name = path_mgr.get_bronze_path(
-    market=Market.A_SHARE,
+    market=Market.HS,
     doc_type=DocType.QUARTERLY_REPORT,
     stock_code="000001",
     year=2023,
     quarter=3,
     filename="000001_2023_Q3.pdf"
 )
-# 输出: bronze/a_share/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf
+# 输出: bronze/hs/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf
 ```
 
 ### 上传文件
@@ -41,7 +41,7 @@ object_name = path_mgr.get_bronze_path(
 ```python
 # 方式1：从文件路径上传
 success = minio_client.upload_file(
-    object_name="bronze/a_share/test.pdf",
+    object_name="bronze/hs/test.pdf",
     file_path="/tmp/test.pdf",
     metadata={"stock_code": "000001", "year": "2023"}
 )
@@ -51,7 +51,7 @@ with open("/tmp/test.pdf", "rb") as f:
     data = f.read()
 
 success = minio_client.upload_file(
-    object_name="bronze/a_share/test.pdf",
+    object_name="bronze/hs/test.pdf",
     data=data,
     content_type="application/pdf"
 )
@@ -69,13 +69,13 @@ success = minio_client.upload_json(
 ```python
 # 方式1：下载到文件
 minio_client.download_file(
-    object_name="bronze/a_share/test.pdf",
+    object_name="bronze/hs/test.pdf",
     file_path="/tmp/downloaded.pdf"
 )
 
 # 方式2：下载到内存
 data = minio_client.download_file(
-    object_name="bronze/a_share/test.pdf"
+    object_name="bronze/hs/test.pdf"
 )
 
 # 方式3：下载 JSON 数据
@@ -89,15 +89,15 @@ print(data_dict["key"])
 
 ```python
 # 检查文件是否存在
-exists = minio_client.file_exists("bronze/a_share/test.pdf")
+exists = minio_client.file_exists("bronze/hs/test.pdf")
 
 # 获取文件信息
-info = minio_client.get_file_info("bronze/a_share/test.pdf")
+info = minio_client.get_file_info("bronze/hs/test.pdf")
 print(f"文件大小: {info['size']}, 类型: {info['content_type']}")
 
 # 列出文件
 files = minio_client.list_files(
-    prefix="bronze/a_share/",
+    prefix="bronze/hs/",
     max_results=10
 )
 for file in files:
@@ -105,23 +105,23 @@ for file in files:
 
 # 复制文件
 minio_client.copy_file(
-    source_object="bronze/a_share/test.pdf",
+    source_object="bronze/hs/test.pdf",
     dest_object="backup/test.pdf"
 )
 
 # 移动文件
 minio_client.move_file(
-    source_object="bronze/a_share/test.pdf",
-    dest_object="quarantine/validation_failed/bronze/a_share/test.pdf"
+    source_object="bronze/hs/test.pdf",
+    dest_object="quarantine/validation_failed/bronze/hs/test.pdf"
 )
 
 # 删除文件
-minio_client.delete_file("bronze/a_share/test.pdf")
+minio_client.delete_file("bronze/hs/test.pdf")
 
 # 生成预签名 URL（临时访问）
 from datetime import timedelta
 url = minio_client.get_presigned_url(
-    object_name="bronze/a_share/test.pdf",
+    object_name="bronze/hs/test.pdf",
     expires=timedelta(hours=1)
 )
 print(f"临时访问链接: {url}")
@@ -159,11 +159,11 @@ with pg_client.get_session() as session:
         session=session,
         stock_code="000001",
         company_name="平安银行",
-        market="a_share",
+        market="hs",
         doc_type="quarterly_reports",
         year=2023,
         quarter=3,
-        minio_object_path="bronze/a_share/quarterly_reports/2023/Q3/000001/report.pdf",
+        minio_object_path="bronze/hs/quarterly_reports/2023/Q3/000001/report.pdf",
         file_size=1024000,
         file_hash="a1b2c3d4...",
         metadata={"publish_date": "2023-10-31"}
@@ -240,7 +240,7 @@ with pg_client.get_session() as session:
         task_type="daily",
         stock_code="000001",
         company_name="平安银行",
-        market="a_share",
+        market="hs",
         doc_type="quarterly_reports",
         year=2023,
         quarter=3
@@ -287,10 +287,10 @@ with pg_client.get_session() as session:
     record = crud.create_quarantine_record(
         session=session,
         document_id=1,
-        source_type="a_share",
+        source_type="hs",
         doc_type="quarterly_reports",
-        original_path="bronze/a_share/test.pdf",
-        quarantine_path="quarantine/validation_failed/bronze/a_share/test.pdf",
+        original_path="bronze/hs/test.pdf",
+        quarantine_path="quarantine/validation_failed/bronze/hs/test.pdf",
         failure_stage="validation_failed",
         failure_reason="文件损坏",
         failure_details="PDF 无法解析"
@@ -450,7 +450,7 @@ milvus = get_milvus_client()
 
 # 1. 上传原始 PDF 到 MinIO（Bronze 层）
 object_name = path_mgr.get_bronze_path(
-    market=Market.A_SHARE,
+    market=Market.HS,
     doc_type=DocType.QUARTERLY_REPORT,
     stock_code="000001",
     year=2023,
@@ -470,7 +470,7 @@ with pg_client.get_session() as session:
         session=session,
         stock_code="000001",
         company_name="平安银行",
-        market="a_share",
+        market="hs",
         doc_type="quarterly_reports",
         year=2023,
         quarter=3,
@@ -483,7 +483,7 @@ with pg_client.get_session() as session:
 # 3. 解析 PDF，保存到 Silver 层（假设解析完成）
 parsed_data = {"text": "解析后的文本...", "tables": []}
 silver_path = path_mgr.get_silver_path(
-    market=Market.A_SHARE,
+    market=Market.HS,
     doc_type=DocType.QUARTERLY_REPORT,
     stock_code="000001",
     year=2023,

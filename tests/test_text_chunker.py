@@ -31,7 +31,7 @@ class TestTextChunker:
             "id": uuid.uuid4(),
             "stock_code": "000001",
             "company_name": "测试公司",
-            "market": Market.A_SHARE.value,
+            "market": Market.HS.value,
             "doc_type": DocType.QUARTERLY_REPORT.value,
             "year": 2023,
             "quarter": 3,
@@ -44,7 +44,7 @@ class TestTextChunker:
         return {
             "id": uuid.uuid4(),
             "document_id": sample_document["id"],
-            "markdown_path": "silver/text_cleaned/a_share/000001/2023/Q3/document.md",
+            "markdown_path": "silver/text_cleaned/hs_stock/000001/2023/Q3/document.md",
             "chunks_count": 0
         }
 

@@ -80,8 +80,8 @@
 | 作业定义 | `processing/compute/dagster/__init__.py` | ✅ | Jobs 导出 |
 
 **已实现作业**：
-- ✅ `crawl_a_share_reports_job` - A股定期报告爬取
-- ✅ `crawl_a_share_ipo_job` - A股IPO招股书爬取
+- ✅ `crawl_hs_reports_job` - A股定期报告爬取
+- ✅ `crawl_hs_ipo_job` - A股IPO招股书爬取
 - ✅ 数据质量验证（validate_crawl_results_op）
 
 ---
@@ -114,7 +114,7 @@
 
 **Dagster 调度**：
 - ✅ 爬虫作业已实现
-- ⏰ PDF 解析作业（parse_pdf_job）
+- ⏰ PDF 解析作业（doc_parse_job）
 - ⏰ 向量化作业（vectorize_job）
 - ⏰ 知识图谱构建作业（build_kg_job）
 

@@ -1,6 +1,6 @@
 # PostgreSQL 数据存储说明
 
-本文档说明运行 Dagster op（如 `crawl_a_share_ipo_op`、`crawl_a_share_reports_op`）时会存入 PostgreSQL 的数据结构。
+本文档说明运行 Dagster op（如 `crawl_hs_ipo_op`、`crawl_hs_reports_op`）时会存入 PostgreSQL 的数据结构。
 
 ## 数据表：`documents`
 
@@ -13,11 +13,11 @@
 | `id` | Integer | 主键，自增 | `1` |
 | `stock_code` | String(20) | 股票代码 | `"000001"` |
 | `company_name` | String(200) | 公司名称 | `"平安银行"` |
-| `market` | String(50) | 市场类型 | `"a_share"` |
+| `market` | String(50) | 市场类型 | `"hs"` |
 | `doc_type` | String(50) | 文档类型 | `"ipo_prospectus"` 或 `"quarterly_reports"` |
 | `year` | Integer | 年份 | `2023` |
 | `quarter` | Integer | 季度 (1-4)，IPO 为 NULL | `3` 或 `NULL` |
-| `minio_object_path` | String(500) | MinIO 对象路径（唯一） | `"bronze/a_share/ipo_prospectus/000001/000001.pdf"` |
+| `minio_object_path` | String(500) | MinIO 对象路径（唯一） | `"bronze/hs/ipo_prospectus/000001/000001.pdf"` |
 | `file_size` | BigInteger | 文件大小（字节） | `1024000` |
 | `file_hash` | String(64) | 文件哈希（MD5） | `"a1b2c3d4e5f6..."` |
 | `status` | String(50) | 文档状态 | `"crawled"` |
@@ -38,11 +38,11 @@
   "id": 1,
   "stock_code": "000001",
   "company_name": "平安银行",
-  "market": "a_share",
+  "market": "hs",
   "doc_type": "ipo_prospectus",
   "year": 2023,
   "quarter": null,
-  "minio_object_path": "bronze/a_share/ipo_prospectus/000001/000001.pdf",
+  "minio_object_path": "bronze/hs/ipo_prospectus/000001/000001.pdf",
   "file_size": 2048000,
   "file_hash": "a1b2c3d4e5f6789012345678901234567890abcd",
   "status": "crawled",
@@ -65,11 +65,11 @@
   "id": 2,
   "stock_code": "000001",
   "company_name": "平安银行",
-  "market": "a_share",
+  "market": "hs",
   "doc_type": "quarterly_reports",
   "year": 2023,
   "quarter": 3,
-  "minio_object_path": "bronze/a_share/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf",
+  "minio_object_path": "bronze/hs/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf",
   "file_size": 3072000,
   "file_hash": "b2c3d4e5f6789012345678901234567890abcdef",
   "status": "crawled",
@@ -101,7 +101,7 @@
 
 ## 数据流程
 
-### 1. IPO Op (`crawl_a_share_ipo_op`)
+### 1. IPO Op (`crawl_hs_ipo_op`)
 
 ```
 1. 爬取 IPO 招股说明书
@@ -117,7 +117,7 @@
 6. 存入 PostgreSQL documents 表
    - stock_code: 股票代码
    - company_name: 公司名称
-   - market: "a_share"
+   - market: "hs"
    - doc_type: "ipo_prospectus"
    - year: 从 metadata 获取的发布年份
    - quarter: NULL（IPO 不需要季度）
@@ -129,7 +129,7 @@
    - extra_metadata: 包含 publication_date 等信息
 ```
 
-### 2. Reports Op (`crawl_a_share_reports_op`)
+### 2. Reports Op (`crawl_hs_reports_op`)
 
 ```
 1. 爬取定期报告（年报/季报）
@@ -143,7 +143,7 @@
 5. 存入 PostgreSQL documents 表
    - stock_code: 股票代码
    - company_name: 公司名称
-   - market: "a_share"
+   - market: "hs"
    - doc_type: "quarterly_reports" 或 "annual_reports"
    - year: 报告年份
    - quarter: 季度 (1-4)

@@ -120,7 +120,7 @@ def my_op(context):
 from dagster import op, get_dagster_logger
 
 @op
-def vectorize_chunks_op(context, scan_result: Dict) -> Dict:
+def doc_vectorize_op(context, scan_result: Dict) -> Dict:
     logger = get_dagster_logger()  # ✅ 使用 Dagster 日志记录器
     
     logger.info("开始向量化...")

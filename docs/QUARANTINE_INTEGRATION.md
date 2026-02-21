@@ -165,7 +165,7 @@ if result.document_id:
 ### 示例 2：Dagster 作业自动隔离
 
 ```python
-# 在 Dagster UI 中运行 crawl_a_share_reports_job
+# 在 Dagster UI 中运行 crawl_hs_reports_job
 # 验证失败的数据会自动隔离
 
 # 查看隔离统计

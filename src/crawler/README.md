@@ -140,7 +140,7 @@ dagster dev -m src.crawler.dagster_jobs
 ```
 
 **主要功能：**
-- `crawl_a_share_reports_job`: A股报告爬取作业（爬取 + 验证）
+- `crawl_hs_reports_job`: A股报告爬取作业（爬取 + 验证）
 - `daily_crawl_schedule`: 每日定时调度（每天凌晨2点）
 - `manual_trigger_sensor`: 手动触发传感器
 

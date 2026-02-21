@@ -142,7 +142,7 @@ WHERE vector_id IS NOT NULL AND vectorized_at IS NULL;
 python scripts/check_vectorized_chunks.py
 
 # 运行向量化作业测试
-# 在 Dagster UI 中运行 vectorize_documents_job
+# 在 Dagster UI 中运行 doc_vectorize_job
 ```
 
 ---

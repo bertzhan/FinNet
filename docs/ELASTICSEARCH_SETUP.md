@@ -123,9 +123,9 @@ Elasticsearch 服务配置在 `docker-compose.yml` 中：
 ### 1. 通过 Dagster Job 自动索引
 
 ```bash
-# 在 Dagster UI 中触发 elasticsearch_index_job
+# 在 Dagster UI 中触发 doc_index_job
 # 或使用命令行
-dagster job execute -j elasticsearch_index_job
+dagster job execute -j doc_index_job
 ```
 
 ### 2. 手动索引文档
@@ -141,7 +141,7 @@ doc = {
     "document_id": "doc-456",
     "chunk_text": "这是分块文本内容",
     "stock_code": "000001",
-    "market": "a_share"
+    "market": "hs"
 }
 client.index_document("chunks", doc, document_id="chunk-123")
 

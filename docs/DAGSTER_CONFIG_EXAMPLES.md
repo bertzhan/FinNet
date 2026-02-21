@@ -168,7 +168,7 @@ quarter: 3
 ### 测试1：使用默认配置（自动计算季度）
 
 在 Dagster UI 中：
-1. 点击 `crawl_a_share_reports_job`
+1. 点击 `crawl_hs_reports_job`
 2. 点击 "Launch Run"
 3. 不修改配置，直接点击 "Launch"
 

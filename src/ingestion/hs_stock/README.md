@@ -15,7 +15,7 @@
 ## 目录结构
 
 ```
-src/ingestion/a_share/
+src/ingestion/hs_stock/
 ├── __init__.py                    # 模块导出
 ├── config.py                      # 配置和常量（API URLs、Headers、重试策略等）
 ├── crawlers/                      # 爬虫实现层
@@ -104,7 +104,7 @@ BaseCrawler (src/ingestion/base/base_crawler.py)
 
 **使用示例**：
 ```python
-from src.ingestion.a_share import ReportCrawler
+from src.ingestion.hs_stock import ReportCrawler
 from src.ingestion.base.base_crawler import CrawlTask
 from src.common.constants import Market, DocType
 
@@ -120,7 +120,7 @@ crawler = ReportCrawler(
 task = CrawlTask(
     stock_code="000001",
     company_name="平安银行",
-    market=Market.A_SHARE,
+    market=Market.HS,
     doc_type=DocType.QUARTERLY_REPORT,
     year=2023,
     quarter=3
@@ -134,9 +134,9 @@ if result.success:
 # 批量爬取
 tasks = [
     CrawlTask(stock_code="000001", company_name="平安银行", 
-              market=Market.A_SHARE, doc_type=DocType.ANNUAL_REPORT, year=2023, quarter=4),
+              market=Market.HS, doc_type=DocType.ANNUAL_REPORT, year=2023, quarter=4),
     CrawlTask(stock_code="000002", company_name="万科A", 
-              market=Market.A_SHARE, doc_type=DocType.QUARTERLY_REPORT, year=2023, quarter=3),
+              market=Market.HS, doc_type=DocType.QUARTERLY_REPORT, year=2023, quarter=3),
 ]
 results = crawler.crawl_batch(tasks)
 ```
@@ -151,7 +151,7 @@ results = crawler.crawl_batch(tasks)
 
 **使用示例**：
 ```python
-from src.ingestion.a_share import CninfoIPOProspectusCrawler
+from src.ingestion.hs_stock import CninfoIPOProspectusCrawler
 from src.ingestion.base.base_crawler import CrawlTask
 from src.common.constants import Market, DocType
 
@@ -165,7 +165,7 @@ crawler = CninfoIPOProspectusCrawler(
 task = CrawlTask(
     stock_code="688111",
     company_name="金山办公",
-    market=Market.A_SHARE,
+    market=Market.HS,
     doc_type=DocType.IPO_PROSPECTUS,
     year=None,      # IPO不需要年份
     quarter=None    # IPO不需要季度
@@ -377,12 +377,12 @@ List[CrawlResult]
 
 **定期报告**：
 ```
-bronze/a_share/{doc_type}/{year}/Q{quarter}/{stock_code}/{filename}
+bronze/hs_stock/{doc_type}/{year}/Q{quarter}/{stock_code}/{filename}
 ```
 
 **IPO招股说明书**：
 ```
-bronze/a_share/ipo_prospectus/{stock_code}/{filename}
+bronze/hs_stock/ipo_prospectus/{stock_code}/{filename}
 ```
 
 ### 本地文件结构
@@ -411,7 +411,7 @@ bronze/a_share/ipo_prospectus/{stock_code}/{filename}
 
 ### 缓存文件
 
-**全局缓存**（位于 `a_share/` 目录）：
+**全局缓存**（位于 `hs_stock/` 目录）：
 - `orgid_cache.json`: 定期报告OrgID缓存
 - `orgid_cache_ipo.json`: IPO OrgID缓存
 - `code_change_cache.json`: 代码变更缓存
@@ -425,21 +425,21 @@ bronze/a_share/ipo_prospectus/{stock_code}/{filename}
 ### 方式1：使用爬虫类（推荐）
 
 ```python
-from src.ingestion.a_share import ReportCrawler, CninfoIPOProspectusCrawler
+from src.ingestion.hs_stock import ReportCrawler, CninfoIPOProspectusCrawler
 from src.ingestion.base.base_crawler import CrawlTask
 from src.common.constants import Market, DocType
 
 # 定期报告
 crawler = ReportCrawler(enable_minio=True, enable_postgres=True, workers=4)
 task = CrawlTask(stock_code="000001", company_name="平安银行",
-                 market=Market.A_SHARE, doc_type=DocType.ANNUAL_REPORT,
+                 market=Market.HS, doc_type=DocType.ANNUAL_REPORT,
                  year=2023, quarter=4)
 result = crawler.crawl(task)
 
 # IPO
 ipo_crawler = CninfoIPOProspectusCrawler(enable_minio=True, enable_postgres=True)
 ipo_task = CrawlTask(stock_code="688111", company_name="金山办公",
-                    market=Market.A_SHARE, doc_type=DocType.IPO_PROSPECTUS,
+                    market=Market.HS, doc_type=DocType.IPO_PROSPECTUS,
                     year=None, quarter=None)
 ipo_result = ipo_crawler.crawl(ipo_task)
 ```
@@ -448,7 +448,7 @@ ipo_result = ipo_crawler.crawl(ipo_task)
 
 ```bash
 # 定期报告（多进程）
-python -m src.ingestion.a_share.processor.report_processor \
+python -m src.ingestion.hs_stock.processor.report_processor \
     --input tasks.csv \
     --out ./downloads \
     --fail failed.csv \
@@ -457,7 +457,7 @@ python -m src.ingestion.a_share.processor.report_processor \
     --quarter Q2
 
 # IPO（多进程）
-python -m src.ingestion.a_share.processor.ipo_processor \
+python -m src.ingestion.hs_stock.processor.ipo_processor \
     --input tasks.csv \
     --out ./downloads \
     --fail failed.csv \
@@ -468,10 +468,10 @@ python -m src.ingestion.a_share.processor.ipo_processor \
 
 ```bash
 # 定期报告测试
-python src/ingestion/a_share/crawlers/report_crawler.py
+python src/ingestion/hs_stock/crawlers/report_crawler.py
 
 # IPO测试
-python src/ingestion/a_share/crawlers/ipo_crawler.py
+python src/ingestion/hs_stock/crawlers/ipo_crawler.py
 ```
 
 
@@ -479,8 +479,8 @@ python src/ingestion/a_share/crawlers/ipo_crawler.py
 
 ```bash
 # 运行爬虫测试（需要MinIO和PostgreSQL服务）
-python src/ingestion/a_share/crawlers/report_crawler.py
-python src/ingestion/a_share/crawlers/ipo_crawler.py
+python src/ingestion/hs_stock/crawlers/report_crawler.py
+python src/ingestion/hs_stock/crawlers/ipo_crawler.py
 ```
 
 ## 注意事项

@@ -13,7 +13,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from dagster import execute_job
-from src.processing.compute.dagster.jobs.chunk_jobs import chunk_documents_job
+from src.processing.compute.dagster.jobs.chunk_jobs import doc_chunk_job
 
 
 def test_chunk_job():
@@ -34,7 +34,7 @@ def test_chunk_job():
                     # "doc_type": "quarterly_report",  # 可选：过滤文档类型
                 }
             },
-            "chunk_documents_op": {
+            "doc_chunk_op": {
                 "config": {
                     "force_rechunk": False,  # 不强制重新分块
                 }
@@ -45,12 +45,12 @@ def test_chunk_job():
     print("配置参数:")
     print(f"  - batch_size: {config['ops']['scan_parsed_documents_op']['config']['batch_size']}")
     print(f"  - limit: {config['ops']['scan_parsed_documents_op']['config']['limit']}")
-    print(f"  - force_rechunk: {config['ops']['chunk_documents_op']['config']['force_rechunk']}")
+    print(f"  - force_rechunk: {config['ops']['doc_chunk_op']['config']['force_rechunk']}")
     print()
     
     try:
         print("开始执行分块作业...")
-        result = execute_job(chunk_documents_job, run_config=config)
+        result = execute_job(doc_chunk_job, run_config=config)
         
         print()
         print("=" * 60)

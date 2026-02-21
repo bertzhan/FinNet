@@ -77,7 +77,7 @@ def main():
         if chunked_count > 0:
             print("\n💡 提示：如果要强制重新分块已分块的文档，需要在 Dagster UI 中设置：")
             print("   scan_parsed_documents_op.config.force_rechunk = True")
-            print("   chunk_documents_op.config.force_rechunk = True")
+            print("   doc_chunk_op.config.force_rechunk = True")
 
 
 if __name__ == "__main__":

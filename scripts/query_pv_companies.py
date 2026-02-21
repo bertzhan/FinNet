@@ -21,10 +21,10 @@ def query_pv_companies():
             SELECT
                 code,
                 name,
-                affiliate_industry->>'ind_name' as industry,
-                affiliate_industry->>'ind_code' as industry_code
-            FROM listed_companies
-            WHERE affiliate_industry->>'ind_name' LIKE '%光伏设备%'
+                industry,
+                industry_code
+            FROM hs_listed_companies
+            WHERE industry LIKE '%光伏设备%'
             ORDER BY code
             LIMIT 3
         """)).fetchall()
@@ -34,9 +34,9 @@ def query_pv_companies():
         print("=" * 80)
         print()
 
-        for i, (code, name, industry, ind_code) in enumerate(result, 1):
+        for i, (code, name, industry, industry_code) in enumerate(result, 1):
             print(f"{i}. {code} - {name}")
-            print(f"   行业: {industry} ({ind_code})")
+            print(f"   行业: {industry} ({industry_code})")
             print()
 
 if __name__ == "__main__":

@@ -41,7 +41,7 @@ from src.common.constants import DocumentStatus, DocType, Market
 
 class DocumentProcessingConfig(Config):
     """文档处理配置"""
-    market: str = "a_share"
+    market: str = "hs_stock"
     doc_type: Optional[str] = None
     stock_codes: Optional[List[str]] = None
     limit: int = 100
@@ -88,7 +88,7 @@ def bronze_documents(context: AssetExecutionContext) -> MaterializeResult:
         
         # 按市场和文档类型统计
         market_stats = {}
-        for market in [Market.A_SHARE.value]:
+        for market in [Market.HS.value]:
             count = session.query(Document).filter(
                 Document.market == market
             ).count()

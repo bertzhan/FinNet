@@ -53,8 +53,8 @@ pip install ultralytics
 **问题**: 数据库中的文档路径与 MinIO 实际路径不一致
 
 **示例**:
-- 数据库: `bronze/a_share/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf`
-- MinIO 实际: `bronze/a_share/ipo_prospectus/300542/300542.pdf`
+- 数据库: `bronze/hs/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf`
+- MinIO 实际: `bronze/hs/ipo_prospectus/300542/300542.pdf`
 
 **解决方案**:
 1. 重新运行爬虫任务，确保路径一致

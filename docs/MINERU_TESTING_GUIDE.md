@@ -157,7 +157,7 @@ pip install mineru
 
 ### Q2: MinIO 文件不存在
 
-**错误**: `MinIO 文件不存在: bronze/a_share/...`
+**错误**: `MinIO 文件不存在: bronze/hs/...`
 
 **原因**: 数据库中的文档路径与 MinIO 实际路径不一致
 
@@ -187,7 +187,7 @@ pip install mineru
 ```
 ✅ 解析成功！
    解析任务ID: 1
-   Silver 层路径: silver/text_cleaned/a_share/ipo_prospectus/300542/300542_parsed.json
+   Silver 层路径: silver/text_cleaned/hs/ipo_prospectus/300542/300542_parsed.json
    文本长度: 50000 字符
    表格数量: 10
    图片数量: 5

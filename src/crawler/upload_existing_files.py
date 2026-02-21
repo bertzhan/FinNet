@@ -98,11 +98,11 @@ def upload_existing_files(reports_dir="./reports", dry_run=False):
         
         # 确定市场类型
         market_map = {
-            "SZ": Market.A_SHARE,
-            "SH": Market.A_SHARE,
-            "BJ": Market.A_SHARE,
+            "SZ": Market.HS,
+            "SH": Market.HS,
+            "BJ": Market.HS,
         }
-        market = market_map.get(exchange, Market.A_SHARE)
+        market = market_map.get(exchange, Market.HS)
         
         # 确定文档类型
         quarter_num = int(quarter_str[1]) if quarter_str.startswith("Q") else 4

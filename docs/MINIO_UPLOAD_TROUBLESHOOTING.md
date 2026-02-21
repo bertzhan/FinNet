@@ -68,7 +68,7 @@ MINIO_BUCKET=company-datalake
 
 ```yaml
 ops:
-  crawl_a_share_reports_op:
+  crawl_hs_reports_op:
     config:
       enable_minio: true  # ✅ 确保为 true
       enable_postgres: true
@@ -163,7 +163,7 @@ client.delete_file("test/upload_test.txt")
 1. 访问 http://localhost:9001
 2. 登录（admin / admin123456）
 3. 进入 `company-datalake` 桶
-4. 查看 `bronze/a_share/...` 目录
+4. 查看 `bronze/hs/...` 目录
 
 ### 方式2: Python 脚本
 
@@ -173,7 +173,7 @@ from src.storage.object_store.minio_client import MinIOClient
 client = MinIOClient()
 
 # 列出文件
-objects = client.list_objects(prefix="bronze/a_share/")
+objects = client.list_objects(prefix="bronze/hs/")
 for obj in objects:
     print(f"{obj.object_name} ({obj.size} bytes)")
 ```
@@ -182,7 +182,7 @@ for obj in objects:
 
 ```bash
 # 使用 mc (MinIO Client)
-mc ls local/company-datalake/bronze/a_share/
+mc ls local/company-datalake/bronze/hs/
 ```
 
 ## 🔗 相关文档

@@ -174,7 +174,7 @@ with pg_client.get_session() as session:
   "document_id": 123,
   "stock_code": "000001",
   "company_name": "平安银行",
-  "market": "a_share",
+  "market": "hs",
   "doc_type": "ipo_prospectus",
   "year": 2023,
   "quarter": null,

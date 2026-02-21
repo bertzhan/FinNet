@@ -218,7 +218,8 @@ erDiagram
         BigInteger listed_date "上市日期"
         Float reg_asset "注册资本"
         Integer staff_num "员工人数"
-        JSON affiliate_industry "所属行业"
+        String industry_code "行业代码"
+        String industry "行业名称"
         DateTime created_at "创建时间"
         DateTime updated_at "更新时间"
     }
@@ -290,7 +291,7 @@ Document (Bronze层 - 原始文档)
     ├── ValidationLog (数据验证)
     └── QuarantineRecord (隔离记录)
 
-ListedCompany (A股上市公司基础数据，独立表)
+ListedCompany (A股上市公司基础数据，表名 hs_listed_companies)
 HKListedCompany (港股上市公司基础数据，独立表)
 ```
 

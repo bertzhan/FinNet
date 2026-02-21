@@ -1,4 +1,4 @@
-# update_listed_companies_job 测试指南
+# get_hs_companies_job 测试指南
 
 ## 测试状态
 
@@ -99,19 +99,20 @@ with pg_client.get_session() as session:
 
 ```python
 from dagster import execute_job, RunConfig
-from src.processing.compute.dagster.jobs import update_listed_companies_job
+from src.processing.compute.dagster.jobs import get_hs_companies_job
 
 config = RunConfig(
     ops={
-        "update_listed_companies_op": {
+        "get_hs_companies_op": {
             "config": {
-                "clear_before_update": False
+                "clear_before_update": False,
+                "basic_info_only": False
             }
         }
     }
 )
 
-result = execute_job(update_listed_companies_job, run_config=config)
+result = execute_job(get_hs_companies_job, run_config=config)
 print(f"执行成功: {result.success}")
 ```
 
@@ -164,7 +165,7 @@ bash scripts/start_dagster.sh
 
 ### 2. 查找作业
 
-在 Jobs 列表中找到 `update_listed_companies_job`
+在 Jobs 列表中找到 `get_hs_companies_job`
 
 ### 3. 手动触发
 
@@ -173,9 +174,10 @@ bash scripts/start_dagster.sh
 3. 配置参数（可选）：
    ```yaml
    ops:
-     update_listed_companies_op:
+     get_hs_companies_op:
        config:
          clear_before_update: false
+         basic_info_only: false
    ```
 4. 点击 "Launch"
 
@@ -192,13 +194,14 @@ cd /Users/han/PycharmProjects/FinNet
 export PYTHONPATH=".:$PYTHONPATH"
 
 dagster job execute \
-  -j update_listed_companies_job \
+  -j get_hs_companies_job \
   -m src.processing.compute.dagster \
   --config '{
     "ops": {
-      "update_listed_companies_op": {
+      "get_hs_companies_op": {
         "config": {
-          "clear_before_update": false
+          "clear_before_update": false,
+          "basic_info_only": false
         }
       }
     }
@@ -252,7 +255,7 @@ python scripts/migrate_listed_companies_table.py
 pip install sentence-transformers
 ```
 
-注意：这个依赖是其他 Dagster 作业需要的，不影响 `update_listed_companies_job` 本身。
+注意：这个依赖是其他 Dagster 作业需要的，不影响 `get_hs_companies_job` 本身。
 
 ## 测试检查清单
 

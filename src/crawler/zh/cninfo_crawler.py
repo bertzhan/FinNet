@@ -33,7 +33,7 @@ class CNInfoCrawler(BaseCrawler):
             workers: 并行进程数
             old_pdf_dir: 旧PDF目录（用于跳过已下载文件）
         """
-        super().__init__(Market.A_SHARE, output_root)
+        super().__init__(Market.HS, output_root)
         self.workers = workers
         self.old_pdf_dir = old_pdf_dir
 

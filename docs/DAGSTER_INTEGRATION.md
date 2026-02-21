@@ -30,8 +30,8 @@ dagster dev -m src.processing.compute.dagster
 
 在 Dagster UI 中，你可以看到以下 Jobs：
 
-- **`crawl_a_share_reports_job`** - A股定期报告爬取作业
-- **`crawl_a_share_ipo_job`** - A股IPO招股说明书爬取作业
+- **`crawl_hs_reports_job`** - A股定期报告爬取作业
+- **`crawl_hs_ipo_job`** - A股IPO招股说明书爬取作业
 
 ### 3. 手动触发任务
 
@@ -97,7 +97,7 @@ ops:
 
 ```bash
 dagster job execute \
-  -j crawl_a_share_reports_job \
+  -j crawl_hs_reports_job \
   -m src.processing.compute.dagster \
   -c dagster_config.yaml
 ```
@@ -128,7 +128,7 @@ dagster schedule start daily_crawl_ipo_schedule -m src.processing.compute.dagste
 
 ```python
 @schedule(
-    job=crawl_a_share_reports_job,
+    job=crawl_hs_reports_job,
     cron_schedule="0 3 * * *",  # 改为每天凌晨3点
     default_status=DefaultScheduleStatus.RUNNING,  # 默认启动
 )
@@ -219,7 +219,7 @@ AssetMaterialization(
 
 ### 场景2：手动爬取指定季度
 
-1. 在 UI 中手动触发 `crawl_a_share_reports_job`
+1. 在 UI 中手动触发 `crawl_hs_reports_job`
 2. 配置参数：
    ```yaml
    year: 2023
@@ -229,7 +229,7 @@ AssetMaterialization(
 
 ### 场景3：批量爬取IPO招股说明书
 
-1. 手动触发 `crawl_a_share_ipo_job`
+1. 手动触发 `crawl_hs_ipo_job`
 2. 系统自动爬取所有公司的IPO招股说明书
 3. 自动验证和存储
 

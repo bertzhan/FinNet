@@ -147,7 +147,7 @@ ops:
 ```python
 # 每2小时执行
 @schedule(
-    job=vectorize_documents_job,
+    job=doc_vectorize_job,
     cron_schedule="0 */2 * * *",
     default_status=DefaultScheduleStatus.STOPPED,  # 默认停止，需手动启用
 )

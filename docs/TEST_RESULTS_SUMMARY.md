@@ -83,7 +83,7 @@
 ### 1. 准备测试数据
 ```bash
 # 方式1: 运行爬虫任务，爬取一些文档
-dagster job execute -j crawl_a_share_reports_job -m src.processing.compute.dagster
+dagster job execute -j crawl_hs_reports_job -m src.processing.compute.dagster
 
 # 方式2: 手动上传测试 PDF 到 MinIO
 # 然后更新数据库中的文档状态为 'crawled'
@@ -92,7 +92,7 @@ dagster job execute -j crawl_a_share_reports_job -m src.processing.compute.dagst
 ### 2. 运行解析 Job
 ```bash
 # 使用 Dagster CLI
-dagster job execute -j parse_pdf_job -m src.processing.compute.dagster
+dagster job execute -j doc_parse_job -m src.processing.compute.dagster
 
 # 或使用 Python 脚本
 python tests/test_dagster_job_execution.py

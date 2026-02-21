@@ -63,7 +63,7 @@ python tests/test_vectorize_job.py
 
 6. **Dagster Ops 测试**
    - scan_unvectorized_chunks_op
-   - vectorize_chunks_op
+   - doc_vectorize_op
    - validate_vectorize_results_op
 
 ### 3. 手动测试单个组件
@@ -122,11 +122,11 @@ print(f"失败: {result['failed_count']}")
    - 配置：`batch_size=10, limit=20`
 
 2. **手动触发向量化**：
-   - 运行 `vectorize_chunks_op`
+   - 运行 `doc_vectorize_op`
    - 使用 scan_op 的输出作为输入
 
 3. **运行完整作业**：
-   - 运行 `vectorize_documents_job`
+   - 运行 `doc_vectorize_job`
    - 或使用传感器 `manual_trigger_vectorize_sensor`
 
 ### 4. 验证结果
@@ -177,7 +177,7 @@ print(f"向量数量: {stats.get('row_count', 0)}")
 - 还没有分块数据（需要先运行分块作业）
 
 **解决**：
-- 运行分块作业：`chunk_documents_job`
+- 运行分块作业：`doc_chunk_job`
 - 或强制重新向量化：`force_revectorize=True`
 
 ### 2. Embedding 模型加载失败

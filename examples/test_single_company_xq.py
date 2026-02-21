@@ -183,7 +183,7 @@ def test_single_company(code: str = "000488"):
                 # 其他信息
                 currency_encode=info_dict.get('currency_encode'),
                 currency=info_dict.get('currency'),
-                affiliate_industry=parse_industry(info_dict.get('affiliate_industry')),
+                industry=parse_industry(info_dict.get('affiliate_industry')),
             )
             session.commit()
             

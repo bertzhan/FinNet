@@ -24,24 +24,24 @@ from dagster import (
 数据血缘关系：
 
 Bronze层（原始数据）
-├── bronze/a_share/annual_report/2023/Q4
-├── bronze/a_share/quarterly_report/2023/Q3
-└── bronze/a_share/ipo_prospectus
+├── bronze/hs_stock/annual_report/2023/Q4
+├── bronze/hs_stock/quarterly_report/2023/Q3
+└── bronze/hs_stock/ipo_prospectus
 
 Silver层（加工数据）
-├── silver/parsed_documents/a_share/annual_report/000001/2023/Q4
-│   └── 依赖: bronze/a_share/annual_report/2023/Q4
-├── silver/chunked_documents/a_share/annual_report/000001
-│   └── 依赖: silver/parsed_documents/a_share/annual_report/000001/2023/Q4
-├── silver/vectorized_chunks/a_share/annual_report/000001
-│   └── 依赖: silver/chunked_documents/a_share/annual_report/000001
+├── silver/parsed_documents/hs_stock/annual_report/000001/2023/Q4
+│   └── 依赖: bronze/hs_stock/annual_report/2023/Q4
+├── silver/chunked_documents/hs_stock/annual_report/000001
+│   └── 依赖: silver/parsed_documents/hs_stock/annual_report/000001/2023/Q4
+├── silver/vectorized_chunks/hs_stock/annual_report/000001
+│   └── 依赖: silver/chunked_documents/hs_stock/annual_report/000001
 └── ...
 
 Gold层（应用数据）
-├── gold/graph_nodes/a_share/annual_report/000001
-│   └── 依赖: silver/chunked_documents/a_share/annual_report/000001
-└── gold/elasticsearch_index/a_share/annual_report/000001
-    └── 依赖: silver/chunked_documents/a_share/annual_report/000001
+├── gold/graph_nodes/hs_stock/annual_report/000001
+│   └── 依赖: silver/chunked_documents/hs_stock/annual_report/000001
+└── gold/elasticsearch_index/hs_stock/annual_report/000001
+    └── 依赖: silver/chunked_documents/hs_stock/annual_report/000001
 
 质量指标
 ├── quality_metrics/crawl_validation
@@ -63,9 +63,9 @@ ASSET_KEY_FORMAT = """
 - quality_metrics: 质量指标
 
 示例:
-- Bronze层: ["bronze", "a_share", "annual_report", "2023", "Q4"]
-- Silver层: ["silver", "parsed_documents", "a_share", "annual_report", "000001", "2023", "Q4"]
-- Gold层: ["gold", "graph_nodes", "a_share", "annual_report", "000001"]
+- Bronze层: ["bronze", "hs_stock", "annual_report", "2023", "Q4"]
+- Silver层: ["silver", "parsed_documents", "hs_stock", "annual_report", "000001", "2023", "Q4"]
+- Gold层: ["gold", "graph_nodes", "hs_stock", "annual_report", "000001"]
 """
 
 # 依赖关系说明

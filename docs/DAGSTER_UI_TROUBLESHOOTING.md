@@ -202,7 +202,7 @@ http://127.0.0.1:3000
 
 ### 3. 运行 Job
 
-1. 在 UI 中找到你的 job (例如 `parse_pdf_job`)
+1. 在 UI 中找到你的 job (例如 `doc_parse_job`)
 2. 点击 "Launchpad"
 3. 配置参数
 4. 点击 "Launch Run"

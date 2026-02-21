@@ -417,7 +417,7 @@ Content-Type: application/json
         "doc_type": "quarterly_reports",
         "year": 2023,
         "quarter": 3,
-        "market": "a_share",
+        "market": "hs",
         "chunk_index": 0
       }
     }

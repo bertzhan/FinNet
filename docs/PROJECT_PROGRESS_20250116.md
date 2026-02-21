@@ -83,11 +83,11 @@
 | 作业导出 | `processing/compute/dagster/__init__.py` | ✅ | Definitions 对象 |
 
 **已实现作业（5个）**:
-- ✅ `crawl_a_share_reports_job` - A股定期报告爬取
-- ✅ `crawl_a_share_ipo_job` - A股IPO招股书爬取
-- ✅ `parse_pdf_job` - PDF 解析作业（支持部分页解析）
-- ✅ `chunk_documents_job` - 文本分块作业
-- ✅ `vectorize_documents_job` - **向量化作业**
+- ✅ `crawl_hs_reports_job` - A股定期报告爬取
+- ✅ `crawl_hs_ipo_job` - A股IPO招股书爬取
+- ✅ `doc_parse_job` - PDF 解析作业（支持部分页解析）
+- ✅ `doc_chunk_job` - 文本分块作业
+- ✅ `doc_vectorize_job` - **向量化作业**
 
 **已实现调度（8个）**:
 - ✅ `daily_crawl_reports_schedule` - 每日爬取调度

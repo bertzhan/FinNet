@@ -69,7 +69,7 @@ def main():
                     logger.info(f"  - {constraint_type:20s} | {constraint_name:40s} | {columns}")
 
                     # 高亮显示 CIK UNIQUE 约束
-                    if constraint_type == 'UNIQUE' and 'cik' in columns:
+                    if constraint_type == 'UNIQUE' and ('cik' in columns or 'org_id' in columns):
                         logger.warning(f"    ⚠️  发现 CIK UNIQUE 约束：{constraint_name}")
                         logger.warning(f"    需要删除此约束！")
             else:
@@ -117,15 +117,17 @@ def main():
                 length = f"({max_length})" if max_length else ""
                 logger.info(f"  - {col_name:20s} {data_type}{length:15s} {nullable}")
 
-            # 5. 查询示例数据（检查是否有重复 CIK）
-            logger.info("\n5. 检查重复 CIK...")
-            result = session.execute(text("""
+            # 5. 查询示例数据（检查是否有重复 org_id/cik）
+            column_names = [c[0] for c in columns_info]
+            col_for_id = 'org_id' if 'org_id' in column_names else 'cik'
+            logger.info(f"\n5. 检查重复 {col_for_id}...")
+            result = session.execute(text(f"""
                 SELECT
-                    cik,
+                    {col_for_id},
                     COUNT(*) as count,
                     STRING_AGG(code, ', ' ORDER BY code) as tickers
                 FROM us_listed_companies
-                GROUP BY cik
+                GROUP BY {col_for_id}
                 HAVING COUNT(*) > 1
                 ORDER BY count DESC
                 LIMIT 10;
@@ -133,12 +135,12 @@ def main():
 
             duplicates = result.fetchall()
             if duplicates:
-                logger.info("发现重复 CIK（这是正常的，多个证券共享 CIK）：")
+                logger.info(f"发现重复 {col_for_id}（这是正常的，多个证券共享）：")
                 for row in duplicates:
-                    cik, count, tickers = row
-                    logger.info(f"  - CIK {cik}: {count} 个证券 ({tickers})")
+                    oid, count, tickers = row
+                    logger.info(f"  - {col_for_id} {oid}: {count} 个证券 ({tickers})")
             else:
-                logger.info("未发现重复 CIK")
+                logger.info(f"未发现重复 {col_for_id}")
 
             # 6. 统计
             logger.info("\n6. 表统计...")
@@ -146,35 +148,35 @@ def main():
             total_count = result.scalar()
             logger.info(f"总记录数: {total_count}")
 
-            result = session.execute(text("SELECT COUNT(DISTINCT cik) FROM us_listed_companies;"))
-            unique_cik_count = result.scalar()
-            logger.info(f"唯一 CIK 数: {unique_cik_count}")
+            result = session.execute(text(f"SELECT COUNT(DISTINCT {col_for_id}) FROM us_listed_companies;"))
+            unique_id_count = result.scalar()
+            logger.info(f"唯一 {col_for_id} 数: {unique_id_count}")
 
-            if total_count > unique_cik_count:
-                logger.info(f"平均每个公司有 {total_count / unique_cik_count:.2f} 个证券")
+            if total_count > unique_id_count:
+                logger.info(f"平均每个公司有 {total_count / unique_id_count:.2f} 个证券")
 
             # 7. 诊断建议
             logger.info("\n" + "=" * 80)
             logger.info("诊断建议：")
             logger.info("=" * 80)
 
-            has_cik_unique = any(
-                row[1] == 'UNIQUE' and 'cik' in row[2]
+            has_id_unique = any(
+                row[1] == 'UNIQUE' and ('cik' in row[2] or 'org_id' in row[2])
                 for row in constraints
             )
 
-            if has_cik_unique:
-                logger.warning("❌ 发现 CIK UNIQUE 约束，需要删除！")
+            if has_id_unique:
+                logger.warning("❌ 发现 org_id/cik UNIQUE 约束，需要删除！")
                 logger.info("\n请执行以下命令修复：")
                 logger.info("  python scripts/migrate_us_companies_db.py")
                 logger.info("\n或手动执行 SQL：")
-                cik_constraint_name = next(
+                id_constraint_name = next(
                     row[0] for row in constraints
-                    if row[1] == 'UNIQUE' and 'cik' in row[2]
+                    if row[1] == 'UNIQUE' and ('cik' in row[2] or 'org_id' in row[2])
                 )
-                logger.info(f"  ALTER TABLE us_listed_companies DROP CONSTRAINT {cik_constraint_name};")
+                logger.info(f"  ALTER TABLE us_listed_companies DROP CONSTRAINT {id_constraint_name};")
             else:
-                logger.info("✅ 未发现 CIK UNIQUE 约束，表结构正确")
+                logger.info("✅ 未发现 org_id/cik UNIQUE 约束，表结构正确")
 
     except Exception as e:
         logger.error(f"❌ 检查失败: {e}", exc_info=True)

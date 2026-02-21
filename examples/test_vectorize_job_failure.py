@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 向量化作业失败分析测试脚本
-测试 vectorize_documents_job，详细分析分块失败的原因
+测试 doc_vectorize_job，详细分析分块失败的原因
 """
 
 import sys

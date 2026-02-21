@@ -21,14 +21,14 @@ class CninfoBaseCrawler(BaseCrawler):
     提供公共的文件处理、批量爬取等功能
     """
 
-    def _get_a_share_dir(self) -> str:
+    def _get_hs_stock_dir(self) -> str:
         """
-        获取 a_share 目录路径
+        获取 hs_stock 目录路径
         
         Returns:
-            a_share 目录的绝对路径
+            hs_stock 目录的绝对路径
         """
-        # crawlers/ 目录的父目录就是 a_share 目录
+        # crawlers/ 目录的父目录就是 hs_stock 目录
         return os.path.dirname(os.path.dirname(__file__))
 
     def _get_cache_file_path(self, filename: str) -> str:
@@ -41,7 +41,7 @@ class CninfoBaseCrawler(BaseCrawler):
         Returns:
             缓存文件的完整路径
         """
-        return os.path.join(self._get_a_share_dir(), filename)
+        return os.path.join(self._get_hs_stock_dir(), filename)
 
     def _safe_import(self, relative_path: str, absolute_path: str):
         """

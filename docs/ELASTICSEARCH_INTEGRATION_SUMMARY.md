@@ -22,9 +22,9 @@
 - ✅ 创建了 `src/processing/compute/dagster/jobs/elasticsearch_jobs.py`
 - ✅ 实现了三个 Op：
   - `scan_chunked_documents_op`: 扫描已分块的文档
-  - `index_chunks_to_elasticsearch_op`: 批量索引到 Elasticsearch
+  - `doc_index_op`: 批量索引到 Elasticsearch
   - `validate_elasticsearch_results_op`: 验证索引结果
-- ✅ 创建了 Job：`elasticsearch_index_job`
+- ✅ 创建了 Job：`doc_index_job`
 - ✅ 创建了 Schedules：
   - `hourly_elasticsearch_schedule`: 每小时执行一次
   - `daily_elasticsearch_schedule`: 每天执行一次
@@ -72,7 +72,7 @@ bash scripts/install_elasticsearch_ik.sh
 dagster dev
 ```
 
-访问 http://localhost:3000，应该能看到 `elasticsearch_index_job`。
+访问 http://localhost:3000，应该能看到 `doc_index_job`。
 
 ### 3. 测试完整流程
 运行完整的测试脚本，确保所有功能正常：
@@ -86,12 +86,12 @@ python examples/test_elasticsearch_job_simple.py
 
 **方式 1：通过 Dagster UI**
 - 访问 http://localhost:3000
-- 找到 `elasticsearch_index_job`
+- 找到 `doc_index_job`
 - 点击 "Launch Run" 手动触发
 
 **方式 2：通过命令行**
 ```bash
-dagster job execute -j elasticsearch_index_job
+dagster job execute -j doc_index_job
 ```
 
 **方式 3：通过 Sensor（手动触发）**

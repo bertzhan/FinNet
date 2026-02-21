@@ -112,7 +112,7 @@ def create_table(session):
 
 
 def update_existing_table(session):
-    """更新现有表（删除 exchange 字段，移除 cik UNIQUE 约束）"""
+    """更新现有表（删除 exchange 字段，移除 org_id UNIQUE 约束）"""
     logger.info("更新现有表 us_listed_companies...")
 
     changes_made = False
@@ -137,8 +137,8 @@ def update_existing_table(session):
     else:
         logger.info("字段 exchange 不存在，跳过")
 
-    # 3. 删除 cik UNIQUE 约束（如果存在）
-    logger.info("检查 cik UNIQUE 约束...")
+    # 3. 删除 org_id UNIQUE 约束（如果存在）
+    logger.info("检查 org_id UNIQUE 约束...")
     result = session.execute(text("""
         SELECT tc.constraint_name
         FROM information_schema.table_constraints tc
@@ -146,43 +146,31 @@ def update_existing_table(session):
             ON tc.constraint_name = ccu.constraint_name
             AND tc.table_schema = ccu.table_schema
         WHERE tc.table_name = 'us_listed_companies'
-            AND ccu.column_name = 'cik'
+            AND ccu.column_name IN ('cik', 'org_id')
             AND tc.constraint_type = 'UNIQUE';
     """))
     constraint_row = result.fetchone()
 
     if constraint_row:
         constraint_name = constraint_row[0]
-        logger.info(f"删除 cik UNIQUE 约束: {constraint_name}...")
+        logger.info(f"删除 org_id UNIQUE 约束: {constraint_name}...")
         session.execute(text(f"ALTER TABLE us_listed_companies DROP CONSTRAINT {constraint_name};"))
         session.commit()
         logger.info(f"✅ UNIQUE 约束 {constraint_name} 已删除")
-        logger.info("   原因：多个证券（stocks, warrants, units）可能共享同一个 CIK")
+        logger.info("   原因：多个证券（stocks, warrants, units）可能共享同一个 org_id")
         changes_made = True
     else:
-        logger.info("cik 字段没有 UNIQUE 约束，跳过")
+        logger.info("org_id 字段没有 UNIQUE 约束，跳过")
 
-    # 4. 添加新索引
-    if not check_index_exists(session, 'idx_us_active'):
-        logger.info("创建索引 idx_us_active...")
-        session.execute(text(
-            "CREATE INDEX idx_us_active ON us_listed_companies(is_active);"
-        ))
+    # 4. 确保 org_id 索引存在（用于查询性能）
+    if not check_index_exists(session, 'idx_us_org_id'):
+        logger.info("创建索引 idx_us_org_id...")
+        session.execute(text("CREATE INDEX idx_us_org_id ON us_listed_companies(org_id);"))
         session.commit()
-        logger.info("✅ 索引 idx_us_active 已创建")
+        logger.info("✅ 索引 idx_us_org_id 已创建")
         changes_made = True
     else:
-        logger.info("索引 idx_us_active 已存在，跳过")
-
-    # 5. 确保 cik 索引存在（用于查询性能）
-    if not check_index_exists(session, 'idx_us_cik'):
-        logger.info("创建索引 idx_us_cik...")
-        session.execute(text("CREATE INDEX idx_us_cik ON us_listed_companies(cik);"))
-        session.commit()
-        logger.info("✅ 索引 idx_us_cik 已创建")
-        changes_made = True
-    else:
-        logger.info("索引 idx_us_cik 已存在")
+        logger.info("索引 idx_us_org_id 已存在")
 
     if not changes_made:
         logger.info("✅ 表结构已是最新，无需更新")

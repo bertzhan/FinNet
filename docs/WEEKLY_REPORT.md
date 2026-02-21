@@ -135,10 +135,10 @@
 #### 4.2 Dagster 调度系统
 
 - ✅ 实现爬虫作业（`crawl_jobs.py`）
-  - `crawl_a_share_reports_job` - A股报告爬取作业
-  - `crawl_a_share_ipo_job` - A股IPO爬取作业
+  - `crawl_hs_reports_job` - A股报告爬取作业
+  - `crawl_hs_ipo_job` - A股IPO爬取作业
 - ✅ 实现解析作业（`parse_jobs.py`）
-  - `parse_documents_job` - 文档解析作业
+  - `doc_parse_job` - 文档解析作业
 - ✅ 支持配置文件驱动的作业执行
 
 **关键文件**:

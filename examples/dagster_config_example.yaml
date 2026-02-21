@@ -1,8 +1,8 @@
 # Dagster 爬虫配置示例文件
-# 使用方法：dagster job execute -j crawl_a_share_reports_job -m src.processing.compute.dagster -c examples/dagster_config_example.yaml
+# 使用方法：dagster job execute -j crawl_hs_reports_job -m src.processing.compute.dagster -c examples/dagster_config_example.yaml
 
 ops:
-  crawl_a_share_reports_op:
+  crawl_hs_reports_op:
     config:
       # 公司列表文件路径
       company_list_path: "src/crawler/zh/company_list.csv"

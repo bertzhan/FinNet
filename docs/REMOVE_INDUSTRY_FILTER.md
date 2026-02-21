@@ -88,7 +88,7 @@ else:
     logger.info(f"从数据库加载了 {len(companies)} 家公司")
 ```
 
-#### 4. 更新 crawl_a_share_reports_op 中的调用
+#### 4. 更新 crawl_hs_reports_op 中的调用
 
 **修改前**:
 ```python
@@ -168,7 +168,7 @@ elif limit is not None:
 **之前的配置**:
 ```yaml
 ops:
-  crawl_a_share_reports_op:
+  crawl_hs_reports_op:
     config:
       industry: "光伏设备"
       limit: 50
@@ -177,7 +177,7 @@ ops:
 **迁移方案 1: 使用 stock_codes**
 ```yaml
 ops:
-  crawl_a_share_reports_op:
+  crawl_hs_reports_op:
     config:
       stock_codes: ['300750', '688599', '300763']  # 手动指定光伏设备公司代码
 ```

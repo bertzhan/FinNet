@@ -88,12 +88,12 @@ class Document(Base):
 
 ```bash
 测试爬取一个文档...
-✅ MinIO 上传成功: bronze/a_share/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf
+✅ MinIO 上传成功: bronze/hs/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf
 ✅ PostgreSQL 记录成功: id=140
 
 结果:
   - success: True
-  - minio_object_path: bronze/a_share/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf
+  - minio_object_path: bronze/hs/quarterly_reports/2023/Q3/000001/000001_2023_Q3.pdf
   - document_id: 140  # ✅ 不再是 None
   - error_message: None
 
@@ -115,7 +115,7 @@ class Document(Base):
 这个问题是导致以下警告的根本原因：
 ```
 WARNING: 缺少数据库ID: 300552
-INFO: ✅ 已隔离缺少数据库ID的文档: bronze/a_share/annual_reports/2023/300552/300552_2023_Q4.pdf
+INFO: ✅ 已隔离缺少数据库ID的文档: bronze/hs/annual_reports/2023/300552/300552_2023_Q4.pdf
 ```
 
 现在这些警告将不再出现，因为文档记录可以正常创建了。

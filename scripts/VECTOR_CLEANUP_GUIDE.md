@@ -102,10 +102,10 @@ EOF
 ```
 
 #### 3. 重新向量化
-在 Dagster UI 中运行 `vectorize_documents_job`：
+在 Dagster UI 中运行 `doc_vectorize_job`：
 ```bash
 # 访问 http://localhost:3000
-# 找到 vectorize_documents_job
+# 找到 doc_vectorize_job
 # 点击 "Launch Run"
 ```
 
@@ -161,7 +161,7 @@ config:
       config:
         force_revectorize: true
         limit: 10  # 先测试少量数据
-    vectorize_chunks_op:
+    doc_vectorize_op:
       config:
         force_revectorize: true
 ```

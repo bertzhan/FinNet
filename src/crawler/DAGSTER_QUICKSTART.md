@@ -38,11 +38,11 @@ dagster dev -m src.crawler.dagster_jobs
 
 ```bash
 # 通过命令行运行
-dagster job execute -j crawl_a_share_reports_job -m src.crawler.dagster_jobs
+dagster job execute -j crawl_hs_reports_job -m src.crawler.dagster_jobs
 
 # 带配置运行
 dagster job execute \
-  -j crawl_a_share_reports_job \
+  -j crawl_hs_reports_job \
   -m src.crawler.dagster_jobs \
   -c config.yaml
 ```
@@ -86,14 +86,14 @@ ops:
 ## 在 UI 中操作
 
 1. **启动 UI**：运行 `bash scripts/start_dagster.sh`
-2. **查看作业**：在主页点击 `crawl_a_share_reports_job`
+2. **查看作业**：在主页点击 `crawl_hs_reports_job`
 3. **手动触发**：点击右上角 "Launch Run" 按钮
 4. **查看结果**：在 "Runs" 标签页查看运行历史
 5. **启用调度**：在 "Schedules" 标签页启动 `daily_crawl_schedule`
 
 ## 作业说明
 
-### crawl_a_share_reports_job
+### crawl_hs_reports_job
 
 - **功能**：爬取A股季度报告并验证
 - **流程**：爬取 → 验证 → 存储

@@ -1,3 +1,4 @@
+
 #!/bin/bash
 # 实时监控 Parse Job 运行状态
 
@@ -9,7 +10,7 @@ echo ""
 # 查找正在运行的 parse job 进程
 echo "1. 查找正在运行的 Parse Job 进程..."
 echo "------------------------------------------"
-PARSE_PROCS=$(ps aux | grep -E "parse_pdf_job|parse_documents_op" | grep -v grep)
+PARSE_PROCS=$(ps aux | grep -E "doc_parse_job|doc_parse_op" | grep -v grep)
 
 if [ -z "$PARSE_PROCS" ]; then
     echo "❌ 未找到正在运行的 Parse Job 进程"

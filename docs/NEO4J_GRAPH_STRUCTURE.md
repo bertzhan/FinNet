@@ -42,7 +42,7 @@ Company (根节点)
 - `id`: UUID - 文档 ID（主键，唯一）
 - `stock_code`: String - 股票代码
 - `company_name`: String - 公司名称
-- `market`: String - 市场（如 "a_share"）
+- `market`: String - 市场（如 "hs"）
 - `doc_type`: String - 文档类型（如 "annual_reports"）
 - `year`: Integer - 年份
 - `quarter`: Integer - 季度（可选）

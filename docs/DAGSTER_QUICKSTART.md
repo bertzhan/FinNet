@@ -7,8 +7,8 @@
 **文件位置**: `src/processing/compute/dagster/jobs/crawl_jobs.py`
 
 **包含的 Jobs**:
-- ✅ `crawl_a_share_reports_job` - A股定期报告爬取作业
-- ✅ `crawl_a_share_ipo_job` - A股IPO招股说明书爬取作业
+- ✅ `crawl_hs_reports_job` - A股定期报告爬取作业
+- ✅ `crawl_hs_ipo_job` - A股IPO招股说明书爬取作业
 
 **包含的 Ops**:
 - ✅ `crawl_a_share_reports_op` - 爬取定期报告
@@ -59,12 +59,12 @@ dagster dev -m src.processing.compute.dagster
 
 在 Dagster UI 中，你应该能看到：
 
-- **`crawl_a_share_reports_job`** - A股定期报告爬取
-- **`crawl_a_share_ipo_job`** - A股IPO爬取
+- **`crawl_hs_reports_job`** - A股定期报告爬取
+- **`crawl_hs_ipo_job`** - A股IPO爬取
 
 ### 步骤3：手动触发任务
 
-1. 点击 Job 名称（如 `crawl_a_share_reports_job`）
+1. 点击 Job 名称（如 `crawl_hs_reports_job`）
 2. 点击右上角 **"Launch Run"**
 3. 配置参数（可选）：
    ```yaml

@@ -53,7 +53,7 @@ def get_security_profile_from_akshare(stock_code: str) -> Optional[Dict]:
                 try:
                     listed_date = _parse_date(str(listed_date_str))
                     if listed_date:
-                        result['listed_date'] = int(listed_date.timestamp() * 1000)
+                        result['listed_date'] = listed_date.date()
                 except Exception as e:
                     logger.debug(f"解析上市日期失败: {e}")
             
@@ -206,7 +206,7 @@ def get_company_profile_from_akshare(stock_code: str) -> Optional[Dict]:
             try:
                 established_date = _parse_date(str(established_date_str))
                 if established_date:
-                    result['established_date'] = int(established_date.timestamp() * 1000)
+                    result['established_date'] = established_date.date()
             except Exception as e:
                 logger.debug(f"解析公司成立日期失败: {e}")
         

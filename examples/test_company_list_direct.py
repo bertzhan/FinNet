@@ -40,10 +40,10 @@ def test_company_list_job_direct():
         print("✅ company_list_jobs 模块加载成功")
         print(f"   找到的组件:")
         
-        if hasattr(module, 'update_listed_companies_op'):
-            print(f"     - update_listed_companies_op")
-        if hasattr(module, 'update_listed_companies_job'):
-            print(f"     - update_listed_companies_job")
+        if hasattr(module, 'get_hs_companies_op'):
+            print(f"     - get_hs_companies_op")
+        if hasattr(module, 'get_hs_companies_job'):
+            print(f"     - get_hs_companies_job")
         if hasattr(module, 'daily_update_companies_schedule'):
             print(f"     - daily_update_companies_schedule")
         if hasattr(module, 'manual_trigger_companies_sensor'):
@@ -107,14 +107,14 @@ def test_op_functionality():
                 print("   ✅ 数据库连接成功")
                 
                 # 检查表是否存在
-                if pg_client.table_exists('listed_companies'):
-                    print("   ✅ listed_companies 表存在")
+                if pg_client.table_exists('hs_listed_companies'):
+                    print("   ✅ hs_listed_companies 表存在")
                     
                     # 获取当前记录数
-                    count = pg_client.get_table_count('listed_companies')
+                    count = pg_client.get_table_count('hs_listed_companies')
                     print(f"   当前记录数: {count} 家")
                 else:
-                    print("   ⚠️  listed_companies 表不存在")
+                    print("   ⚠️  hs_listed_companies 表不存在")
                     print("   提示: 运行 python scripts/init_database.py")
             else:
                 print("   ⚠️  数据库连接失败（可能是数据库未启动）")

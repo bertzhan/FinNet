@@ -80,7 +80,7 @@ class ParsedDocument(Base):
 
 **路径格式示例**:
 ```
-silver/text_cleaned/a_share/quarterly_reports/2023/Q3/000001/document_content_list.json
+silver/text_cleaned/hs/quarterly_reports/2023/Q3/000001/document_content_list.json
 ```
 
 **文件内容结构**:
@@ -123,7 +123,7 @@ silver/text_cleaned/a_share/quarterly_reports/2023/Q3/000001/document_content_li
 
 **路径格式示例**:
 ```
-silver/text_cleaned/a_share/quarterly_reports/2023/Q3/000001/document.md
+silver/text_cleaned/hs/quarterly_reports/2023/Q3/000001/document.md
 ```
 
 **何时为 NULL**:
@@ -141,7 +141,7 @@ silver/text_cleaned/a_share/quarterly_reports/2023/Q3/000001/document.md
 
 **路径格式示例**:
 ```
-silver/text_cleaned/a_share/quarterly_reports/2023/Q3/000001/images/
+silver/text_cleaned/hs/quarterly_reports/2023/Q3/000001/images/
 ```
 
 **文件夹结构示例**:
@@ -185,13 +185,13 @@ base_path = pm.get_silver_path(
 
 # 2. 生成三个路径
 content_json_path = base_path
-# 例如: silver/text_cleaned/a_share/quarterly_reports/2023/Q3/000001/document_content_list.json
+# 例如: silver/text_cleaned/hs/quarterly_reports/2023/Q3/000001/document_content_list.json
 
 markdown_path = base_path.replace('document_content_list.json', 'document.md')
-# 例如: silver/text_cleaned/a_share/quarterly_reports/2023/Q3/000001/000001_2023_Q3.md
+# 例如: silver/text_cleaned/hs/quarterly_reports/2023/Q3/000001/000001_2023_Q3.md
 
 image_folder_path = base_path.rsplit('/', 1)[0] + '/images/'
-# 例如: silver/text_cleaned/a_share/quarterly_reports/2023/Q3/000001/images/
+# 例如: silver/text_cleaned/hs/quarterly_reports/2023/Q3/000001/images/
 ```
 
 ---
@@ -206,9 +206,9 @@ parsed_doc = ParsedDocument(
     parse_task_id=456,
     
     # 路径信息
-    content_json_path="silver/text_cleaned/a_share/quarterly_reports/2023/Q3/000001/document_content_list.json",
-    markdown_path="silver/text_cleaned/a_share/quarterly_reports/2023/Q3/000001/document.md",
-    image_folder_path="silver/text_cleaned/a_share/quarterly_reports/2023/Q3/000001/images/",
+    content_json_path="silver/text_cleaned/hs/quarterly_reports/2023/Q3/000001/document_content_list.json",
+    markdown_path="silver/text_cleaned/hs/quarterly_reports/2023/Q3/000001/document.md",
+    image_folder_path="silver/text_cleaned/hs/quarterly_reports/2023/Q3/000001/images/",
     
     # 哈希值
     content_json_hash="a1b2c3d4e5f6...",
@@ -239,7 +239,7 @@ parsed_doc = ParsedDocument(
     parse_task_id=457,
     
     # 路径信息（只有 JSON）
-    content_json_path="silver/text_cleaned/a_share/ipo_prospectus/000001/document_content_list.json",
+    content_json_path="silver/text_cleaned/hs/ipo_prospectus/000001/document_content_list.json",
     markdown_path=None,           # 无 Markdown 文件
     image_folder_path=None,       # 无图片文件夹
     

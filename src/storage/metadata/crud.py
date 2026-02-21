@@ -6,15 +6,15 @@ CRUD 操作辅助类
 
 import uuid
 from typing import Optional, List, Dict, Any, Union
-from datetime import datetime
+from datetime import datetime, date
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, desc, func, String
+from sqlalchemy import and_, or_, desc, func, String, text
 
 from src.storage.metadata.models import (
     Document, DocumentChunk, CrawlTask, ParseTask,
     ValidationLog, QuarantineRecord, EmbeddingTask,
     ParsedDocument, Image, ImageAnnotation, ListedCompany,
-    HKListedCompany
+    HKListedCompany, USListedCompany
 )
 from src.common.constants import DocumentStatus
 from src.common.logger import get_logger
@@ -80,7 +80,7 @@ def create_document(
     Example:
         >>> with get_postgres_client().get_session() as session:
         ...     doc = create_document(
-        ...         session, "000001", "平安银行", "a_share",
+        ...         session, "000001", "平安银行", "hs_stock",
         ...         "quarterly_reports", 2023, 3,
         ...         minio_object_path="bronze/a_share/quarterly_reports/2023/Q3/000001/report.pdf",
         ...         source_url="https://www.cninfo.com.cn/...",
@@ -1239,7 +1239,6 @@ def upsert_listed_company(
     session: Session,
     code: str,
     name: str,
-    # stock_individual_basic_info_xq 返回的所有字段
     org_id: Optional[str] = None,
     org_name_cn: Optional[str] = None,
     org_short_name_cn: Optional[str] = None,
@@ -1249,74 +1248,94 @@ def upsert_listed_company(
     main_operation_business: Optional[str] = None,
     operating_scope: Optional[str] = None,
     org_cn_introduction: Optional[str] = None,
-    telephone: Optional[str] = None,
-    postcode: Optional[str] = None,
-    fax: Optional[str] = None,
-    email: Optional[str] = None,
-    org_website: Optional[str] = None,
-    reg_address_cn: Optional[str] = None,
-    reg_address_en: Optional[str] = None,
-    office_address_cn: Optional[str] = None,
-    office_address_en: Optional[str] = None,
-    legal_representative: Optional[str] = None,
-    general_manager: Optional[str] = None,
-    secretary: Optional[str] = None,
-    chairman: Optional[str] = None,
-    executives_nums: Optional[int] = None,
-    district_encode: Optional[str] = None,
     provincial_name: Optional[str] = None,
-    actual_controller: Optional[str] = None,
-    classi_name: Optional[str] = None,
-    established_date: Optional[int] = None,
-    listed_date: Optional[int] = None,
-    reg_asset: Optional[float] = None,
+    established_date: Optional[Union[int, date, str]] = None,
+    listed_date: Optional[Union[int, date, str]] = None,
     staff_num: Optional[int] = None,
-    actual_issue_vol: Optional[float] = None,
-    issue_price: Optional[float] = None,
-    actual_rc_net_amt: Optional[float] = None,
-    pe_after_issuing: Optional[float] = None,
-    online_success_rate_of_issue: Optional[float] = None,
-    currency_encode: Optional[str] = None,
-    currency: Optional[str] = None,
-    affiliate_industry: Optional[Dict[str, Any]] = None,
+    industry_code: Optional[str] = None,
+    industry: Optional[Union[str, Dict[str, Any]]] = None,
 ) -> ListedCompany:
     """
     插入或更新上市公司信息
     
-    注意：code 是主键，如果已存在会自动更新，不存在则创建
+    注意：org_id 是主键，若未提供则用 code 作为 org_id
     数据来源：akshare stock_individual_basic_info_xq 接口
     
     Args:
         session: 数据库会话
-        code: 股票代码（主键）
+        code: 股票代码
         name: 公司简称（如：平安银行）
+        org_id: 机构ID（主键，未提供时用 code）
         ... 其他所有字段（来自 stock_individual_basic_info_xq）
         
     Returns:
         ListedCompany 对象
-        
-    Example:
-        >>> with get_postgres_client().get_session() as session:
-        ...     company = upsert_listed_company(
-        ...         session, "000001", "平安银行",
-        ...         org_name_cn="平安银行股份有限公司"
-        ...     )
-        ...     print(company.code)
     """
     # 清理 name 字段：去除所有空格（包括中间的空格）
     if name:
         name = name.replace(" ", "").replace("　", "")  # 去除半角和全角空格
     
-    # 使用主键查询（更高效）
-    company = session.get(ListedCompany, code)
+    # 按 code 查找；若未找到则按 org_id=code 查找（clear_before_update 后 code 可能为 None）
+    company = session.query(ListedCompany).filter(ListedCompany.code == code).first()
+    if not company:
+        company = session.get(ListedCompany, code)
     
     # 准备更新数据字典（只包含非 None 的值）
     update_data = {
+        'code': code,
         'name': name,
         'updated_at': datetime.now()
     }
     
-    # 添加所有新字段
+    # industry 兼容：若为 dict（旧格式 {"ind_code","ind_name"}），提取为 industry_code、industry
+    _industry_code = industry_code
+    _industry = industry
+    if isinstance(industry, dict):
+        _industry_code = industry.get('ind_code') or _industry_code
+        _industry = industry.get('ind_name') or _industry
+
+    # established_date/listed_date：支持 int(毫秒/秒时间戳)、date、str(日期字符串)，自动转换为 date
+    def _to_date(v):
+        if v is None:
+            return None
+        if isinstance(v, date):
+            return v
+        if hasattr(v, 'date') and callable(getattr(v, 'date')):  # datetime, pandas.Timestamp
+            try:
+                return v.date()
+            except (ValueError, TypeError):
+                return None
+        if isinstance(v, (int, float)):
+            if isinstance(v, float) and (v != v or v == float('inf')):
+                return None
+            try:
+                ts = v / 1000.0  # 雪球 API 返回毫秒时间戳
+                return datetime.utcfromtimestamp(ts).date() if ts else None
+            except (ValueError, OSError):
+                return None
+        if isinstance(v, str):
+            s = v.strip().split(' ')[0]
+            if not s or s.lower() in ('none', 'nan', ''):
+                return None
+            for fmt in ('%Y-%m-%d', '%Y/%m/%d', '%Y%m%d', '%d/%m/%Y', '%Y年%m月%d日', '%d-%m-%Y'):
+                try:
+                    return datetime.strptime(s, fmt).date()
+                except ValueError:
+                    continue
+            # 雪球 API 可能返回时间戳字符串（如 "943027200000" 毫秒）
+            try:
+                ts = float(s)
+                if ts > 1e11:
+                    ts = ts / 1000.0
+                if 1e8 < ts < 2e10:
+                    return datetime.utcfromtimestamp(ts).date()
+            except (ValueError, OSError):
+                pass
+        return None
+
+    _established_date = _to_date(established_date)
+    _listed_date = _to_date(listed_date)
+
     field_mapping = {
         'org_id': org_id,
         'org_name_cn': org_name_cn,
@@ -1327,41 +1346,17 @@ def upsert_listed_company(
         'main_operation_business': main_operation_business,
         'operating_scope': operating_scope,
         'org_cn_introduction': org_cn_introduction,
-        'telephone': telephone,
-        'postcode': postcode,
-        'fax': fax,
-        'email': email,
-        'org_website': org_website,
-        'reg_address_cn': reg_address_cn,
-        'reg_address_en': reg_address_en,
-        'office_address_cn': office_address_cn,
-        'office_address_en': office_address_en,
-        'legal_representative': legal_representative,
-        'general_manager': general_manager,
-        'secretary': secretary,
-        'chairman': chairman,
-        'executives_nums': executives_nums,
-        'district_encode': district_encode,
         'provincial_name': provincial_name,
-        'actual_controller': actual_controller,
-        'classi_name': classi_name,
-        'established_date': established_date,
-        'listed_date': listed_date,
-        'reg_asset': reg_asset,
+        'established_date': _established_date,
+        'listed_date': _listed_date,
         'staff_num': staff_num,
-        'actual_issue_vol': actual_issue_vol,
-        'issue_price': issue_price,
-        'actual_rc_net_amt': actual_rc_net_amt,
-        'pe_after_issuing': pe_after_issuing,
-        'online_success_rate_of_issue': online_success_rate_of_issue,
-        'currency_encode': currency_encode,
-        'currency': currency,
-        'affiliate_industry': affiliate_industry,
+        'industry_code': _industry_code,
+        'industry': _industry,
     }
     
-    # 只添加非 None 的字段
+    # 只添加非 None 的字段（跳过 org_id，已用于 PK）
     for key, value in field_mapping.items():
-        if value is not None:
+        if key != 'org_id' and value is not None:
             update_data[key] = value
     
     if company:
@@ -1370,8 +1365,8 @@ def upsert_listed_company(
             setattr(company, key, value)
         logger.debug(f"更新上市公司: {code} - {name}")
     else:
-        # 创建新记录
-        company = ListedCompany(code=code, **update_data)
+        # 新记录：org_id 用 code（主键）
+        company = ListedCompany(org_id=code, **update_data)
         session.add(company)
         logger.debug(f"新增上市公司: {code} - {name}")
     
@@ -1396,6 +1391,23 @@ def get_listed_company_by_code(
     return session.query(ListedCompany).filter(ListedCompany.code == code).first()
 
 
+def get_listed_company_by_org_id(
+    session: Session,
+    org_id: str
+) -> Optional[ListedCompany]:
+    """
+    根据 org_id 获取上市公司信息
+    
+    Args:
+        session: 数据库会话
+        org_id: 机构ID（主键）
+        
+    Returns:
+        ListedCompany 对象，如果不存在则返回 None
+    """
+    return session.get(ListedCompany, org_id)
+
+
 def get_all_listed_companies(
     session: Session,
     limit: Optional[int] = None,
@@ -1416,14 +1428,12 @@ def get_all_listed_companies(
     """
     query = session.query(ListedCompany)
 
-    # 按行业过滤（affiliate_industry 是 JSON 字段，格式: {"ind_code": "...", "ind_name": "..."}）
+    # 按行业过滤（industry 为行业名称字符串）
     if industry:
-        # 使用 PostgreSQL JSON 操作符 ->> 提取 ind_name 字段，然后用 LIKE 查询
-        # affiliate_industry->>'ind_name' 提取 JSON 中的 ind_name 字段的文本值
         from sqlalchemy import text
         query = query.filter(
-            text(f"affiliate_industry->>'ind_name' LIKE :industry")
-        ).params(industry=f'%{industry}%')
+            text("industry LIKE :industry_filter")
+        ).params(industry_filter=f'%{industry}%')
 
     query = query.order_by(ListedCompany.code)
     if offset:
@@ -1431,6 +1441,38 @@ def get_all_listed_companies(
     if limit:
         query = query.limit(limit)
     return query.all()
+
+
+def clear_listed_companies_except_org_id(session: Session) -> int:
+    """
+    清空 hs_listed_companies 表中除 org_id 外的所有字段（含 code）
+    org_id 为主键，用于 clear_before_update=True 时保留以便后续增量更新
+
+    使用原生 SQL UPDATE 确保清空生效（避免 ORM 变更检测遗漏）
+    """
+    result = session.execute(
+        text("""
+            UPDATE hs_listed_companies SET
+                code = NULL,
+                name = '',
+                org_name_cn = NULL,
+                org_short_name_cn = NULL,
+                org_name_en = NULL,
+                org_short_name_en = NULL,
+                pre_name_cn = NULL,
+                main_operation_business = NULL,
+                operating_scope = NULL,
+                org_cn_introduction = NULL,
+                provincial_name = NULL,
+                established_date = NULL,
+                listed_date = NULL,
+                staff_num = NULL,
+                industry_code = NULL,
+                industry = NULL,
+                updated_at = NOW()
+        """)
+    )
+    return result.rowcount
 
 
 def _normalize_company_name(name: str) -> str:
@@ -1650,38 +1692,29 @@ def upsert_hk_listed_company(
     name: str,
     org_id: Optional[int] = None,
     category: Optional[str] = None,
-    sub_category: Optional[str] = None,
-    **kwargs  # 支持其他字段（org_name_cn, telephone, etc.）
+    **kwargs  # 支持其他字段（org_name_cn, org_name_en, org_cn_introduction, etc.）
 ) -> HKListedCompany:
     """
     插入或更新港股上市公司信息
     
-    注意：code 是主键，如果已存在会自动更新，不存在则创建
+    注意：org_id 是主键，若未提供则用 code 的整数值（如 00001 -> 1）
     
     Args:
         session: 数据库会话
-        code: 股票代码（主键，如：00001）
+        code: 股票代码（如：00001）
         name: 公司名称（中文繁体）
-        org_id: 披露易 orgId（用于查询报告）
-        category: 分类
-        sub_category: 次分类
-        **kwargs: 其他字段（org_name_cn, org_name_en, telephone, email, etc.）
+        org_id: 披露易 orgId（主键，未提供时用 code::int）
+        category: 板块分类（如：主板、創業板）
+        **kwargs: 其他字段（org_name_cn, org_name_en, org_cn_introduction, established_date, etc.）
         
     Returns:
         HKListedCompany 对象
-        
-    Example:
-        >>> with get_postgres_client().get_session() as session:
-        ...     company = upsert_hk_listed_company(
-        ...         session, "00001", "長和",
-        ...         org_id=1,
-        ...         org_name_cn="長江和記實業有限公司",
-        ...         telephone="+852 2128 8888"
-        ...     )
-        ...     print(company.code)
     """
+    # org_id 为主键，未提供时用 code 的整数值
+    pk_value = org_id if org_id is not None else int(code)
+    
     # 使用主键查询
-    company = session.get(HKListedCompany, code)
+    company = session.get(HKListedCompany, pk_value)
     
     # 繁简转换辅助函数
     def convert_to_simplified(value):
@@ -1695,9 +1728,8 @@ def upsert_hk_listed_company(
     
     # 需要进行繁简转换的文本字段
     text_fields_to_convert = {
-        'name', 'org_name_cn', 'reg_location', 'reg_address', 
-        'office_address_cn', 'chairman', 'secretary', 'industry',
-        'category', 'sub_category', 'org_cn_introduction', 'security_type'
+        'name', 'org_name_cn', 'org_name_en', 'industry',
+        'category', 'org_cn_introduction'
     }
     
     # 转换 name 字段
@@ -1705,15 +1737,14 @@ def upsert_hk_listed_company(
     
     # 准备更新数据字典
     update_data = {
+        'code': code,
         'name': name,
         'updated_at': datetime.now()
     }
     
-    # 添加可选字段
+    # 添加可选字段（不含 org_id，已用于 PK）
     optional_fields = {
-        'org_id': org_id,
         'category': convert_to_simplified(category),
-        'sub_category': convert_to_simplified(sub_category),
     }
     
     # 添加 kwargs 中的其他字段，并对文本字段进行繁简转换
@@ -1732,13 +1763,15 @@ def upsert_hk_listed_company(
         # 我们依赖 SQLAlchemy 来验证字段名
     
     if company:
-        # 更新现有记录
+        # 更新现有记录（不更新 org_id）
         for key, value in update_data.items():
-            setattr(company, key, value)
+            if key != 'org_id':
+                setattr(company, key, value)
         logger.debug(f"更新港股公司: {code} - {name}")
     else:
         # 创建新记录
-        company = HKListedCompany(code=code, **update_data)
+        update_data['org_id'] = pk_value
+        company = HKListedCompany(**update_data)
         session.add(company)
         logger.debug(f"新增港股公司: {code} - {name}")
     
@@ -1796,6 +1829,61 @@ def get_all_hk_listed_companies(
     return query.all()
 
 
+def clear_hk_listed_companies_except_org_id(session: Session) -> int:
+    """
+    清空 hk_listed_companies 表中除 org_id 外的所有字段（含 code）
+    org_id 为主键，用于 clear_before_update=True 时保留以便后续增量更新
+
+    使用原生 SQL UPDATE 确保清空生效（避免 ORM 变更检测遗漏）
+    """
+    result = session.execute(
+        text("""
+            UPDATE hk_listed_companies SET
+                code = NULL,
+                name = '',
+                org_name_cn = NULL,
+                org_name_en = NULL,
+                category = NULL,
+                org_cn_introduction = NULL,
+                established_date = NULL,
+                listed_date = NULL,
+                staff_num = NULL,
+                fiscal_year_end = NULL,
+                industry = NULL,
+                is_sh_hk_connect = NULL,
+                is_sz_hk_connect = NULL,
+                updated_at = NOW()
+        """)
+    )
+    return result.rowcount
+
+
+def clear_us_listed_companies_except_org_id(session: Session) -> int:
+    """
+    清空 us_listed_companies 表中除 org_id 外的所有字段（含 code）
+    org_id 为主键，用于 clear_before_update=True 时保留以便后续增量更新
+
+    使用原生 SQL UPDATE 确保清空生效（避免 ORM 变更检测遗漏）
+    """
+    result = session.execute(
+        text("""
+            UPDATE us_listed_companies SET
+                code = NULL,
+                name = '',
+                tickers = NULL,
+                entity_type = NULL,
+                sic = NULL,
+                industry = NULL,
+                exchanges = NULL,
+                fiscal_year_end = NULL,
+                state_of_incorporation = NULL,
+                state_of_incorporation_description = NULL,
+                updated_at = NOW()
+        """)
+    )
+    return result.rowcount
+
+
 def update_hk_company_org_id(
     session: Session,
     code: str,
@@ -1837,9 +1925,8 @@ def batch_upsert_hk_listed_companies(
             - code: 股票代码（必需）
             - name: 公司名称（必需）
             - org_id: 披露易 orgId（可选，兼容 stock_id）
-            - category: 分类（可选）
-            - sub_category: 次分类（可选）
-            - 其他字段（org_name_cn, org_name_en, telephone, etc.）
+            - category: 板块分类（可选，如：主板、創業板）
+            - 其他字段（org_name_cn, org_name_en, org_cn_introduction, etc.）
             
     Returns:
         成功处理的公司数量
@@ -1858,18 +1945,13 @@ def batch_upsert_hk_listed_companies(
         kwargs = {
             'org_id': org_id,
             'category': company_data.get('category'),
-            'sub_category': company_data.get('sub_category'),
         }
         
-        # 添加其他字段（akshare 获取的详细信息）
-        # 注意：只添加存在的键，值可以是 None、空字符串、False 等
+        # 添加其他字段
         enriched_fields = []
-        for key in ['org_name_cn', 'org_name_en', 'reg_location', 'reg_address',
-                    'office_address_cn', 'telephone', 'fax', 'email', 'org_website',
-                    'org_cn_introduction', 'chairman', 'secretary', 'established_date',
-                    'listed_date', 'staff_num', 'industry', 'fiscal_year_end',
-                    'security_type', 'issue_price', 'issue_amount', 'lot_size',
-                    'par_value', 'isin', 'is_sh_hk_connect', 'is_sz_hk_connect']:
+        for key in ['org_name_cn', 'org_name_en', 'org_cn_introduction',
+                    'established_date', 'listed_date', 'staff_num', 'industry', 'fiscal_year_end',
+                    'is_sh_hk_connect', 'is_sz_hk_connect']:
             if key in company_data:
                 value = company_data[key]
                 # 只添加非 None 的值（None 表示字段不存在或未获取到）

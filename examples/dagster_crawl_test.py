@@ -15,21 +15,21 @@ sys.path.insert(0, str(project_root))
 
 from dagster import execute_job, RunConfig
 from src.processing.compute.dagster.jobs import (
-    crawl_a_share_reports_job,
-    crawl_a_share_ipo_job,
+    crawl_hs_reports_job,
+    crawl_hs_ipo_job,
 )
 
 
 def test_reports_job():
     """测试定期报告爬取Job"""
     print("=" * 60)
-    print("测试: crawl_a_share_reports_job")
+    print("测试: crawl_hs_reports_job")
     print("=" * 60)
     
     # 配置：只爬取少量公司进行测试
     config = RunConfig(
         ops={
-            "crawl_a_share_reports_op": {
+            "crawl_hs_reports_op": {
                 "config": {
                     "company_list_path": str(project_root / "src" / "crawler" / "zh" / "company_list.csv"),
                     "output_root": str(project_root / "downloads" / "test"),
@@ -45,7 +45,7 @@ def test_reports_job():
     )
     
     try:
-        result = execute_job(crawl_a_share_reports_job, run_config=config)
+        result = execute_job(crawl_hs_reports_job, run_config=config)
         print(f"\n✅ Job 执行完成")
         print(f"   成功: {result.success}")
         if result.success:
@@ -63,12 +63,12 @@ def test_reports_job():
 def test_ipo_job():
     """测试IPO爬取Job"""
     print("\n" + "=" * 60)
-    print("测试: crawl_a_share_ipo_job")
+    print("测试: crawl_hs_ipo_job")
     print("=" * 60)
     
     config = RunConfig(
         ops={
-            "crawl_a_share_ipo_op": {
+            "crawl_hs_ipo_op": {
                 "config": {
                     "company_list_path": str(project_root / "src" / "crawler" / "zh" / "company_list.csv"),
                     "output_root": str(project_root / "downloads" / "test_ipo"),
@@ -81,7 +81,7 @@ def test_ipo_job():
     )
     
     try:
-        result = execute_job(crawl_a_share_ipo_job, run_config=config)
+        result = execute_job(crawl_hs_ipo_job, run_config=config)
         print(f"\n✅ Job 执行完成")
         print(f"   成功: {result.success}")
         if result.success:

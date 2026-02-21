@@ -97,7 +97,7 @@ def check_elasticsearch():
         if doc_count == 0:
             print(f"\n⚠️  索引为空，需要索引数据")
             print(f"   运行以下命令索引数据:")
-            print(f"     dagster job execute -j elasticsearch_index_job")
+            print(f"     dagster job execute -j doc_index_job")
             print(f"   或使用 Python:")
             print(f"     PYTHONPATH={project_root} python examples/test_elasticsearch_job_simple.py")
             return False

@@ -13,13 +13,13 @@ project_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(project_root))
 
 from dagster import RunConfig
-from src.processing.compute.dagster.jobs import parse_pdf_job
+from src.processing.compute.dagster.jobs import doc_parse_job
 
 
 def test_parse_job():
     """测试完整的 PDF 解析 Job"""
     print("=" * 80)
-    print("测试: parse_pdf_job (完整流程)")
+    print("测试: doc_parse_job (完整流程)")
     print("=" * 80)
     print()
     
@@ -35,7 +35,7 @@ def test_parse_job():
                     "doc_type": "ipo_prospectus",  # 只选择 IPO 文档（更可能存在于 MinIO）
                 }
             },
-            "parse_documents_op": {
+            "doc_parse_op": {
                 "config": {
                     "batch_size": 2,
                     "parser_type": "mineru",
@@ -59,7 +59,7 @@ def test_parse_job():
         print()
         
         # 使用 execute_in_process 方法执行 job
-        result = parse_pdf_job.execute_in_process(run_config=config)
+        result = doc_parse_job.execute_in_process(run_config=config)
         
         print()
         print("=" * 80)
@@ -73,7 +73,7 @@ def test_parse_job():
             # 获取各个 op 的输出
             try:
                 scan_output = result.output_for_node("scan_pending_documents_op")
-                parse_output = result.output_for_node("parse_documents_op")
+                parse_output = result.output_for_node("doc_parse_op")
                 validate_output = result.output_for_node("validate_parse_results_op")
                 
                 print(f"\n  1. scan_pending_documents_op:")
@@ -81,7 +81,7 @@ def test_parse_job():
                     print(f"     - 总文档数: {scan_output.get('total_documents', 0)}")
                     print(f"     - 批次数: {scan_output.get('total_batches', 0)}")
                 
-                print(f"\n  2. parse_documents_op:")
+                print(f"\n  2. doc_parse_op:")
                 if isinstance(parse_output, dict):
                     print(f"     - 成功解析: {parse_output.get('parsed_count', 0)}")
                     print(f"     - 解析失败: {parse_output.get('failed_count', 0)}")

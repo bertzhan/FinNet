@@ -244,7 +244,7 @@ def main():
         print("  python tests/test_vectorize_job.py")
         print()
         print("或者在 Dagster UI 中运行向量化作业：")
-        print("  - 作业名称: vectorize_documents_job")
+        print("  - 作业名称: doc_vectorize_job")
         print("  - 传感器: manual_trigger_vectorize_sensor")
         print()
 

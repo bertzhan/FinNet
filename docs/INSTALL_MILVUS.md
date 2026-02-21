@@ -134,4 +134,4 @@ conda activate finnet && pip install pymilvus && python -c "import pymilvus; pri
    ```
 
 3. **在 Dagster 中运行向量化作业**：
-   - 运行 `vectorize_documents_job`
+   - 运行 `doc_vectorize_job`

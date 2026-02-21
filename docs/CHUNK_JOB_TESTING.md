@@ -13,7 +13,7 @@
    打开浏览器访问：http://localhost:3000
 
 3. **查找分块作业**：
-   - 在 Jobs 列表中查找 `chunk_documents_job` 或 `chunk_documents_batch_job`
+   - 在 Jobs 列表中查找 `doc_chunk_job` 或 `doc_chunk_batch_job`
    - 点击作业名称进入详情页
 
 4. **手动触发**：
@@ -25,9 +25,9 @@
          config:
            batch_size: 2
            limit: 5
-           # market: "a_share"  # 可选：过滤市场
+           # market: "hs"  # 可选：过滤市场
            # doc_type: "quarterly_report"  # 可选：过滤文档类型
-       chunk_documents_op:
+       doc_chunk_op:
          config:
            force_rechunk: false  # 是否强制重新分块
      ```
@@ -46,7 +46,7 @@ export PYTHONPATH=".:$PYTHONPATH"
 
 # 执行分块作业
 dagster job execute \
-  -j chunk_documents_job \
+  -j doc_chunk_job \
   -m src.processing.compute.dagster \
   --config '{
     "ops": {
@@ -56,7 +56,7 @@ dagster job execute \
           "limit": 5
         }
       },
-      "chunk_documents_op": {
+      "doc_chunk_op": {
         "config": {
           "force_rechunk": false
         }
@@ -104,9 +104,9 @@ else:
 分块作业需要已解析的文档（有 markdown_path）。如果没有，先运行解析作业：
 
 ```bash
-# 通过 Dagster UI 运行 parse_pdf_job
+# 通过 Dagster UI 运行 doc_parse_job
 # 或通过命令行：
-dagster job execute -j parse_pdf_job -m src.processing.compute.dagster
+dagster job execute -j doc_parse_job -m src.processing.compute.dagster
 ```
 
 ### 2. 检查数据库连接

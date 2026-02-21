@@ -23,12 +23,12 @@ def main():
 
         # 2. 查询 AAPL（大写，与存储一致）
         r = session.execute(
-            text("SELECT code, name, cik FROM us_listed_companies WHERE code = :code"),
+            text("SELECT code, name, org_id FROM us_listed_companies WHERE code = :code"),
             {"code": "AAPL"}
         )
         row = r.fetchone()
         if row:
-            print(f"✅ AAPL 存在: code={row[0]}, name={row[1]}, cik={row[2]}")
+            print(f"✅ AAPL 存在: code={row[0]}, name={row[1]}, org_id={row[2]}")
         else:
             print("❌ 未找到 code='AAPL'")
 

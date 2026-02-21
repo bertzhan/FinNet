@@ -1,7 +1,7 @@
-# parse_pdf_job 配置：强制重新解析光伏设备公司的文档
+# parse_documents_job 配置：强制重新解析光伏设备公司的文档
 #
 # 使用方法：
-# 1. 在 Dagster UI 中打开 parse_pdf_job
+# 1. 在 Dagster UI 中打开 parse_documents_job
 # 2. 点击 "Launchpad" 标签
 # 3. 将此配置粘贴到配置编辑器中
 # 4. 点击 "Launch Run"

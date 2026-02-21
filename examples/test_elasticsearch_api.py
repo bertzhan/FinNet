@@ -82,8 +82,8 @@ def check_index_data() -> bool:
                 return True
             else:
                 print(f"⚠ 索引中没有数据")
-                print(f"  提示: 需要先运行 elasticsearch_index_job 来索引数据")
-                print(f"  命令: dagster job execute -j elasticsearch_index_job")
+                print(f"  提示: 需要先运行 doc_index_job 来索引数据")
+                print(f"  命令: dagster job execute -j doc_index_job")
                 return False
         else:
             print(f"⚠ 无法检查索引数据: HTTP {response.status_code}")
@@ -424,7 +424,7 @@ def main():
     has_data = check_index_data()
     if not has_data:
         print("\n⚠️  索引中没有数据，测试可能会返回空结果")
-        print("  建议先运行: dagster job execute -j elasticsearch_index_job")
+        print("  建议先运行: dagster job execute -j doc_index_job")
         print()
     
     # 解析命令行参数

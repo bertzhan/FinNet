@@ -156,7 +156,7 @@
   - 过滤搜索
 
 #### 6.2 Dagster 作业集成
-- ✅ 实现 `elasticsearch_index_job` - Elasticsearch 索引作业
+- ✅ 实现 `doc_index_job` - Elasticsearch 索引作业
 - ✅ 实现定时调度：
   - `hourly_elasticsearch_schedule` - 每小时执行一次
   - `daily_elasticsearch_schedule` - 每天执行一次
@@ -178,7 +178,7 @@
   - 批量操作
 
 #### 7.2 图构建作业
-- ✅ 实现 `build_graph_job` - 图构建作业
+- ✅ 实现 `doc_toc_graph_job` - 图构建作业
 - ✅ 实现定时调度：
   - `hourly_graph_schedule` - 每小时执行一次
   - `daily_graph_schedule` - 每天执行一次
@@ -198,7 +198,7 @@
 **完成时间**: 2025-01-21
 
 #### 8.1 上市公司列表作业
-- ✅ 实现 `update_listed_companies_job` - 上市公司列表更新作业
+- ✅ 实现 `get_hs_companies_job` - 上市公司列表更新作业
 - ✅ 实现定时调度：
   - `daily_update_companies_schedule` - 每天执行一次
 - ✅ 实现手动传感器：`manual_trigger_companies_sensor`
@@ -275,14 +275,14 @@
 ### 3. Dagster 统一调度 ✅
 
 **已实现作业（8个）**:
-- ✅ `crawl_a_share_reports_job` - A股定期报告爬取
-- ✅ `crawl_a_share_ipo_job` - A股IPO招股书爬取
-- ✅ `parse_pdf_job` - PDF 解析作业
-- ✅ `chunk_documents_job` - 文本分块作业
-- ✅ `vectorize_documents_job` - 向量化作业
-- ✅ `elasticsearch_index_job` - Elasticsearch 索引作业
-- ✅ `build_graph_job` - 图构建作业
-- ✅ `update_listed_companies_job` - 上市公司列表更新作业
+- ✅ `crawl_hs_reports_job` - A股定期报告爬取
+- ✅ `crawl_hs_ipo_job` - A股IPO招股书爬取
+- ✅ `doc_parse_job` - PDF 解析作业
+- ✅ `doc_chunk_job` - 文本分块作业
+- ✅ `doc_vectorize_job` - 向量化作业
+- ✅ `doc_index_job` - Elasticsearch 索引作业
+- ✅ `doc_toc_graph_job` - 图构建作业
+- ✅ `get_hs_companies_job` - 上市公司列表更新作业
 
 **已实现调度（13个）**:
 - ✅ 爬取调度（每日）

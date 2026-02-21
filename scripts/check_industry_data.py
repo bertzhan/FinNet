@@ -31,7 +31,7 @@ def check_industry_data():
         print(f"\n找到 {len(documents)} 个文档，涉及 {len(stock_codes)} 家公司")
         print(f"公司代码: {sorted(stock_codes)[:10]}")
 
-        # 2. 查看这些公司在 ListedCompany 表中的 affiliate_industry 字段
+        # 2. 查看这些公司在 ListedCompany 表中的 industry 字段
         print("\n" + "=" * 60)
         print("2. 查看 ListedCompany 表中的行业信息")
         print("=" * 60)
@@ -44,16 +44,8 @@ def check_industry_data():
             if company:
                 print(f"\n公司代码: {stock_code}")
                 print(f"公司名称: {company.name}")
-                print(f"affiliate_industry 类型: {type(company.affiliate_industry)}")
-                print(f"affiliate_industry 值: {company.affiliate_industry}")
-
-                if company.affiliate_industry:
-                    if isinstance(company.affiliate_industry, dict):
-                        print(f"  字典键: {list(company.affiliate_industry.keys())}")
-                    elif isinstance(company.affiliate_industry, list):
-                        print(f"  列表长度: {len(company.affiliate_industry)}")
-                        if company.affiliate_industry:
-                            print(f"  第一个元素: {company.affiliate_industry[0]}")
+                print(f"industry_code: {company.industry_code}")
+                print(f"industry: {company.industry}")
             else:
                 print(f"\n⚠️ 公司代码 {stock_code} 在 ListedCompany 表中不存在")
 
@@ -70,7 +62,7 @@ def check_industry_data():
             # 方式1: LIKE 查询（当前使用的方式）
             try:
                 companies_like = session.query(ListedCompany).filter(
-                    ListedCompany.affiliate_industry.cast(String).like(f'%{keyword}%')
+                    ListedCompany.industry.like(f'%{keyword}%')
                 ).limit(5).all()
                 print(f"  LIKE 查询: 找到 {len(companies_like)} 家公司")
                 if companies_like:
@@ -79,12 +71,11 @@ def check_industry_data():
             except Exception as e:
                 print(f"  LIKE 查询失败: {e}")
 
-            # 方式2: JSON 查询（PostgreSQL JSON 操作符）
+            # 方式2: LIKE 查询
             try:
-                # 使用 PostgreSQL JSON 包含操作符 @>
                 from sqlalchemy import text
                 companies_json = session.query(ListedCompany).filter(
-                    text(f"affiliate_industry::text LIKE '%{keyword}%'")
+                    text(f"industry LIKE '%{keyword}%'")
                 ).limit(5).all()
                 print(f"  JSON text 查询: 找到 {len(companies_json)} 家公司")
                 if companies_json:
@@ -93,28 +84,20 @@ def check_industry_data():
             except Exception as e:
                 print(f"  JSON text 查询失败: {e}")
 
-        # 4. 查找所有有 affiliate_industry 的公司样本
+        # 4. 查找所有有 industry 的公司样本
         print("\n" + "=" * 60)
         print("4. 查看所有公司的行业数据样本")
         print("=" * 60)
 
         companies_with_industry = session.query(ListedCompany).filter(
-            ListedCompany.affiliate_industry.isnot(None)
+            ListedCompany.industry.isnot(None)
         ).limit(10).all()
 
         print(f"\n找到 {len(companies_with_industry)} 家有行业信息的公司（样本）:")
         for company in companies_with_industry:
             print(f"\n{company.code} - {company.name}")
-            print(f"  affiliate_industry: {company.affiliate_industry}")
-
-            # 尝试解析 JSON 结构
-            if company.affiliate_industry:
-                if isinstance(company.affiliate_industry, dict):
-                    for key, value in company.affiliate_industry.items():
-                        print(f"    {key}: {value}")
-                elif isinstance(company.affiliate_industry, list):
-                    for item in company.affiliate_industry:
-                        print(f"    - {item}")
+            print(f"  industry_code: {company.industry_code}")
+            print(f"  industry: {company.industry}")
 
 if __name__ == '__main__':
     check_industry_data()

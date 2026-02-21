@@ -273,7 +273,7 @@ export HF_HOME=/custom/path
 安装完成后：
 
 1. **运行测试**: `python examples/test_vectorize_simple.py`
-2. **运行向量化作业**: 在 Dagster UI 中运行 `vectorize_documents_job`
+2. **运行向量化作业**: 在 Dagster UI 中运行 `doc_vectorize_job`
 3. **查看文档**: [向量化测试指南](VECTORIZE_TESTING_GUIDE.md)
 
 ## 参考

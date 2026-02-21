@@ -103,16 +103,16 @@ http://localhost:3000
 不启动UI，直接运行作业：
 
 ```bash
-dagster job execute -j crawl_a_share_reports_job -m src.crawler.dagster_jobs
+dagster job execute -j crawl_hs_reports_job -m src.crawler.dagster_jobs
 ```
 
 ### 方式3：使用 Python API
 
 ```python
 from dagster import execute_job
-from src.crawler.dagster_jobs import crawl_a_share_reports_job
+from src.crawler.dagster_jobs import crawl_hs_reports_job
 
-result = execute_job(crawl_a_share_reports_job)
+result = execute_job(crawl_hs_reports_job)
 print(result)
 ```
 
@@ -121,7 +121,7 @@ print(result)
 ### 1. 查看作业列表
 
 在 UI 主页可以看到：
-- **crawl_a_share_reports_job**：A股报告爬取作业
+- **crawl_hs_reports_job**：A股报告爬取作业
 - **daily_crawl_schedule**：每日定时调度（默认停止）
 - **manual_trigger_sensor**：手动触发传感器（默认停止）
 
@@ -179,11 +179,11 @@ print(result)
 
 ```bash
 # 基本运行
-dagster job execute -j crawl_a_share_reports_job -m src.crawler.dagster_jobs
+dagster job execute -j crawl_hs_reports_job -m src.crawler.dagster_jobs
 
 # 带配置运行
 dagster job execute \
-  -j crawl_a_share_reports_job \
+  -j crawl_hs_reports_job \
   -m src.crawler.dagster_jobs \
   -c config.yaml
 ```
@@ -203,14 +203,14 @@ ops:
 
 ```python
 from dagster import execute_job, RunConfig
-from src.crawler.dagster_jobs import crawl_a_share_reports_job
+from src.crawler.dagster_jobs import crawl_hs_reports_job
 
 # 基本运行
-result = execute_job(crawl_a_share_reports_job)
+result = execute_job(crawl_hs_reports_job)
 
 # 带配置运行
 result = execute_job(
-    crawl_a_share_reports_job,
+    crawl_hs_reports_job,
     run_config=RunConfig(
         ops={
             "crawl_a_share_quarterly_reports": {
@@ -234,7 +234,7 @@ print(f"运行结果: {result.success}")
 
 ```python
 @schedule(
-    job=crawl_a_share_reports_job,
+    job=crawl_hs_reports_job,
     cron_schedule="0 2 * * *",  # 每天凌晨2点执行
     default_status=DefaultSensorStatus.STOPPED,  # 默认停止
 )
@@ -255,7 +255,7 @@ def daily_crawl_schedule(context):
 
 ```python
 @schedule(
-    job=crawl_a_share_reports_job,
+    job=crawl_hs_reports_job,
     cron_schedule="0 3 * * *",  # 改为每天凌晨3点
     default_status=DefaultSensorStatus.RUNNING,  # 默认启动
 )
@@ -282,7 +282,7 @@ dagster schedule start daily_crawl_schedule -m src.crawler.dagster_jobs
 
 ```python
 @schedule(
-    job=crawl_a_share_reports_job,
+    job=crawl_hs_reports_job,
     cron_schedule="0 2 * * *",
     default_status=DefaultSensorStatus.RUNNING,  # 默认启动
 )
@@ -346,7 +346,7 @@ logger.error("错误日志")
 
 ## 作业流程说明
 
-### crawl_a_share_reports_job 流程
+### crawl_hs_reports_job 流程
 
 1. **crawl_a_share_quarterly_reports**（爬取阶段）
    - 自动计算上一季度和当前季度

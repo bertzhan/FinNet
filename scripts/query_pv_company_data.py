@@ -19,8 +19,8 @@ def query_pv_company_data():
         result = session.execute(text("""
             WITH pv_companies AS (
                 SELECT code, name
-                FROM listed_companies
-                WHERE affiliate_industry->>'ind_name' LIKE '%光伏设备%'
+                FROM hs_listed_companies
+                WHERE industry LIKE '%光伏设备%'
                 ORDER BY code
                 LIMIT 3
             )

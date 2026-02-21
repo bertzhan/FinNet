@@ -32,7 +32,7 @@ def demo_single_task():
     task = CrawlTask(
         stock_code="000001",
         company_name="平安银行",
-        market=Market.A_SHARE,
+        market=Market.HS,
         doc_type=DocType.QUARTERLY_REPORT,
         year=2023,
         quarter=3,
@@ -82,7 +82,7 @@ def demo_batch_tasks():
         CrawlTask(
             stock_code="000001",
             company_name="平安银行",
-            market=Market.A_SHARE,
+            market=Market.HS,
             doc_type=DocType.QUARTERLY_REPORT,
             year=2023,
             quarter=3
@@ -90,7 +90,7 @@ def demo_batch_tasks():
         CrawlTask(
             stock_code="000002",
             company_name="万科A",
-            market=Market.A_SHARE,
+            market=Market.HS,
             doc_type=DocType.QUARTERLY_REPORT,
             year=2023,
             quarter=3
@@ -98,7 +98,7 @@ def demo_batch_tasks():
         CrawlTask(
             stock_code="600519",
             company_name="贵州茅台",
-            market=Market.A_SHARE,
+            market=Market.HS,
             doc_type=DocType.QUARTERLY_REPORT,
             year=2023,
             quarter=3
@@ -151,7 +151,7 @@ def demo_storage_integration():
         print(f"   ✅ MinIO 连接成功: {minio_client.endpoint}")
 
         # 列出最近的文件
-        files = minio_client.list_files(prefix="bronze/a_share/", max_results=5)
+        files = minio_client.list_files(prefix="bronze/hs_stock/", max_results=5)
         print(f"   📂 最近的文件 (前5个):")
         for file in files[:5]:
             print(f"      - {file['name']} ({file['size']:,} bytes)")

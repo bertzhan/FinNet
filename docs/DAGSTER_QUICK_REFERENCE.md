@@ -291,7 +291,7 @@ dagster dev --dagster-log-level debug
 
 ```yaml
 ops:
-  parse_documents_op:
+  doc_parse_op:
     config:
       enable_silver_upload: true
       start_page_id: 0
@@ -303,7 +303,7 @@ ops:
 
 ```yaml
 ops:
-  crawl_a_share_reports_op:
+  crawl_hs_reports_op:
     config:
       workers: 4
       year: 2024
@@ -317,7 +317,7 @@ ops:
 
 ```yaml
 ops:
-  chunk_documents_op:
+  doc_chunk_op:
     config:
       max_chunk_size: 800
       overlap_size: 100
@@ -329,7 +329,7 @@ ops:
 
 ```yaml
 ops:
-  vectorize_chunks_op:
+  doc_vectorize_op:
     config:
       batch_size: 32
       # force_revectorize: false
@@ -393,7 +393,7 @@ dagster dev --help
 
 4. **测试单个 Op**
    ```bash
-   dagster job execute -j parse_pdf_job --config-yaml config.yaml
+   dagster job execute -j doc_parse_job --config-yaml config.yaml
    ```
 
 ---

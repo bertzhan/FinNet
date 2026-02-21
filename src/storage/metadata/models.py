@@ -7,7 +7,7 @@
 import uuid
 from datetime import datetime
 from sqlalchemy import (
-    Column, Integer, String, DateTime, Boolean, Float, BigInteger, Text, JSON,
+    Column, Integer, String, DateTime, Date, Boolean, Float, BigInteger, Text, JSON,
     ForeignKey, Index, UniqueConstraint, ForeignKeyConstraint, func
 )
 from sqlalchemy.dialects.postgresql import UUID
@@ -367,7 +367,7 @@ class QuarantineRecord(Base):
     document_id = Column(UUID(as_uuid=True), ForeignKey('documents.id', ondelete='CASCADE'), nullable=True, index=True)  # 允许为空
 
     # 来源和类型信息
-    source_type = Column(String(50), nullable=False)  # a_share/hk_stock/us_stock
+    source_type = Column(String(50), nullable=False)  # hs_stock/hk_stock/us_stock
     doc_type = Column(String(50), nullable=False)     # 文档类型
 
     # 路径信息
@@ -426,69 +426,41 @@ class ListedCompany(Base):
     """
     A股上市公司表
     存储A股上市公司的代码和名称信息
-    
-    注意：使用 code（股票代码）作为主键，确保不会出现重复的公司记录
+
+    注意：使用 org_id 作为主键，code 为股票代码（可空，有唯一索引）
     数据来源：akshare stock_individual_basic_info_xq 接口
     """
-    __tablename__ = 'listed_companies'
+    __tablename__ = 'hs_listed_companies'
 
-    # ==================== 基本信息 ====================
-    code = Column(String(20), primary_key=True)  # 股票代码（如：000001），主键
+    # ==================== 标识符 ====================
+    org_id = Column(String(100), primary_key=True)  # 机构ID，主键
+    code = Column(String(20), nullable=True)  # 股票代码（如：000001）
     name = Column(String(100), nullable=False)   # 公司简称（如：平安银行）
-    
+
     # ==================== 公司名称信息 ====================
-    org_id = Column(String(100), nullable=True)  # 机构ID
     org_name_cn = Column(String(100), nullable=True)  # 公司全称（中文）
     org_short_name_cn = Column(String(100), nullable=True)  # 公司简称（中文）
     org_name_en = Column(String(100), nullable=True)  # 公司全称（英文）
     org_short_name_en = Column(String(100), nullable=True)  # 公司简称（英文）
     pre_name_cn = Column(String(100), nullable=True)  # 曾用名
-    
+
     # ==================== 业务信息 ====================
     main_operation_business = Column(Text, nullable=True)  # 主营业务
     operating_scope = Column(Text, nullable=True)  # 经营范围
     org_cn_introduction = Column(Text, nullable=True)  # 公司简介
-    
-    # ==================== 联系信息 ====================
-    telephone = Column(String(100), nullable=True)  # 电话（可能包含多个号码）
-    postcode = Column(String(20), nullable=True)  # 邮编
-    fax = Column(String(50), nullable=True)  # 传真（可能包含多个号码）
-    email = Column(String(50), nullable=True)  # 邮箱
-    org_website = Column(String(100), nullable=True)  # 网站
-    reg_address_cn = Column(String(200), nullable=True)  # 注册地址（中文）
-    reg_address_en = Column(String(200), nullable=True)  # 注册地址（英文）
-    office_address_cn = Column(String(200), nullable=True)  # 办公地址（中文）
-    office_address_en = Column(String(200), nullable=True)  # 办公地址（英文）
-    
-    # ==================== 管理信息 ====================
-    legal_representative = Column(String(10), nullable=True)  # 法定代表人
-    general_manager = Column(String(10), nullable=True)  # 总经理
-    secretary = Column(String(10), nullable=True)  # 董事会秘书
-    chairman = Column(String(10), nullable=True)  # 董事长
-    executives_nums = Column(Integer, nullable=True)  # 高管人数
-    
+
     # ==================== 地区信息 ====================
-    district_encode = Column(String(10), nullable=True)  # 地区编码
     provincial_name = Column(String(10), nullable=True)  # 省份名称
-    actual_controller = Column(String(10), nullable=True)  # 实际控制人
-    classi_name = Column(String(10), nullable=True)  # 分类名称
-    
+
     # ==================== 财务信息 ====================
-    established_date = Column(BigInteger, nullable=True)  # 成立日期（时间戳）
-    listed_date = Column(BigInteger, nullable=True)  # 上市日期（时间戳）
-    reg_asset = Column(Float, nullable=True)  # 注册资本
+    established_date = Column(Date, nullable=True)  # 成立日期
+    listed_date = Column(Date, nullable=True)  # 上市日期
     staff_num = Column(Integer, nullable=True)  # 员工人数
-    actual_issue_vol = Column(Float, nullable=True)  # 实际发行量
-    issue_price = Column(Float, nullable=True)  # 发行价格
-    actual_rc_net_amt = Column(Float, nullable=True)  # 实际募集资金净额
-    pe_after_issuing = Column(Float, nullable=True)  # 发行后市盈率
-    online_success_rate_of_issue = Column(Float, nullable=True)  # 网上发行中签率
-    
+
     # ==================== 其他信息 ====================
-    currency_encode = Column(String(100), nullable=True)  # 货币编码
-    currency = Column(String(20), nullable=True)  # 货币
-    affiliate_industry = Column(JSON, nullable=True)  # 所属行业（JSON格式）
-    
+    industry_code = Column(String(50), nullable=True)   # 行业代码（如：BK0055）
+    industry = Column(String(200), nullable=True)     # 行业名称（如：银行）
+
     # ==================== 时间戳 ====================
     created_at = Column(DateTime, nullable=False, default=func.now())
     updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
@@ -499,60 +471,36 @@ class HKListedCompany(Base):
     港股上市公司表
     存储港股上市公司的代码和名称信息
 
-    注意：使用 code（股票代码）作为主键，确保不会出现重复的公司记录
+    注意：使用 org_id 作为主键，code 为股票代码（可空，有唯一索引）
     数据来源：香港交易所证券列表 + 披露易 stockId + akshare stock_hk_company_profile_em
     """
     __tablename__ = 'hk_listed_companies'
 
     # ==================== 基本信息 ====================
-    code = Column(String(10), primary_key=True)  # 股票代码（如：00001），主键，5位数字
+    org_id = Column(Integer, primary_key=True)  # 披露易 orgId，主键
+    code = Column(String(10), nullable=True)  # 股票代码（如：00001），5位数字
     name = Column(String(200), nullable=False)   # 公司名称（简体中文，存入前自动转换）
 
     # ==================== 公司名称信息 ====================
     org_name_cn = Column(String(200), nullable=True)  # 公司全称（中文）
     org_name_en = Column(String(200), nullable=True)  # 公司全称（英文）
 
-    # ==================== 披露易信息 ====================
-    org_id = Column(Integer, nullable=True, index=True)  # 披露易 orgId（用于查询报告）
-
     # ==================== 分类信息 ====================
-    category = Column(String(50), nullable=True)  # 分类（如：股本）
-    sub_category = Column(String(100), nullable=True)  # 次分类（如：股本證券(主板)）
+    category = Column(String(100), nullable=True)  # 板块分类（如：主板、創業板，从次分类提取括号内文字）
 
     # ==================== 业务信息 ====================
     org_cn_introduction = Column(Text, nullable=True)  # 公司简介
 
-    # ==================== 联系信息 ====================
-    telephone = Column(String(100), nullable=True)  # 电话（可能包含多个号码）
-    fax = Column(String(100), nullable=True)  # 传真（可能包含多个号码）
-    email = Column(String(200), nullable=True)  # 邮箱（可能包含多个邮箱）
-    org_website = Column(String(100), nullable=True)  # 网站
-    reg_location = Column(String(100), nullable=True)  # 注册地
-    reg_address = Column(String(200), nullable=True)  # 注册地址
-    office_address_cn = Column(String(200), nullable=True)  # 办公地址
-
-    # ==================== 管理信息 ====================
-    secretary = Column(String(100), nullable=True)  # 公司秘书
-    chairman = Column(String(100), nullable=True)  # 董事长（可能有联席董事长）
-
     # ==================== 财务信息 ====================
-    established_date = Column(BigInteger, nullable=True)  # 成立日期（时间戳）
-    listed_date = Column(BigInteger, nullable=True)  # 上市日期（时间戳）
+    established_date = Column(Date, nullable=True)  # 成立日期
+    listed_date = Column(Date, nullable=True)  # 上市日期
     staff_num = Column(Integer, nullable=True)  # 员工人数
     fiscal_year_end = Column(String(20), nullable=True)  # 年结日（如：12-31）
 
-    # ==================== 证券信息 ====================
-    security_type = Column(String(50), nullable=True)  # 证券类型（如：非H股）
-    issue_price = Column(Float, nullable=True)  # 发行价
-    issue_amount = Column(BigInteger, nullable=True)  # 发行量(股)
-    lot_size = Column(Integer, nullable=True)  # 每手股数
-    par_value = Column(String(50), nullable=True)  # 每股面值（如：1 HKD）
-    isin = Column(String(50), nullable=True)  # ISIN（国际证券识别编码）
-    is_sh_hk_connect = Column(Boolean, nullable=True)  # 是否沪港通标的
-    is_sz_hk_connect = Column(Boolean, nullable=True)  # 是否深港通标的
-
     # ==================== 其他信息 ====================
     industry = Column(String(100), nullable=True)  # 所属行业
+    is_sh_hk_connect = Column(Boolean, nullable=True)  # 是否沪港通标的
+    is_sz_hk_connect = Column(Boolean, nullable=True)  # 是否深港通标的
 
     # ==================== 时间戳 ====================
     created_at = Column(DateTime, nullable=False, default=func.now())
@@ -560,7 +508,7 @@ class HKListedCompany(Base):
 
     # ==================== 索引 ====================
     __table_args__ = (
-        Index('idx_hk_org_id', 'org_id'),
+        Index('idx_hk_code', 'code'),  # 按 code 查询
     )
 
 
@@ -569,31 +517,27 @@ class USListedCompany(Base):
     美股上市公司表
     存储NYSE/NASDAQ/NYSE American等美股上市公司信息
 
-    注意：使用 code（Ticker）作为主键
+    注意：使用 org_id（SEC CIK）作为主键，一个 CIK 对应一行
     数据来源：SEC EDGAR API (company_tickers.json) + NASDAQ/NYSE官方列表
     """
     __tablename__ = 'us_listed_companies'
 
+    # ==================== 标识符（优先）====================
+    org_id = Column(String(10), primary_key=True)  # SEC CIK，主键
+    code = Column(String(20), nullable=True)  # 主 Ticker（同一 CIK 下取第一个）
+    tickers = Column(String(500), nullable=True)   # 所有 ticker，逗号分隔
+
     # ==================== 基本信息 ====================
-    code = Column(String(20), primary_key=True)  # Ticker（股票代码，如：AAPL），主键
     name = Column(String(200), nullable=False)   # 公司名称（英文）
 
-    # ==================== SEC特定字段 ====================
-    cik = Column(String(10), nullable=False, index=True)  # CIK（中央索引键，SEC唯一标识符，注意：多个证券可能共享同一CIK）
-
-    # ==================== 公司名称信息 ====================
-    org_name_en = Column(String(200), nullable=True)  # 公司全称（英文）
-
-    # ==================== 行业信息 ====================
-    sic_code = Column(String(10), nullable=True)       # SIC行业代码（Standard Industrial Classification）
-    sic_description = Column(String(200), nullable=True)  # SIC行业描述
-
-    # ==================== 公司分类 ====================
-    is_foreign_filer = Column(Boolean, default=False, index=True)  # 是否为外国公司（提交20-F/40-F）
-    country = Column(String(100), nullable=True)  # 注册国家/地区（如：United States, Canada, China）
-
-    # ==================== 状态 ====================
-    is_active = Column(Boolean, default=True, index=True)  # 是否活跃（是否已退市）
+    # ==================== SEC submissions 字段（来自 data.sec.gov/submissions/CIK{org_id}.json）====================
+    entity_type = Column(String(50), nullable=True)           # entityType (e.g. operating)
+    sic = Column(String(10), nullable=True)                   # SIC行业代码
+    industry = Column(String(200), nullable=True)             # SIC行业描述（与 sic 代码对应）
+    exchanges = Column(String(200), nullable=True)             # 交易所列表，逗号分隔
+    fiscal_year_end = Column(String(4), nullable=True)         # 财年结束日 MMDD
+    state_of_incorporation = Column(String(20), nullable=True)  # stateOfIncorporation
+    state_of_incorporation_description = Column(String(100), nullable=True)  # stateOfIncorporationDescription
 
     # ==================== 时间戳 ====================
     created_at = Column(DateTime, nullable=False, default=func.now())
@@ -601,7 +545,5 @@ class USListedCompany(Base):
 
     # ==================== 索引 ====================
     __table_args__ = (
-        Index('idx_us_cik', 'cik'),  # CIK索引（SEC API查询）
-        Index('idx_us_foreign', 'is_foreign_filer'),  # 外国公司索引
-        Index('idx_us_active', 'is_active'),  # 活跃状态索引
+        Index('idx_us_code', 'code'),  # 按 code 查询
     )

@@ -20,8 +20,8 @@ src/ingestion/
 ├── base/                       # 基础模块
 │   ├── base_crawler.py         # 爬虫基类（集成 storage 层）
 │   └── __init__.py
-├── a_share/                    # A股爬虫
-│   ├── cninfo_crawler.py       # CNINFO（巨潮资讯网）爬虫
+├── hs_stock/                   # A股爬虫
+│   ├── crawlers/               # CNINFO（巨潮资讯网）爬虫
 │   └── __init__.py
 ├── hk_stock/                   # 港股爬虫（待实现）
 │   └── __init__.py
@@ -48,7 +48,7 @@ crawler = CninfoAShareCrawler()
 task = CrawlTask(
     stock_code="000001",
     company_name="平安银行",
-    market=Market.A_SHARE,
+    market=Market.HS,
     doc_type=DocType.QUARTERLY_REPORT,
     year=2023,
     quarter=3
@@ -68,9 +68,9 @@ if result.success:
 ```python
 # 创建多个任务
 tasks = [
-    CrawlTask(stock_code="000001", company_name="平安银行", market=Market.A_SHARE,
+    CrawlTask(stock_code="000001", company_name="平安银行", market=Market.HS,
               doc_type=DocType.QUARTERLY_REPORT, year=2023, quarter=3),
-    CrawlTask(stock_code="600519", company_name="贵州茅台", market=Market.A_SHARE,
+    CrawlTask(stock_code="600519", company_name="贵州茅台", market=Market.HS,
               doc_type=DocType.QUARTERLY_REPORT, year=2023, quarter=3),
 ]
 
@@ -117,7 +117,7 @@ class BaseCrawler(ABC, LoggerMixin):
 
 ### CninfoAShareCrawler（A股爬虫）
 
-**位置**: `src/ingestion/a_share/cninfo_crawler.py`
+**位置**: `src/ingestion/hs_stock/crawlers/report_crawler.py`
 
 **功能**:
 - 继承 BaseCrawler
@@ -151,7 +151,7 @@ crawler = CninfoAShareCrawler(
    ↓
 4. MinIOClient.upload_file()
    - 上传到 Bronze 层
-   - 路径: bronze/a_share/quarterly_reports/2023/Q3/000001/*.pdf
+   - 路径: bronze/hs_stock/quarterly_reports/2023/Q3/000001/*.pdf
    ↓
 5. PostgreSQLClient + crud.create_document()
    - 记录文档元数据到数据库

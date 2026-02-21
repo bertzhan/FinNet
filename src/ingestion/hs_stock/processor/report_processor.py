@@ -222,7 +222,7 @@ def process_single_task(task_data: Tuple) -> Tuple[bool, Optional[Tuple]]:
         # Q2（半年报）和 Q4（年报）不需要季度文件夹
         quarter_for_path = quarter_num if quarter_num not in [2, 4] else None
         minio_path = path_manager.get_bronze_path(
-            market=Market.A_SHARE,
+            market=Market.HS,
             doc_type=doc_type,
             stock_code=code,
             year=year,
@@ -604,7 +604,7 @@ def run(
         # Q2（半年报）和 Q4（年报）不需要季度文件夹
         quarter_for_path = quarter_num if quarter_num not in [2, 4] else None
         minio_path = path_manager.get_bronze_path(
-            market=Market.A_SHARE,
+            market=Market.HS,
             doc_type=doc_type,
             stock_code=code,
             year=year,

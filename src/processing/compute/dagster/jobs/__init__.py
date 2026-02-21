@@ -6,12 +6,12 @@ Dagster Jobs 模块
 
 from .crawl_jobs import (
     # A股 Jobs
-    crawl_a_share_reports_job,
-    crawl_a_share_ipo_job,
+    crawl_hs_reports_job,
+    crawl_hs_ipo_job,
     
     # A股 Ops
-    crawl_a_share_reports_op,
-    crawl_a_share_ipo_op,
+    crawl_hs_reports_op,
+    crawl_hs_ipo_op,
     validate_crawl_results_op,
     
     # A股 Schedules
@@ -24,11 +24,11 @@ from .crawl_jobs import (
     
     # ============ 港股 ============
     # 港股 Jobs
-    update_hk_companies_job,
+    get_hk_companies_job,
     crawl_hk_reports_job,
     
     # 港股 Ops
-    update_hk_companies_op,
+    get_hk_companies_op,
     crawl_hk_reports_op,
     
     # 港股 Schedules
@@ -42,11 +42,11 @@ from .crawl_jobs import (
 
 from .parse_jobs import (
     # Jobs
-    parse_pdf_job,
+    doc_parse_job,
     
     # Ops
     scan_pending_documents_op,
-    parse_documents_op,
+    doc_parse_op,
     validate_parse_results_op,
     
     # Schedules
@@ -59,11 +59,11 @@ from .parse_jobs import (
 
 from .chunk_jobs import (
     # Jobs
-    chunk_documents_job,
+    doc_chunk_job,
     
     # Ops
     scan_parsed_documents_op,
-    chunk_documents_op,
+    doc_chunk_op,
     validate_chunk_results_op,
     
     # Schedules
@@ -77,11 +77,11 @@ from .chunk_jobs import (
 # 向量化作业（需要 sentence_transformers）
 from .vectorize_jobs import (
     # Jobs
-    vectorize_documents_job,
+    doc_vectorize_job,
     
     # Ops
     scan_unvectorized_chunks_op,
-    vectorize_chunks_op,
+    doc_vectorize_op,
     validate_vectorize_results_op,
     
     # Schedules
@@ -95,11 +95,11 @@ from .vectorize_jobs import (
 # 图构建作业（需要 neo4j）
 from .graph_jobs import (
     # Jobs
-    build_graph_job,
+    doc_toc_graph_job,
     
     # Ops
     scan_chunked_documents_for_graph_op,
-    build_graph_op,
+    doc_toc_graph_op,
     validate_graph_op,
     
     # Schedules
@@ -113,11 +113,11 @@ from .graph_jobs import (
 # Elasticsearch 索引作业（需要 elasticsearch）
 from .elasticsearch_jobs import (
     # Jobs
-    elasticsearch_index_job,
+    doc_index_job,
     
     # Ops
     scan_chunked_documents_op,
-    index_chunks_to_elasticsearch_op,
+    doc_index_op,
     validate_elasticsearch_results_op,
     
     # Schedules
@@ -131,10 +131,10 @@ from .elasticsearch_jobs import (
 # 上市公司列表更新作业（需要 akshare）
 from .company_list_jobs import (
     # Jobs
-    update_listed_companies_job,
+    get_hs_companies_job,
     
     # Ops
-    update_listed_companies_op,
+    get_hs_companies_op,
     
     # Schedules
     daily_update_companies_schedule,
@@ -145,35 +145,35 @@ from .company_list_jobs import (
 
 __all__ = [
     # Jobs
-    "crawl_a_share_reports_job",
-    "crawl_a_share_ipo_job",
-    "parse_pdf_job",
-    "chunk_documents_job",
-    "vectorize_documents_job",
-    "build_graph_job",
-    "elasticsearch_index_job",
-    "update_listed_companies_job",
+    "crawl_hs_reports_job",
+    "crawl_hs_ipo_job",
+    "doc_parse_job",
+    "doc_chunk_job",
+    "doc_vectorize_job",
+    "doc_toc_graph_job",
+    "doc_index_job",
+    "get_hs_companies_job",
     
     # Ops
-    "crawl_a_share_reports_op",
-    "crawl_a_share_ipo_op",
+    "crawl_hs_reports_op",
+    "crawl_hs_ipo_op",
     "validate_crawl_results_op",
     "scan_pending_documents_op",
-    "parse_documents_op",
+    "doc_parse_op",
     "validate_parse_results_op",
     "scan_parsed_documents_op",
-    "chunk_documents_op",
+    "doc_chunk_op",
     "validate_chunk_results_op",
     "scan_unvectorized_chunks_op",
-    "vectorize_chunks_op",
+    "doc_vectorize_op",
     "validate_vectorize_results_op",
     "scan_chunked_documents_for_graph_op",
-    "build_graph_op",
+    "doc_toc_graph_op",
     "validate_graph_op",
     "scan_chunked_documents_op",
-    "index_chunks_to_elasticsearch_op",
+    "doc_index_op",
     "validate_elasticsearch_results_op",
-    "update_listed_companies_op",
+    "get_hs_companies_op",
     
     # Schedules
     "daily_crawl_reports_schedule",

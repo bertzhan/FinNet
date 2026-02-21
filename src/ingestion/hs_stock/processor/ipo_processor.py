@@ -204,7 +204,7 @@ def process_single_ipo_task(task_data: Tuple) -> Tuple[bool, Optional[Tuple]]:
         fname = f"document{file_ext}"
         path_manager = PathManager()
         minio_path = path_manager.get_bronze_path(
-            market=Market.A_SHARE,
+            market=Market.HS,
             doc_type=DocType.IPO_PROSPECTUS,
             stock_code=code,
             year=None,  # IPO不需要年份
@@ -393,7 +393,7 @@ def run_ipo(
     html_session = make_session(HEADERS_HTML)
 
     checkpoint_file = os.path.join(out_root, "checkpoint_ipo.json")
-    script_dir = os.path.dirname(os.path.dirname(__file__))  # 回到 a_share 目录
+    script_dir = os.path.dirname(os.path.dirname(__file__))  # 回到 hs_stock 目录
     orgid_cache_file = os.path.join(script_dir, "orgid_cache_ipo.json")
 
     checkpoint: dict = load_json(checkpoint_file, {})
@@ -503,7 +503,7 @@ def run_ipo(
         fname = f"document{file_ext}"
         path_manager = PathManager()
         minio_path = path_manager.get_bronze_path(
-            market=Market.A_SHARE,
+            market=Market.HS,
             doc_type=DocType.IPO_PROSPECTUS,
             stock_code=code,
             year=None,  # IPO不需要年份

@@ -45,7 +45,7 @@ VECTORIZE_CONFIG_SCHEMA = {
     "market": Field(
         str,
         is_required=False,
-        description="市场过滤（a_share/hk_stock/us_stock），None 表示所有市场"
+        description="市场过滤（hs_stock/hk_stock/us_stock），None 表示所有市场"
     ),
     "doc_type": Field(
         str,
@@ -215,7 +215,7 @@ def scan_unvectorized_chunks_op(context) -> Dict:
         ),
     }
 )
-def vectorize_chunks_op(context, scan_result: Dict) -> Dict:
+def doc_vectorize_op(context, scan_result: Dict) -> Dict:
     """
     批量执行向量化
     
@@ -461,7 +461,7 @@ def validate_vectorize_results_op(context, vectorize_results: Dict) -> Dict:
     检查向量化结果的质量，记录统计信息
     
     Args:
-        vectorize_results: vectorize_chunks_op 的返回结果
+        vectorize_results: doc_vectorize_op 的返回结果
         
     Returns:
         验证结果统计
@@ -548,7 +548,7 @@ def validate_vectorize_results_op(context, vectorize_results: Dict) -> Dict:
                     # market 和 doc_type 是可选的，不设置表示所有类型
                 }
             },
-            "vectorize_chunks_op": {
+            "doc_vectorize_op": {
                 "config": {
                     "force_revectorize": False,
                 }
@@ -557,7 +557,7 @@ def validate_vectorize_results_op(context, vectorize_results: Dict) -> Dict:
     },
     description="向量化作业 - 默认配置"
 )
-def vectorize_documents_job():
+def doc_vectorize_job():
     """
     向量化作业
 
@@ -570,18 +570,18 @@ def vectorize_documents_job():
     - scan_unvectorized_chunks_op:
         - batch_size: 32 (每批处理32个分块)
         - limit: 不设置 (处理全部未向量化的分块)
-    - vectorize_chunks_op:
+    - doc_vectorize_op:
         - force_revectorize: False (不强制重新向量化)
     """
     scan_result = scan_unvectorized_chunks_op()
-    vectorize_results = vectorize_chunks_op(scan_result)
+    vectorize_results = doc_vectorize_op(scan_result)
     validate_vectorize_results_op(vectorize_results)
 
 
 # ==================== Schedules ====================
 
 @schedule(
-    job=vectorize_documents_job,
+    job=doc_vectorize_job,
     cron_schedule="0 */2 * * *",  # 每2小时执行一次
     default_status=DefaultScheduleStatus.STOPPED,  # 默认停止，需要手动启用
 )
@@ -593,7 +593,7 @@ def hourly_vectorize_schedule(context):
 
 
 @schedule(
-    job=vectorize_documents_job,
+    job=doc_vectorize_job,
     cron_schedule="0 6 * * *",  # 每天凌晨6点执行（分块完成后）
     default_status=DefaultScheduleStatus.STOPPED,  # 默认停止
 )
@@ -607,7 +607,7 @@ def daily_vectorize_schedule(context):
 # ==================== Sensors ====================
 
 @sensor(
-    job=vectorize_documents_job,
+    job=doc_vectorize_job,
     default_status=DefaultSensorStatus.STOPPED,
 )
 def manual_trigger_vectorize_sensor(context):

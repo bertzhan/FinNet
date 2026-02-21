@@ -19,9 +19,9 @@ def import_modules():
     from dagster import build_op_context
     from src.processing.compute.dagster.jobs.graph_jobs import (
         scan_chunked_documents_for_graph_op,
-        build_graph_op,
+        doc_toc_graph_op,
         validate_graph_op,
-        build_graph_job,
+        doc_toc_graph_job,
     )
     from src.processing.graph.graph_builder import GraphBuilder
     from src.storage.graph.neo4j_client import get_neo4j_client
@@ -31,9 +31,9 @@ def import_modules():
     return (
         build_op_context,
         scan_chunked_documents_for_graph_op,
-        build_graph_op,
+        doc_toc_graph_op,
         validate_graph_op,
-        build_graph_job,
+        doc_toc_graph_job,
         GraphBuilder,
         get_neo4j_client,
         get_postgres_client,
@@ -88,7 +88,7 @@ def test_scan_vectorized_documents():
 def test_build_graph(scan_result):
     """测试构建图的 op"""
     print("=" * 60)
-    print("测试: build_graph_op")
+    print("测试: doc_toc_graph_op")
     print("=" * 60)
     print()
     
@@ -96,7 +96,7 @@ def test_build_graph(scan_result):
         print("⚠️  没有待建图的文档，跳过构建测试")
         return None
     
-    build_op_context, _, build_graph_op, _, _, _, _, _, _, _ = import_modules()
+    build_op_context, _, doc_toc_graph_op, _, _, _, _, _, _, _ = import_modules()
     
     config = {
         "force_rebuild": False,
@@ -105,7 +105,7 @@ def test_build_graph(scan_result):
     context = build_op_context(config=config)
     
     try:
-        result = build_graph_op(context, scan_result)
+        result = doc_toc_graph_op(context, scan_result)
         
         print(f"✅ 图构建完成")
         print(f"   成功: {result.get('success')}")

@@ -395,8 +395,8 @@ class TextChunker(LoggerMixin):
             (文件路径, 文件哈希)
         """
         # 从 markdown_path 提取目录，生成 structure.json 路径
-        # 例如: silver/mineru/a_share/300542/2023/FY/document.md
-        # -> silver/mineru/a_share/300542/2023/FY/structure.json
+        # 例如: silver/mineru/hs_stock/300542/2023/FY/document.md
+        # -> silver/mineru/hs_stock/300542/2023/FY/structure.json
         markdown_dir = "/".join(markdown_path.split("/")[:-1])  # 去掉文件名，保留目录
         structure_path = f"{markdown_dir}/structure.json"
         structure_txt_path = f"{markdown_dir}/structure.txt"
@@ -479,8 +479,8 @@ class TextChunker(LoggerMixin):
             (文件路径, 文件哈希)
         """
         # 从 markdown_path 提取目录，生成 chunks.json 路径
-        # 例如: silver/mineru/a_share/300542/2023/FY/document.md
-        # -> silver/mineru/a_share/300542/2023/FY/chunks.json
+        # 例如: silver/mineru/hs_stock/300542/2023/FY/document.md
+        # -> silver/mineru/hs_stock/300542/2023/FY/chunks.json
         markdown_dir = "/".join(markdown_path.split("/")[:-1])  # 去掉文件名，保留目录
         chunks_path = f"{markdown_dir}/chunks.json"
 

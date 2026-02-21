@@ -9,7 +9,7 @@ from enum import Enum
 
 class Market(Enum):
     """市场类型（plan.md 2.1）"""
-    A_SHARE = "a_share"      # A股（上交所、深交所、北交所）
+    HS = "hs_stock"          # A股（上交所、深交所、北交所）
     HK_STOCK = "hk_stock"    # 港股（香港联交所）
     US_STOCK = "us_stock"    # 美股（NYSE、NASDAQ）
 
@@ -150,7 +150,7 @@ QUARTER_MAP = {
 
 # 市场显示名称
 MARKET_DISPLAY_NAMES = {
-    Market.A_SHARE: "A股",
+    Market.HS: "A股",
     Market.HK_STOCK: "港股",
     Market.US_STOCK: "美股"
 }

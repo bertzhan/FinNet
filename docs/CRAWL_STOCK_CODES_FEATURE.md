@@ -57,7 +57,7 @@ def load_company_list_from_db(
         listed_companies = crud.get_all_listed_companies(session, limit=limit)
 ```
 
-#### 修改 3: 更新 crawl_a_share_reports_op 函数
+#### 修改 3: 更新 crawl_hs_reports_op 函数
 
 支持从配置中读取 `stock_codes` 并传递给加载函数：
 
@@ -74,7 +74,7 @@ companies = load_company_list_from_db(
 )
 ```
 
-#### 修改 4: 更新 crawl_a_share_ipo_op 函数
+#### 修改 4: 更新 crawl_hs_ipo_op 函数
 
 同样支持 `stock_codes` 参数：
 
@@ -177,7 +177,7 @@ limit: 10
 
 ```yaml
 ops:
-  crawl_a_share_reports_op:
+  crawl_hs_reports_op:
     config:
       workers: 4
       enable_minio: true
@@ -193,7 +193,7 @@ ops:
 
 ```yaml
 ops:
-  crawl_a_share_ipo_op:
+  crawl_hs_ipo_op:
     config:
       workers: 4
       enable_minio: true
