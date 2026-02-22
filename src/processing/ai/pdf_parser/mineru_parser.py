@@ -164,9 +164,17 @@ class MinerUParser(LoggerMixin):
             if not temp_file_path:
                 raise Exception("文件下载失败")
 
-            # 3.1 如果是 HTM/HTML 文件，先通过 Chrome 打印转换为 PDF
+            # 3.1 如果是 HTM/HTML 文件，先下载同目录图片，再通过 Chrome 打印转换为 PDF
             if temp_file_path.lower().endswith((".htm", ".html")):
                 self.logger.info(f"检测到 HTM/HTML 文件，先转换为 PDF: {temp_file_path}")
+                try:
+                    img_count = self._download_html_images_to_temp(
+                        minio_object_path, os.path.dirname(temp_file_path)
+                    )
+                    if img_count > 0:
+                        self.logger.debug(f"已下载 {img_count} 张图片供 HTML 转 PDF 使用")
+                except Exception as e:
+                    self.logger.warning(f"下载 HTML 图片时出错（将继续转 PDF）: {e}")
                 temp_pdf_path = self._convert_html_to_pdf(temp_file_path)
                 if not temp_pdf_path:
                     raise Exception("HTM 转 PDF 失败")
@@ -316,6 +324,61 @@ class MinerUParser(LoggerMixin):
             self.logger.error(f"下载文件失败: {e}", exc_info=True)
             return None
 
+    def _download_html_images_to_temp(self, minio_object_path: str, temp_dir: str) -> int:
+        """
+        将 HTML 同目录下的图片从 MinIO 下载到临时目录，供 Chrome 转 PDF 时加载。
+
+        HTML 中的图片引用为相对路径（如 ./AAPL_2025_FY_image-001.gif），
+        图片与 document.htm 存储在同一 MinIO 前缀下。Chrome 通过 file:// 加载
+        HTML 时需从同目录解析相对路径，故需将图片下载到 HTML 所在目录。
+
+        Args:
+            minio_object_path: MinIO 对象路径（如 bronze/us_stock/AAPL/2025/FY/document.htm）
+            temp_dir: HTML 所在临时目录
+
+        Returns:
+            成功下载的图片数量
+        """
+        IMAGE_EXTENSIONS = {'.gif', '.png', '.jpg', '.jpeg', '.webp', '.bmp'}
+        EXCLUDED_NAMES = {'document.htm', 'document.html'}
+
+        try:
+            # 提取目录前缀（如 bronze/us_stock/AAPL/2025/FY/）
+            dir_prefix = minio_object_path.rsplit('/', 1)[0]
+            if not dir_prefix.endswith('/'):
+                dir_prefix += '/'
+
+            files = self.minio_client.list_files(prefix=dir_prefix, recursive=False)
+            if not files:
+                return 0
+
+            downloaded = 0
+            for obj in files:
+                name = obj.get('name', '')
+                if not name:
+                    continue
+                # 只取文件名（MinIO 返回完整路径）
+                filename = name.split('/')[-1] if '/' in name else name
+                if filename.lower() in EXCLUDED_NAMES:
+                    continue
+                ext = Path(filename).suffix.lower()
+                if ext not in IMAGE_EXTENSIONS:
+                    continue
+
+                local_path = os.path.join(temp_dir, filename)
+                self.minio_client.download_file(object_name=name, file_path=local_path)
+                if os.path.exists(local_path):
+                    downloaded += 1
+                    self.logger.debug(f"已下载图片: {filename}")
+                else:
+                    self.logger.warning(f"图片下载失败: {name}")
+            if downloaded > 0:
+                self.logger.info(f"HTML 图片已下载到临时目录: {downloaded} 张")
+            return downloaded
+        except Exception as e:
+            self.logger.warning(f"下载 HTML 图片失败（将继续转 PDF）: {e}")
+            return 0
+
     def _convert_html_to_pdf(self, html_path: str) -> Optional[str]:
         """
         使用 Chrome 无头模式将 HTML/HTM 文件转换为 PDF（打印功能）
@@ -359,9 +422,11 @@ class MinerUParser(LoggerMixin):
             file_url = abs_path.as_uri()
 
             # --headless=new 为新版 Chrome，旧版用 --headless
+            # --force-device-scale-factor=2 提升 PDF 中图片清晰度（2x 渲染）
             cmd = [
                 chrome_exec,
                 "--headless",
+                "--force-device-scale-factor=2",
                 "--disable-gpu",
                 "--no-sandbox",
                 "--disable-dev-shm-usage",
