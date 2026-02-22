@@ -60,16 +60,6 @@ FILINGS_CRAWL_CONFIG_SCHEMA = {
         is_required=False,
         description="Output root directory (default: downloads/, 美股主要用于临时文件)"
     ),
-    "enable_minio": Field(
-        bool,
-        default_value=True,
-        description="Enable MinIO upload"
-    ),
-    "enable_postgres": Field(
-        bool,
-        default_value=True,
-        description="Enable PostgreSQL metadata recording"
-    ),
     "year": Field(
         int,
         is_required=True,
@@ -179,8 +169,6 @@ def crawl_us_reports_op(context) -> Dict:
     config = context.op_config
 
     output_root = config.get("output_root") or str(PROJECT_ROOT / "downloads")
-    enable_minio = config.get("enable_minio", True)
-    enable_postgres = config.get("enable_postgres", True)
     year = config.get("year")
     limit = config.get("limit")
     stock_codes = config.get("stock_codes")
@@ -200,56 +188,49 @@ def crawl_us_reports_op(context) -> Dict:
 
     start_date = f"{year}-01-01"
     end_date = f"{year}-12-31"
-
-    logger.info("开始爬取 SEC 财报")
-    logger.info(f"  年份: {year}，日期范围: {start_date} 到 {end_date}")
-    logger.info(f"  配置: enable_minio={enable_minio}, enable_postgres={enable_postgres}")
-    if limit:
-        logger.info(f"  限制公司数: {limit}")
-    if stock_codes:
-        logger.info(f"  指定股票: {stock_codes}")
+    logger.info(f"开始爬取 美股 SEC财报 | 年份: {year} | 日期: {start_date} ~ {end_date}")
 
     try:
+        # 每文档 AssetMaterialization 回调（与 A股/港股 统一格式）
+        def on_filing_success(crawl_result, success_count: int, filings_discovered: int):
+            task = crawl_result.task
+            doc_type_str = task.doc_type.value  # 10k, 10q, 20f, 40f
+            asset_key = ["bronze", "us_stock", doc_type_str, str(task.year)]
+            if task.quarter is not None:
+                asset_key.append(f"Q{task.quarter}")
+            context.log_event(
+                AssetMaterialization(
+                    asset_key=asset_key,
+                    description=f"{task.company_name} {task.year} {f'Q{task.quarter}' if task.quarter else 'FY'}",
+                    metadata={
+                        "stock_code": MetadataValue.text(task.stock_code),
+                        "company_name": MetadataValue.text(task.company_name),
+                        "minio_path": MetadataValue.text(crawl_result.minio_object_path or ""),
+                        "file_size": MetadataValue.int(crawl_result.file_size or 0),
+                        "file_hash": MetadataValue.text(crawl_result.file_hash or ""),
+                        "document_id": MetadataValue.text(str(crawl_result.document_id) if crawl_result.document_id else ""),
+                        "progress": MetadataValue.text(f"{success_count}/{filings_discovered} ({success_count/max(1,filings_discovered)*100:.1f}%)"),
+                    }
+                )
+            )
+
         # 调用爬取 Job
         result = crawl_us_reports_job_fn(
-            mode="backfill",
-            limit=limit,
             start_date=start_date,
             end_date=end_date,
+            limit=limit,
             tickers=stock_codes,
-            enable_minio=enable_minio,
-            enable_postgres=enable_postgres,
+            enable_minio=True,
+            enable_postgres=True,
+            on_filing_success=on_filing_success,
         )
 
-        # 记录 Asset Materialization
-        context.log_event(
-            AssetMaterialization(
-                asset_key="us_sec_filings",
-                description=f"SEC 财报爬取完成（year={year}）",
-                metadata={
-                    "year": MetadataValue.int(year),
-                    "companies_processed": MetadataValue.int(result['companies_processed']),
-                    "filings_discovered": MetadataValue.int(result['filings_discovered']),
-                    "filings_downloaded": MetadataValue.int(result['filings_downloaded']),
-                    "filings_failed": MetadataValue.int(result['filings_failed']),
-                    "filings_skipped": MetadataValue.int(result['filings_skipped']),
-                    "duration_seconds": MetadataValue.int(result['duration_seconds']),
-                }
-            )
-        )
-
-        logger.info("✅ SEC 财报爬取完成")
-        logger.info(f"  处理公司数: {result['companies_processed']}")
-        logger.info(f"  发现财报数: {result['filings_discovered']}")
-        logger.info(f"  下载成功: {result['filings_downloaded']}")
-        logger.info(f"  下载失败: {result['filings_failed']}")
-        logger.info(f"  已跳过: {result['filings_skipped']}")
-        logger.info(f"  耗时: {result['duration_seconds']}秒")
-
+        total = result['filings_downloaded'] + result['filings_failed']
+        logger.info(f"爬取完成: 成功 {result['filings_downloaded']}/{total}, 失败 {result['filings_failed']}/{total}")
         return result
 
     except Exception as e:
-        logger.error(f"❌ SEC 财报爬取失败: {e}", exc_info=True)
+        logger.error(f"爬取失败: {e}", exc_info=True)
         return {
             "success": False,
             "error": str(e),
@@ -286,9 +267,7 @@ def crawl_us_reports_job():
     2. 爬取财报（10-K、10-Q、20-F、40-F）
     3. 上传到 MinIO 和 PostgreSQL
 
-    通过 run_config 配置 mode、start_date、end_date 等参数：
-    - mode='incremental': 增量（最近7天）
-    - mode='backfill': 回填（需配置 start_date、end_date）
+    通过 run_config 配置 year（日期范围：{year}-01-01 至 {year}-12-31）
     """
     crawl_us_reports_op()
 
@@ -318,7 +297,7 @@ def weekly_crawl_us_reports_schedule(context):
     """
     每周爬取 SEC 财报（周一凌晨3点）
 
-    默认增量模式，爬取最近7天的新财报（10-K、10-Q、20-F、40-F）
+    按当前年份爬取财报（10-K、10-Q、20-F、40-F）
     """
     current_year = datetime.now().year
     return RunRequest(
@@ -358,7 +337,7 @@ def manual_trigger_crawl_us_reports_sensor(context):
     """
     手动触发 SEC 财报爬取
 
-    可以通过 Dagster UI 手动触发，支持配置 mode、start_date、end_date 等参数
+    可以通过 Dagster UI 手动触发，支持配置 year 等参数
     """
     # 这个 sensor 不会自动触发，仅用于手动触发
     return None

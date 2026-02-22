@@ -50,13 +50,12 @@ dagster dev -m src.processing.compute.dagster
 
 ### 默认配置
 
-```python
+```yaml
 # 默认配置值
-company_list_path: "src/crawler/zh/company_list.csv"
+year: 2024  # 必需
 output_root: "downloads/"
 workers: 4
-enable_minio: True
-enable_postgres: True
+# 公司列表从数据库读取（需先运行 get_hs_companies_job）
 ```
 
 ### 通过 UI 配置
@@ -65,16 +64,12 @@ enable_postgres: True
 
 ```yaml
 ops:
-  crawl_a_share_reports_op:
+  crawl_hs_reports_op:
     config:
-      company_list_path: "src/crawler/zh/company_list.csv"
+      year: 2024
       output_root: "./downloads"
       workers: 4
-      year: null  # null = 自动计算当前和上一季度
-      quarter: null  # null = 自动计算
-      # 注意：文档类型会根据季度自动判断（Q1/Q3=季度报告，Q2=半年报，Q4=年报）
-      enable_minio: true
-      enable_postgres: true
+      # 公司列表从数据库读取
 ```
 
 ### 通过配置文件
@@ -83,14 +78,11 @@ ops:
 
 ```yaml
 ops:
-  crawl_a_share_reports_op:
+  crawl_hs_reports_op:
     config:
-      company_list_path: "src/crawler/zh/company_list.csv"
+      year: 2024
       output_root: "./downloads"
       workers: 6
-      enable_minio: true
-      # 文档类型会根据季度自动判断（Q1/Q3=季度报告，Q2=半年报，Q4=年报）
-      enable_postgres: true
 ```
 
 然后通过命令行运行：

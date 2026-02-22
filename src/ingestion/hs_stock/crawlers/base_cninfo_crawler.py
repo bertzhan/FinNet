@@ -173,6 +173,28 @@ class CninfoBaseCrawler(BaseCrawler):
             except Exception as e:
                 self.logger.warning(f"读取metadata文件失败: {e}")
 
+        # 按 source_url 检查是否已存在，若存在则跳过上传和创建
+        source_url = (task.metadata or {}).get("source_url") or (task.metadata or {}).get("doc_url") or (task.metadata or {}).get("pdf_url")
+        if source_url and self.enable_postgres and self.pg_client:
+            try:
+                from src.storage.metadata import crud
+                with self.pg_client.get_session() as session:
+                    existing_doc = crud.get_document_by_source_url(session, source_url)
+                    if existing_doc:
+                        self.logger.info(f"文档已存在（source_url），跳过上传: {task.stock_code} {task.year} Q{task.quarter}")
+                        return CrawlResult(
+                            task=task,
+                            success=True,
+                            local_file_path=file_path,
+                            minio_object_path=existing_doc.minio_object_path,
+                            document_id=existing_doc.id,
+                            file_size=existing_doc.file_size,
+                            file_hash=existing_doc.file_hash,
+                            metadata=task.metadata
+                        )
+            except Exception as e:
+                self.logger.debug(f"检查 source_url 失败，继续上传: {e}")
+
         # 计算文件哈希和大小
         try:
             from src.common.utils import calculate_file_hash
@@ -277,7 +299,7 @@ class CninfoBaseCrawler(BaseCrawler):
                     error_message=f"MinIO上传异常: {str(e)}"
                 )
 
-        # 记录到 PostgreSQL
+        # 记录到 PostgreSQL（先按 source_url 检查，再按 minio 路径检查）
         document_id = None
         if not self.enable_postgres:
             self.logger.warning(f"⚠️ PostgreSQL 未启用，跳过记录: {minio_object_path}")
@@ -287,8 +309,16 @@ class CninfoBaseCrawler(BaseCrawler):
             try:
                 from src.storage.metadata import crud
                 with self.pg_client.get_session() as session:
-                    # 检查是否已存在
-                    existing_doc = crud.get_document_by_path(session, minio_object_path)
+                    # 优先按 source_url 检查（更精确的去重）
+                    source_url = (task.metadata or {}).get("source_url") or (task.metadata or {}).get("doc_url") or (task.metadata or {}).get("pdf_url")
+                    if source_url:
+                        existing_doc = crud.get_document_by_source_url(session, source_url)
+                        if existing_doc:
+                            self.logger.info(f"文档已存在（source_url）: id={existing_doc.id}，跳过创建")
+                            document_id = existing_doc.id
+                    # 否则按 minio 路径检查
+                    if document_id is None:
+                        existing_doc = crud.get_document_by_path(session, minio_object_path)
 
                     if existing_doc:
                         self.logger.info(f"文档已存在: id={existing_doc.id}")

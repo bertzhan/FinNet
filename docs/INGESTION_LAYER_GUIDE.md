@@ -39,7 +39,7 @@ BaseCrawler (抽象基类)
 CninfoAShareCrawler (A股实现)
 ├── 继承 BaseCrawler
 ├── 实现 _download_file() 方法
-├── 复用现有 src/crawler/zh/main.py 逻辑
+├── A股爬虫（src/ingestion/hs_stock）
 └── 支持单任务和多进程批量爬取
 ```
 
@@ -282,7 +282,7 @@ task = CrawlTask(
 1. 用户创建 CrawlTask
    ↓
 2. CninfoAShareCrawler._download_file()
-   - 调用现有 src/crawler/zh/main.py 逻辑
+   - 使用 src/ingestion/hs_stock 爬虫
    - 下载 PDF 到临时目录
    ↓
 3. BaseCrawler.crawl()

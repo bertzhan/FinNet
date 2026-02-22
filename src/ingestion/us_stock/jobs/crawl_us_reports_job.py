@@ -10,11 +10,12 @@ Job 2: 爬取SEC财报
 4. 创建CrawlTask列表
 5. 批量执行爬虫
 """
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from datetime import datetime
+from typing import Callable, Dict, List, Optional
 from sqlalchemy import text
 
 from src.common.logger import get_logger
+from src.ingestion.base.base_crawler import CrawlResult
 from src.common.constants import Market, DocType
 from src.storage.metadata.postgres_client import get_postgres_client
 from src.ingestion.base.base_crawler import CrawlTask
@@ -40,24 +41,21 @@ FORM_TYPE_MAPPING = {
 
 
 def crawl_us_reports_job(
-    mode: str = "incremental",
+    start_date: str,
+    end_date: str,
     limit: Optional[int] = None,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
     tickers: Optional[List[str]] = None,
     enable_minio: bool = True,
     enable_postgres: bool = True,
+    on_filing_success: Optional[Callable[[CrawlResult, int, int], None]] = None,
 ) -> Dict:
     """
     爬取SEC财报
 
     Args:
-        mode: 模式
-            - 'incremental': 增量更新（最近7天）
-            - 'backfill': 回填（指定日期范围）
+        start_date: 开始日期（格式：'2023-01-01'）
+        end_date: 结束日期（格式：'2024-12-31'）
         limit: 限制公司数量（用于测试）
-        start_date: 开始日期（回填模式，格式：'2023-01-01'）
-        end_date: 结束日期（回填模式，格式：'2024-12-31'）
         tickers: 指定股票代码列表（如：['AAPL', 'MSFT']）
 
     Returns:
@@ -70,38 +68,23 @@ def crawl_us_reports_job(
         }
     """
     start_time = datetime.now()
-    logger.info("=" * 80)
-    logger.info(f"开始爬取SEC财报（模式: {mode}）")
-    logger.info("=" * 80)
-
-    # 1. 确定日期范围
-    if mode == "incremental":
-        # 增量模式：最近7天
-        end_dt = datetime.now()
-        start_dt = end_dt - timedelta(days=7)
-        start_date = start_dt.strftime('%Y-%m-%d')
-        end_date = end_dt.strftime('%Y-%m-%d')
-        logger.info(f"增量模式：日期范围 {start_date} 到 {end_date}")
-    elif mode == "backfill":
-        # 回填模式：使用提供的日期
-        if not start_date or not end_date:
-            start_date = "2023-01-01"
-            end_date = datetime.now().strftime('%Y-%m-%d')
-        logger.info(f"回填模式：日期范围 {start_date} 到 {end_date}")
-    else:
-        raise ValueError(f"不支持的模式: {mode}")
+    year = start_date[:4] if start_date else ""
+    logger.info(f"开始爬取 美股 SEC财报 | 年份: {year} | 日期: {start_date} ~ {end_date}")
 
     # 2. 确定表单类型（固定为所有主要表单）
     form_types = ['10-K', '10-Q', '20-F', '40-F']
-    logger.info(f"表单类型: {form_types}")
 
     # 3. 查询目标公司列表
-    logger.info("步骤1: 查询目标公司列表...")
     companies = _get_target_companies(
         tickers=tickers,
         limit=limit
     )
-    logger.info(f"目标公司数: {len(companies)}")
+    filter_info = ""
+    if tickers:
+        filter_info = f"（按股票代码: {tickers}）"
+    elif limit is not None:
+        filter_info = f"（限制前 {limit} 家）"
+    logger.info(f"加载公司列表: {len(companies)} 家{filter_info}")
 
     # 4. 初始化爬虫
     sec_client = SECAPIClient()
@@ -112,7 +95,6 @@ def crawl_us_reports_job(
     )
 
     # 5. 爬取财报
-    logger.info("步骤2: 开始爬取财报...")
     filings_discovered = 0
     filings_downloaded = 0
     filings_failed = 0
@@ -123,7 +105,8 @@ def crawl_us_reports_job(
         company_name = company['name']
         org_id = company['org_id']
 
-        logger.info(f"\n[{idx}/{len(companies)}] 处理公司: {ticker} ({company_name})")
+        progress_pct = (idx / len(companies)) * 100
+        logger.info(f"[{idx}/{len(companies)}] {progress_pct:.1f}% | 处理公司: {ticker} ({company_name})")
 
         try:
             # 5.1 获取公司的所有提交记录
@@ -138,7 +121,6 @@ def crawl_us_reports_job(
             )
 
             filings_discovered += len(filings)
-            logger.info(f"  发现财报数: {len(filings)}")
 
             if not filings:
                 continue
@@ -189,13 +171,17 @@ def crawl_us_reports_job(
 
             # 5.4 批量爬取
             if tasks:
-                logger.info(f"  开始爬取 {len(tasks)} 个财报...")
                 results = crawler.crawl_batch(tasks)
 
-                # 统计结果
+                # 统计结果并回调（用于 Dagster 每文档 AssetMaterialization）
                 for result in results:
                     if result.success:
                         filings_downloaded += 1
+                        if on_filing_success:
+                            try:
+                                on_filing_success(result, filings_downloaded, filings_discovered)
+                            except Exception as cb_e:
+                                logger.warning(f"on_filing_success 回调失败: {cb_e}")
                     else:
                         filings_failed += 1
 
@@ -228,15 +214,8 @@ def crawl_us_reports_job(
         'duration_seconds': int(duration)
     }
 
-    logger.info("=" * 80)
-    logger.info("✅ SEC财报爬取完成")
-    logger.info(f"  处理公司数: {result['companies_processed']}")
-    logger.info(f"  发现财报数: {result['filings_discovered']}")
-    logger.info(f"  下载成功: {result['filings_downloaded']}")
-    logger.info(f"  下载失败: {result['filings_failed']}")
-    logger.info(f"  已跳过: {result['filings_skipped']}")
-    logger.info(f"  耗时: {duration:.1f}秒")
-    logger.info("=" * 80)
+    total = result['filings_downloaded'] + result['filings_failed']
+    logger.info(f"爬取完成: 成功 {result['filings_downloaded']}/{total}, 失败 {result['filings_failed']}/{total}")
 
     return result
 
@@ -398,10 +377,14 @@ def _parse_fiscal_period(
 if __name__ == '__main__':
     """命令行直接运行（用于测试）"""
     import sys
+    from datetime import timedelta
 
-    # 示例：测试爬取3家公司的最近财报
+    # 示例：测试爬取3家公司的最近财报（最近7天）
+    end_dt = datetime.now()
+    start_dt = end_dt - timedelta(days=7)
     result = crawl_us_reports_job(
-        mode='incremental',
+        start_date=start_dt.strftime('%Y-%m-%d'),
+        end_date=end_dt.strftime('%Y-%m-%d'),
         limit=3,
         tickers=['AAPL', 'MSFT', 'GOOGL'] if len(sys.argv) == 1 else None
     )

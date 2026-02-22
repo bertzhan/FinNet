@@ -37,24 +37,17 @@ if ! python3 -c "import dagster" 2>/dev/null; then
     fi
 fi
 
-# 检查新的 Dagster 模块是否存在
+# 使用 Dagster 模块
 DAGSTER_MODULE="src.processing.compute.dagster"
 DAGSTER_FILE="$PROJECT_ROOT/src/processing/compute/dagster/__init__.py"
 
-# 如果新模块不存在，尝试使用旧的
 if [ ! -f "$DAGSTER_FILE" ]; then
-    OLD_DAGSTER_FILE="$PROJECT_ROOT/src/crawler/dagster_jobs.py"
-    if [ -f "$OLD_DAGSTER_FILE" ]; then
-        echo -e "${YELLOW}使用旧的 Dagster 模块: src.crawler.dagster_jobs${NC}"
-        DAGSTER_MODULE="src.crawler.dagster_jobs"
-    else
-        echo -e "${RED}错误: 未找到 Dagster 模块${NC}"
-        echo "  请检查: $DAGSTER_FILE 或 $OLD_DAGSTER_FILE"
-        exit 1
-    fi
-else
-    echo -e "${GREEN}使用新的 Dagster 模块: $DAGSTER_MODULE${NC}"
+    echo -e "${RED}错误: 未找到 Dagster 模块${NC}"
+    echo "  请检查: $DAGSTER_FILE"
+    exit 1
 fi
+
+echo -e "${GREEN}使用 Dagster 模块: $DAGSTER_MODULE${NC}"
 
 echo "项目根目录: $PROJECT_ROOT"
 echo "Dagster 模块: $DAGSTER_MODULE"

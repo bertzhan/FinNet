@@ -118,7 +118,7 @@ FinNet 严格遵循 `plan.md` 的四层架构设计：
 
 ### 2. ingestion 层（重构现有代码）
 
-将现有 `src/crawler/` 重构为：
+爬虫架构（已从 `src/crawler/` 迁移至 `src/ingestion/`）：
 - `ingestion/base/` - 爬虫基类、验证器
 - `ingestion/hs/` - A股爬虫（整合现有 cninfo_crawler）
 - `ingestion/hk_stock/` - 港股爬虫（待实现）
@@ -251,7 +251,7 @@ app_path = pm.get_application_path(
 3. 实现 `milvus_client.py`（向量插入/检索）
 
 ### 优先级 2：重构 Ingestion 层
-1. 将现有 `src/crawler/` 迁移到 `src/ingestion/`
+1. 爬虫已迁移至 `src/ingestion/`（hs_stock、hk_stock、us_stock）
 2. 统一使用 `PathManager` 生成路径
 3. 集成数据验证体系
 

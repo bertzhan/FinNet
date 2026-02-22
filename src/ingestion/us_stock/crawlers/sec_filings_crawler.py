@@ -12,9 +12,10 @@ SEC财报爬虫（继承BaseCrawler，复用存储逻辑）
 import os
 import tempfile
 import hashlib
+from datetime import date, datetime
 from pathlib import Path
 from types import SimpleNamespace
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
@@ -78,6 +79,32 @@ class SECFilingsCrawler(BaseCrawler):
                 "download_images": download_images
             }
         )
+
+    def _prepare_us_minio_metadata(self, task: CrawlTask, html_url: str) -> Dict[str, str]:
+        """
+        准备美股 MinIO 上传的 metadata，与 A股/港股统一格式：source_url、publish_date
+
+        Args:
+            task: 爬取任务
+            html_url: 文档来源 URL
+
+        Returns:
+            统一的 metadata 字典，包含 source_url 和 publish_date（ISO 格式）
+        """
+        metadata: Dict[str, str] = {}
+        if html_url:
+            metadata["source_url"] = str(html_url)
+        fd = task.metadata.get("filing_date") if task.metadata else None
+        if fd:
+            if hasattr(fd, "isoformat"):
+                # date/datetime 对象：补全为完整 ISO 格式以与 HK 一致
+                iso_str = fd.isoformat()
+                if "T" not in iso_str:
+                    iso_str = f"{iso_str}T00:00:00"
+                metadata["publish_date"] = iso_str
+            else:
+                metadata["publish_date"] = str(fd)
+        return metadata
 
     def _download_file(self, task: CrawlTask) -> Tuple[bool, Optional[str], Optional[str]]:
         """
@@ -208,9 +235,11 @@ class SECFilingsCrawler(BaseCrawler):
 
                 if self.enable_minio:
                     logger.info(f"上传HTML到MinIO: {minio_path}")
+                    minio_metadata = self._prepare_us_minio_metadata(task, html_url)
                     self.minio_client.upload_file(
                         object_name=minio_path,
-                        file_path=str(html_temp_path)
+                        file_path=str(html_temp_path),
+                        metadata=minio_metadata
                     )
 
                     # 上传图片（如果有）

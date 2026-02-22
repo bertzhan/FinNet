@@ -63,24 +63,12 @@ def process_single_task(task_data: Tuple) -> Tuple[bool, Optional[Tuple]]:
     api_session = make_session(HEADERS_API)
     html_session = make_session(HEADERS_HTML)
 
-    # checkpoint 存储在输出目录
-    checkpoint_file = os.path.join(out_root, "checkpoint.json")
-
-    # 创建共享状态管理器（SQLite 或 JSON+锁）
+    # 共享状态管理器（用于 orgid_cache、code_change_cache，checkpoint 已由 documents 表替代）
+    checkpoint_file = os.path.join(out_root, "checkpoint.json")  # 仅用于 SharedStateSQLite 初始化
     if USE_SQLITE:
         shared = SharedStateSQLite(checkpoint_file, orgid_cache_file, code_change_cache_file)
     else:
         shared = SharedState(checkpoint_file, orgid_cache_file, code_change_cache_file, shared_lock)
-
-    # 检查是否已完成（checkpoint）
-    key = f"{code}-{year}-{quarter}"
-    checkpoint = shared.load_checkpoint()
-    if checkpoint.get(key):
-        # checkpoint 存在，但为了确保文件存在，不跳过下载
-        # 如果文件不存在，会在 report_crawler.py 中删除 checkpoint 并重新下载
-        return True, None
-
-    # 不再检查旧目录，总是重新下载
 
     exch_dir, column_api, _ = detect_exchange(code)
 
@@ -235,6 +223,19 @@ def process_single_task(task_data: Tuple) -> Tuple[bool, Optional[Tuple]]:
         out_dir = os.path.dirname(out_path)
         ensure_dir(out_dir)
 
+        # 通过 source_url 检查 documents 表是否已存在（避免重复下载）
+        try:
+            from src.storage.metadata.postgres_client import get_postgres_client
+            from src.storage.metadata import crud
+            pg = get_postgres_client()
+            with pg.get_session() as session:
+                existing = crud.get_document_by_source_url(session, pdf_url)
+                if existing:
+                    logger.info(f"[{code}] 文档已存在（source_url）: {year}-{quarter}，跳过下载")
+                    return True, ("SOURCE_URL_EXISTS", pdf_url)
+        except Exception as e:
+            logger.debug(f"检查 source_url 失败，继续下载: {e}")
+
         # 定义刷新函数（先尝试带orgId，失败则不带orgId）
         def refresh_fn():
             anns2 = fetch_anns_by_category(api_session, code, orgId, column_api, year, quarter)
@@ -257,8 +258,8 @@ def process_single_task(task_data: Tuple) -> Tuple[bool, Optional[Tuple]]:
                 'publication_date_iso': pub_date_iso  # 发布日期（ISO格式）
             }
             save_json(metadata_file, metadata_info)
-            shared.save_checkpoint(key)
-            
+            # checkpoint 已由 documents 表替代（crawl_hs_reports_job 预过滤）
+
             # 注意：MinIO 上传已移除，由 report_crawler.py 统一处理
             
             return True, None

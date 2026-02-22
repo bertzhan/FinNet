@@ -14,7 +14,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.processing.compute.dagster.jobs.crawl_jobs import load_company_list_from_db
+from src.ingestion.hs_stock.jobs.db_helpers import load_company_list_from_db
 from src.common.logger import get_logger
 
 logger = get_logger(__name__)

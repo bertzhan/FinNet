@@ -169,7 +169,7 @@ quarantine_path = pm.get_quarantine_path(
 - [ ] `storage/vector/milvus_client.py` - Milvus 客户端
 
 ### 优先级 2：重构 ingestion 层（明天）
-- [ ] 将 `src/crawler/` 迁移到 `src/ingestion/`
+- [x] 将 `src/crawler/` 迁移到 `src/ingestion/`（已完成）
 - [ ] 统一使用 `PathManager` 生成路径
 - [ ] 整合数据验证体系
 

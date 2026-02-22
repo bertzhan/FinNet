@@ -147,6 +147,8 @@ __all__ = [
     # Jobs
     "crawl_hs_reports_job",
     "crawl_hs_ipo_job",
+    "get_hk_companies_job",
+    "crawl_hk_reports_job",
     "doc_parse_job",
     "doc_chunk_job",
     "doc_vectorize_job",
@@ -157,6 +159,8 @@ __all__ = [
     # Ops
     "crawl_hs_reports_op",
     "crawl_hs_ipo_op",
+    "get_hk_companies_op",
+    "crawl_hk_reports_op",
     "validate_crawl_results_op",
     "scan_pending_documents_op",
     "doc_parse_op",
@@ -178,6 +182,8 @@ __all__ = [
     # Schedules
     "daily_crawl_reports_schedule",
     "daily_crawl_ipo_schedule",
+    "weekly_update_hk_companies_schedule",
+    "daily_crawl_hk_reports_schedule",
     "hourly_parse_schedule",
     "daily_parse_schedule",
     "hourly_chunk_schedule",
@@ -193,6 +199,8 @@ __all__ = [
     # Sensors
     "manual_trigger_reports_sensor",
     "manual_trigger_ipo_sensor",
+    "manual_trigger_update_hk_companies_sensor",
+    "manual_trigger_hk_reports_sensor",
     "manual_trigger_parse_sensor",
     "manual_trigger_chunk_sensor",
     "manual_trigger_vectorize_sensor",

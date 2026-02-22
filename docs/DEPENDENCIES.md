@@ -107,7 +107,7 @@ pip install dagster dagster-webserver
 ## 📝 依赖文件位置
 
 - **项目依赖**: `requirements.txt` (项目根目录)
-- **爬虫模块依赖**: `src/crawler/requirements.txt` (旧版本，已整合)
+- **爬虫模块依赖**: 已整合至主项目 `src/ingestion`
 
 ## 🔄 更新依赖
 

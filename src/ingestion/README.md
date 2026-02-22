@@ -122,7 +122,7 @@ class BaseCrawler(ABC, LoggerMixin):
 **功能**:
 - 继承 BaseCrawler
 - 实现 `_download_file()` 方法
-- 复用现有 `src/crawler/zh/main.py` 的核心逻辑
+- A股爬虫实现（hs_stock）
 - 支持单任务和多进程批量爬取
 
 **示例**:

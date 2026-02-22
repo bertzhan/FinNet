@@ -2,18 +2,18 @@
 
 ## 📝 配置说明
 
-`crawl_a_share_reports_op` 的 `year` 和 `quarter` 参数是**可选的**。如果不提供，系统会自动计算当前季度和上一季度。
+`crawl_hs_reports_op` 的 `year` 参数是**必需的**。爬取该年 Q1-Q4 所有季度。
 
-## ✅ 方式1：不提供 year/quarter（自动计算，推荐）
+## ✅ 基本配置
 
 ### 在 Dagster UI 中配置
 
 ```yaml
 ops:
-  crawl_a_share_reports_op:
+  crawl_hs_reports_op:
     config:
+      year: 2024  # 必需
       workers: 4
-      # year 和 quarter 不提供，会自动计算当前和上一季度
 ```
 
 ### 通过配置文件
@@ -22,120 +22,77 @@ ops:
 
 ```yaml
 ops:
-  crawl_a_share_reports_op:
+  crawl_hs_reports_op:
     config:
-      company_list_path: "src/crawler/zh/company_list.csv"
+      year: 2024  # 必需
       output_root: "./downloads"
       workers: 4
-      enable_minio: true
-      enable_postgres: true
-      # year 和 quarter 不设置，自动计算
-      # 注意：文档类型会根据季度自动判断（Q1/Q3=季度报告，Q2=半年报，Q4=年报）
+      # 公司列表从数据库读取（需先运行 get_hs_companies_job）
+      # limit: 10  # 可选，限制公司数量
+      # stock_codes: ["000001", "000002"]  # 可选，仅爬取指定代码
 ```
 
-### 自动计算逻辑
+### 爬取逻辑
 
-- 如果当前是 2025年1月（Q1），会爬取：
-  - 2024年Q4（上一季度）
-  - 2025年Q1（当前季度）
-
-## ✅ 方式2：指定 year 和 quarter
-
-### 爬取指定季度
-
-```yaml
-ops:
-  crawl_a_share_reports_op:
-    config:
-      workers: 4
-      year: 2023
-      quarter: 3  # Q3（自动判断为季度报告）
-```
-
-### 爬取年报
-
-```yaml
-ops:
-  crawl_a_share_reports_op:
-    config:
-      workers: 4
-      year: 2023
-      quarter: 4  # Q4（自动判断为年报）
-```
+- 指定 `year` 后，会爬取该年 Q1、Q2、Q3、Q4 四个季度的报告
+- 文档类型自动判断：Q1/Q3=季度报告，Q2=半年报，Q4=年报
 
 ## 🔍 完整配置示例
 
-### 示例1：最小配置（使用所有默认值）
+### 示例1：最小配置
 
 ```yaml
 ops:
-  crawl_a_share_reports_op:
+  crawl_hs_reports_op:
     config:
-      # 所有参数都使用默认值
-      # 自动计算季度，爬取所有公司
+      year: 2024  # 必需，爬取该年 Q1-Q4
 ```
 
 ### 示例2：完整配置
 
 ```yaml
 ops:
-  crawl_a_share_reports_op:
+  crawl_hs_reports_op:
     config:
-      company_list_path: "src/crawler/zh/company_list.csv"
+      year: 2023
       output_root: "./downloads/bronze"
       workers: 6
-      old_pdf_dir: "./old_pdfs"  # 可选：检查旧PDF避免重复下载
-      enable_minio: true
-      enable_postgres: true
-      year: 2023
-      quarter: 3
-      # 文档类型会根据季度自动判断：
-      #   Q1, Q3: 季度报告 (quarterly_report)
-      #   Q2: 半年报 (interim_report)
-      #   Q4: 年报 (annual_report)
+      # 文档类型会根据季度自动判断：Q1/Q3=季度报告，Q2=半年报，Q4=年报
 ```
 
 ### 示例3：测试配置（少量数据）
 
 ```yaml
 ops:
-  crawl_a_share_reports_op:
+  crawl_hs_reports_op:
     config:
-      company_list_path: "src/crawler/zh/company_list.csv"
+      year: 2023
       output_root: "./downloads/test"
       workers: 2
-      year: 2023
-      quarter: 3
-      enable_minio: true
-      enable_postgres: true
+      limit: 10  # 测试时限制公司数量
 ```
 
 ## 🐛 常见问题
 
-### Q1: 爬取失败，是否需要提供 year/quarter？
+### Q1: 爬取失败，是否需要提供 year？
 
-**A**: 不需要。`year` 和 `quarter` 是可选的。如果不提供，会自动计算。
+**A**: 需要。`year` 是必需参数，会爬取该年 Q1-Q4 所有季度。
 
-### Q2: 如何知道爬取的是哪个季度？
+### Q2: 如何只爬取部分公司？
 
-**A**: 查看 Dagster UI 中的日志，会显示：
-```
-自动计算季度: 2024Q4, 2025Q1
-```
-
-### Q3: 如何只爬取一个季度？
-
-**A**: 明确指定 `year` 和 `quarter`：
+**A**: 使用 `limit` 或 `stock_codes` 参数：
 ```yaml
-year: 2023
-quarter: 3
+year: 2024
+limit: 10  # 仅爬取前10家
+# 或
+stock_codes: ["000001", "000002"]  # 仅爬取指定代码
 ```
 
 ### Q4: 爬取失败的可能原因
 
-1. **公司列表文件不存在**
-   - 检查：`src/crawler/zh/company_list.csv` 是否存在
-   - 解决：确保文件存在且格式正确（code,name 列）
+1. **公司列表为空**
+   - 检查：是否已运行 `get_hs_companies_job` 更新公司列表
+   - 解决：在 Dagster UI 中先运行 `get_hs_companies_job`
 
 2. **MinIO 连接失败**
    - 检查：MinIO 服务是否运行
@@ -153,15 +110,12 @@ quarter: 3
 
 | 参数 | 类型 | 必需 | 默认值 | 说明 |
 |-----|------|------|--------|------|
-| `company_list_path` | str | 否 | `src/crawler/zh/company_list.csv` | 公司列表CSV文件路径 |
+| `year` | int | 是 | - | 年份，爬取该年 Q1-Q4 |
 | `output_root` | str | 否 | `downloads/` | 输出根目录 |
 | `workers` | int | 否 | 4 | 并行进程数（1-16） |
-| `old_pdf_dir` | str | 否 | None | 旧PDF目录（检查重复） |
-| `enable_minio` | bool | 否 | True | 是否启用MinIO上传 |
-| `enable_postgres` | bool | 否 | True | 是否启用PostgreSQL记录 |
-| `year` | int | 否 | None | 年份（None=自动计算） |
-| `quarter` | int | 否 | None | 季度1-4（None=自动计算） |
-| | | | | **注意**：文档类型会根据季度自动判断：Q1/Q3=季度报告，Q2=半年报，Q4=年报 |
+| `limit` | int | 否 | None | 限制公司数量（测试用） |
+| `stock_codes` | list | 否 | None | 指定股票代码列表 |
+| | | | | **注意**：公司列表从数据库读取，需先运行 `get_hs_companies_job` |
 
 ## 🚀 快速测试
 
@@ -179,7 +133,7 @@ quarter: 3
 2. 在配置中添加：
    ```yaml
    ops:
-     crawl_a_share_reports_op:
+     crawl_hs_reports_op:
        config:
          year: 2023
          quarter: 3

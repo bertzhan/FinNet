@@ -98,6 +98,12 @@ class ReportCrawler(CninfoBaseCrawler):
             # 调用现有爬虫逻辑
             success, failure_record = process_single_task(task_data)
 
+            # 处理 source_url 已存在的情况（跳过下载，由 base crawler 返回已有文档）
+            if success and isinstance(failure_record, (tuple, list)) and len(failure_record) == 2:
+                if failure_record[0] == "SOURCE_URL_EXISTS":
+                    task.metadata["existing_document_source_url"] = failure_record[1]
+                    return True, None, None
+
             if not success:
                 error_msg = failure_record[4] if failure_record and len(failure_record) > 4 else "下载失败"
                 self.logger.error(f"下载失败: {task.stock_code} {task.year} Q{task.quarter} - {error_msg}")
@@ -109,59 +115,21 @@ class ReportCrawler(CninfoBaseCrawler):
             file_path = self._find_downloaded_file(temp_dir, task)
 
             if not file_path:
-                # 文件未找到，可能是以下情况：
-                # 1. checkpoint 已存在（跳过下载，但文件不在 temp_dir）
-                # 2. 下载失败但返回了成功（异常情况）
-                
-                # 检查临时目录中是否有任何文件
+                # 文件未找到：process_single_task 返回成功但实际未保存文件，或路径不匹配
                 temp_files = []
                 if os.path.exists(temp_dir):
                     for root, dirs, files in os.walk(temp_dir):
                         for f in files:
                             if f.endswith('.pdf'):
                                 temp_files.append(os.path.join(root, f))
-                
-                self.logger.warning(
-                    f"文件未找到: {task.stock_code} {task.year} Q{task.quarter}\n"
+                error_msg = "文件下载失败或未找到"
+                self.logger.error(
+                    f"{error_msg}: {task.stock_code} {task.year} Q{task.quarter}\n"
                     f"  期望路径: {expected_path}\n"
-                    f"  临时目录: {temp_dir}\n"
                     f"  临时目录中的PDF文件数: {len(temp_files)}\n"
-                    f"  前3个PDF文件: {temp_files[:3]}"
+                    f"  可能原因：1) 下载函数返回成功但实际未保存 2) 文件保存路径不匹配"
                 )
-                
-                # 检查 checkpoint
-                from ..state.shared_state import SharedState
-                checkpoint_file = os.path.join(temp_dir, "checkpoint.json")
-                shared = SharedState(checkpoint_file, orgid_cache_file, code_change_cache_file, shared_lock)
-                checkpoint = shared.load_checkpoint()
-                key = f"{task.stock_code}-{task.year}-{quarter_str}"
-                
-                if checkpoint.get(key):
-                    # checkpoint 存在但文件不在 temp_dir，说明是之前运行留下的 checkpoint
-                    # 删除 checkpoint，强制重新下载
-                    self.logger.warning(f"checkpoint存在但文件未找到，删除checkpoint并重新下载: {task.stock_code} {task.year} Q{task.quarter}")
-                    shared.remove_checkpoint(key)
-                    # 重新调用下载
-                    success, failure_record = process_single_task(task_data)
-                    if not success:
-                        error_msg = failure_record[4] if failure_record and len(failure_record) > 4 else "下载失败"
-                        self.logger.error(f"重新下载失败: {task.stock_code} {task.year} Q{task.quarter} - {error_msg}")
-                        return False, None, error_msg
-                    # 再次查找文件
-                    file_path = self._find_downloaded_file(temp_dir, task)
-                    if not file_path:
-                        error_msg = "重新下载后文件仍未找到"
-                        self.logger.error(f"{error_msg}: {task.stock_code} {task.year} Q{task.quarter}")
-                        return False, None, error_msg
-                else:
-                    # 没有 checkpoint，说明下载失败
-                    error_msg = "文件下载失败或未找到"
-                    self.logger.error(
-                        f"{error_msg}: {task.stock_code} {task.year} Q{task.quarter}\n"
-                        f"  process_single_task 返回了成功，但文件不存在\n"
-                        f"  可能原因：1) 下载函数返回成功但实际未保存文件 2) 文件保存路径不匹配"
-                    )
-                    return False, None, error_msg
+                return False, None, error_msg
 
             self.logger.info(f"下载成功: {file_path}")
             return True, file_path, None

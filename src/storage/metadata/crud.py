@@ -216,6 +216,16 @@ def get_document_by_path(session: Session, minio_object_path: str) -> Optional[D
     return session.query(Document).filter(Document.minio_object_path == minio_object_path).first()
 
 
+def get_document_by_source_url(session: Session, source_url: str) -> Optional[Document]:
+    """
+    获取文档（按 source_url）
+    用于按文档来源 URL 去重，source_url 为文档唯一标识（如 CNINFO PDF URL、SEC accession URL）
+    """
+    if not source_url or not source_url.strip():
+        return None
+    return session.query(Document).filter(Document.source_url == source_url.strip()).first()
+
+
 def get_document_by_task(
     session: Session,
     stock_code: str,

@@ -1,33 +1,22 @@
 # Dagster 爬虫配置示例文件
 # 使用方法：dagster job execute -j crawl_hs_reports_job -m src.processing.compute.dagster -c examples/dagster_config_example.yaml
+#
+# 公司列表从数据库读取（需先运行 get_hs_companies_job 更新）
 
 ops:
   crawl_hs_reports_op:
     config:
-      # 公司列表文件路径
-      company_list_path: "src/crawler/zh/company_list.csv"
-      
-      # 输出根目录（使用相对路径，避免权限问题）
+      # 年份（必需）
+      year: 2024
+
+      # 输出根目录（可选，默认 downloads/）
       output_root: "./downloads"
-      
-      # 并行进程数（建议 4-8）
+
+      # 并行进程数（可选，默认 4）
       workers: 4
-      
-      # 旧PDF目录（可选，用于检查重复下载）
-      # old_pdf_dir: "./old_pdfs"
-      
-      # 是否启用 MinIO 上传
-      enable_minio: true
-      
-      # 是否启用 PostgreSQL 记录
-      enable_postgres: true
-      
-      # 年份（可选，不设置则自动计算当前和上一季度）
-      # year: 2023
-      
-      # 季度（可选，1-4，不设置则自动计算）
-      # 注意：文档类型会根据季度自动判断：
-      #   Q1, Q3: 季度报告 (quarterly_report)
-      #   Q2: 半年报 (interim_report)
-      #   Q4: 年报 (annual_report)
-      # quarter: 3
+
+      # 限制公司数量（可选，用于测试）
+      # limit: 10
+
+      # 指定股票代码列表（可选，仅爬取指定代码）
+      # stock_codes: ["000001", "000002"]

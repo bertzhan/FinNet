@@ -263,6 +263,29 @@ class BaseCrawler(ABC, LoggerMixin):
         # 1. 下载文件
         success, local_file_path, error_message = self._download_file(task)
 
+        # 1.1 处理 source_url 已存在的情况（跳过下载，直接返回已有文档）
+        if success and local_file_path is None and task.metadata and task.metadata.get("existing_document_source_url"):
+            source_url = task.metadata["existing_document_source_url"]
+            if self.pg_client:
+                try:
+                    with self.pg_client.get_session() as session:
+                        existing_doc = crud.get_document_by_source_url(session, source_url)
+                        if existing_doc:
+                            self.logger.info(
+                                f"✅ 文档已存在（source_url），跳过: {task.stock_code} {task.year} Q{task.quarter}"
+                            )
+                            return CrawlResult(
+                                task=task,
+                                success=True,
+                                minio_object_path=existing_doc.minio_object_path,
+                                document_id=existing_doc.id,
+                                file_size=existing_doc.file_size,
+                                file_hash=existing_doc.file_hash,
+                                metadata=task.metadata
+                            )
+                except Exception as e:
+                    self.logger.warning(f"查询 source_url 失败: {e}")
+
         if not success:
             error_msg = error_message or "未知错误"
             self.logger.error(
