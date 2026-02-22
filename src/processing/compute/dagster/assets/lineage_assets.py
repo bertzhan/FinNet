@@ -9,9 +9,9 @@ Dagster Software-Defined Assets
     silver_parsed_documents (解析)
         ↓
     silver_chunked_documents (分块)
-        ├── silver_vectorized_chunks (向量化)
-        ├── gold_graph_nodes (图构建)
-        └── gold_elasticsearch_index (ES索引)
+        ├── gold_vectorized_chunks (向量化)
+        ├── gold_doc_toc_graph (图构建, doc_toc_graph_op)
+        └── gold_doc_index (ES索引, doc_index_op)
 """
 
 from datetime import datetime
@@ -216,19 +216,19 @@ def silver_chunked_documents(context: AssetExecutionContext) -> MaterializeResul
 
 
 @asset(
-    key_prefix=["silver"],
+    key_prefix=["gold"],
     deps=[AssetKey(["silver", "silver_chunked_documents"])],
-    group_name="data_processing",
-    description="向量化的分块（Silver层）- 由向量化作业产生",
+    group_name="data_application",
+    description="向量化的分块（Gold层）- 由向量化作业产生",
     compute_kind="embedding",
     metadata={
-        "layer": "silver",
+        "layer": "gold",
         "stage": "vectorized",
     }
 )
-def silver_vectorized_chunks(context: AssetExecutionContext) -> MaterializeResult:
+def gold_vectorized_chunks(context: AssetExecutionContext) -> MaterializeResult:
     """
-    Silver 层资产：向量化的分块
+    Gold 层资产：向量化的分块
     
     此资产依赖 silver_chunked_documents，代表向量化完成的分块。
     物化此资产时，会统计当前向量化完成的分块数量。
@@ -254,7 +254,7 @@ def silver_vectorized_chunks(context: AssetExecutionContext) -> MaterializeResul
         total_chunks = vectorized_chunks + pending_vectorize
         vectorization_rate = vectorized_chunks / total_chunks if total_chunks > 0 else 0
         
-        logger.info(f"Silver 层向量化统计: 已向量化={vectorized_chunks}, 待向量化={pending_vectorize}, 向量化率={vectorization_rate:.2%}")
+        logger.info(f"Gold 层向量化统计: 已向量化={vectorized_chunks}, 待向量化={pending_vectorize}, 向量化率={vectorization_rate:.2%}")
     
     return MaterializeResult(
         metadata={
@@ -272,16 +272,16 @@ def silver_vectorized_chunks(context: AssetExecutionContext) -> MaterializeResul
     key_prefix=["gold"],
     deps=[AssetKey(["silver", "silver_chunked_documents"])],
     group_name="data_application",
-    description="Neo4j 图节点（Gold层）- 由图构建作业产生",
+    description="Neo4j 图节点（Gold层）- 由 doc_toc_graph_op 产生",
     compute_kind="neo4j",
     metadata={
         "layer": "gold",
-        "stage": "graph",
+        "stage": "doc_toc_graph",
     }
 )
-def gold_graph_nodes(context: AssetExecutionContext) -> MaterializeResult:
+def gold_doc_toc_graph(context: AssetExecutionContext) -> MaterializeResult:
     """
-    Gold 层资产：图节点
+    Gold 层资产：图节点（doc_toc_graph）
     
     此资产依赖 silver_chunked_documents（直接依赖，不依赖 parsed），
     代表在 Neo4j 中构建的图结构。
@@ -327,16 +327,16 @@ def gold_graph_nodes(context: AssetExecutionContext) -> MaterializeResult:
     key_prefix=["gold"],
     deps=[AssetKey(["silver", "silver_chunked_documents"])],
     group_name="data_application",
-    description="Elasticsearch 索引（Gold层）- 由索引作业产生",
+    description="Elasticsearch 索引（Gold层）- 由 doc_index_op 产生",
     compute_kind="elasticsearch",
     metadata={
         "layer": "gold",
-        "stage": "indexed",
+        "stage": "doc_index",
     }
 )
-def gold_elasticsearch_index(context: AssetExecutionContext) -> MaterializeResult:
+def gold_doc_index(context: AssetExecutionContext) -> MaterializeResult:
     """
-    Gold 层资产：Elasticsearch 索引
+    Gold 层资产：Elasticsearch 索引（doc_index）
     
     此资产依赖 silver_chunked_documents（直接依赖，不依赖 parsed），
     代表在 Elasticsearch 中建立的全文索引。
@@ -405,9 +405,9 @@ def gold_elasticsearch_index(context: AssetExecutionContext) -> MaterializeResul
         AssetKey(["bronze", "bronze_documents"]),
         AssetKey(["silver", "silver_parsed_documents"]),
         AssetKey(["silver", "silver_chunked_documents"]),
-        AssetKey(["silver", "silver_vectorized_chunks"]),
-        AssetKey(["gold", "gold_graph_nodes"]),
-        AssetKey(["gold", "gold_elasticsearch_index"]),
+        AssetKey(["gold", "gold_vectorized_chunks"]),
+        AssetKey(["gold", "gold_doc_toc_graph"]),
+        AssetKey(["gold", "gold_doc_index"]),
     ],
     group_name="quality",
     description="数据处理流水线质量指标汇总",
@@ -462,8 +462,8 @@ __all__ = [
     "bronze_documents",
     "silver_parsed_documents",
     "silver_chunked_documents",
-    "silver_vectorized_chunks",
-    "gold_graph_nodes",
-    "gold_elasticsearch_index",
+    "gold_vectorized_chunks",
+    "gold_doc_toc_graph",
+    "gold_doc_index",
     "pipeline_quality_metrics",
 ]

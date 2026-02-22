@@ -155,18 +155,18 @@ crawl_jobs (Bronze)
 parse_jobs (Silver: parsed_documents)
     ↓
 chunk_jobs (Silver: chunked_documents)
-    ├─→ vectorize_jobs (Silver: vectorized_chunks)
-    ├─→ graph_jobs (Gold: graph_nodes)
-    └─→ elasticsearch_jobs (Gold: elasticsearch_index)
+    ├─→ vectorize_jobs (Gold: vectorized_chunks)
+    ├─→ graph_jobs (Gold: doc_toc_graph)
+    └─→ elasticsearch_jobs (Gold: doc_index)
 ```
 
 ### 资产命名规范
 
 所有资产遵循统一的命名格式：`[layer, category, market?, doc_type?, stock_code?, year?, quarter?]`
 
-- **Bronze层**: `["bronze", "a_share", "annual_report", "2023", "Q4"]`
-- **Silver层**: `["silver", "parsed_documents", "a_share", "annual_report", "000001", "2023", "Q4"]`
-- **Gold层**: `["gold", "graph_nodes", "a_share", "annual_report", "000001"]`
+- **Bronze层**: `["bronze", "hs_stock", "annual_report", "2023", "Q4"]`
+- **Silver层**: `["silver", "parsed_documents", "hs_stock", "annual_report", "000001", "2023", "Q4"]`
+- **Gold层**: `["gold", "doc_toc_graph", "hs_stock", "annual_report", "000001"]`
 
 ### 依赖关系建立
 
@@ -176,7 +176,7 @@ chunk_jobs (Silver: chunked_documents)
 AssetMaterialization(
     asset_key=["silver", "parsed_documents", ...],
     metadata={
-        "parent_asset_key": MetadataValue.text("bronze/a_share/annual_report/2023/Q4"),
+        "parent_asset_key": MetadataValue.text("bronze/hs_stock/annual_report/2023/Q4"),
         # ... 其他元数据
     }
 )

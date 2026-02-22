@@ -33,14 +33,14 @@ Silver层（加工数据）
 │   └── 依赖: bronze/hs_stock/annual_report/2023/Q4
 ├── silver/chunked_documents/hs_stock/annual_report/000001
 │   └── 依赖: silver/parsed_documents/hs_stock/annual_report/000001/2023/Q4
-├── silver/vectorized_chunks/hs_stock/annual_report/000001
-│   └── 依赖: silver/chunked_documents/hs_stock/annual_report/000001
 └── ...
 
 Gold层（应用数据）
-├── gold/graph_nodes/hs_stock/annual_report/000001
+├── gold/vectorized_chunks/hs_stock/annual_report/000001
 │   └── 依赖: silver/chunked_documents/hs_stock/annual_report/000001
-└── gold/elasticsearch_index/hs_stock/annual_report/000001
+├── gold/doc_toc_graph/hs_stock/annual_report/000001
+│   └── 依赖: silver/chunked_documents/hs_stock/annual_report/000001
+└── gold/doc_index/hs_stock/annual_report/000001
     └── 依赖: silver/chunked_documents/hs_stock/annual_report/000001
 
 质量指标
@@ -58,14 +58,14 @@ ASSET_KEY_FORMAT = """
 
 层级说明:
 - bronze: 原始数据层（爬虫）
-- silver: 加工数据层（解析、分块、向量化）
-- gold: 应用数据层（图、索引）
+- silver: 加工数据层（解析、分块）
+- gold: 应用数据层（向量化、图、索引）
 - quality_metrics: 质量指标
 
 示例:
 - Bronze层: ["bronze", "hs_stock", "annual_report", "2023", "Q4"]
 - Silver层: ["silver", "parsed_documents", "hs_stock", "annual_report", "000001", "2023", "Q4"]
-- Gold层: ["gold", "graph_nodes", "hs_stock", "annual_report", "000001"]
+- Gold层: ["gold", "doc_toc_graph", "hs_stock", "annual_report", "000001"]
 """
 
 # 依赖关系说明
@@ -77,18 +77,18 @@ DEPENDENCY_RELATIONS = """
 2. parse_jobs (Silver: parsed_documents)
    ↓
 3. chunk_jobs (Silver: chunked_documents)
-   ├─→ vectorize_jobs (Silver: vectorized_chunks)
-   ├─→ graph_jobs (Gold: graph_nodes)
-   └─→ elasticsearch_jobs (Gold: elasticsearch_index)
+   ├─→ vectorize_jobs (Gold: vectorized_chunks)
+   ├─→ graph_jobs (Gold: doc_toc_graph)
+   └─→ elasticsearch_jobs (Gold: doc_index)
 
 关键依赖关系:
 - parse_jobs 依赖 crawl_jobs (bronze → silver/parsed_documents)
 - chunk_jobs 依赖 parse_jobs (silver/parsed_documents → silver/chunked_documents)
-- vectorize_jobs 依赖 chunk_jobs (silver/chunked_documents → silver/vectorized_chunks)
-- graph_jobs 直接依赖 chunk_jobs (silver/chunked_documents → gold/graph_nodes)
-- elasticsearch_jobs 直接依赖 chunk_jobs (silver/chunked_documents → gold/elasticsearch_index)
+- vectorize_jobs 依赖 chunk_jobs (silver/chunked_documents → gold/vectorized_chunks)
+- graph_jobs 直接依赖 chunk_jobs (silver/chunked_documents → gold/doc_toc_graph)
+- elasticsearch_jobs 直接依赖 chunk_jobs (silver/chunked_documents → gold/doc_index)
 
-注意: graph_jobs 和 elasticsearch_jobs 都直接依赖 chunk_jobs，不依赖 parsed_documents
+注意: vectorize_jobs、graph_jobs、elasticsearch_jobs 都直接依赖 chunk_jobs，不依赖 parsed_documents
 """
 
 __all__ = [

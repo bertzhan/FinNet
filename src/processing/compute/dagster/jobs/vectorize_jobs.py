@@ -338,8 +338,8 @@ def doc_vectorize_op(context, scan_result: Dict) -> Dict:
                 company_name = first_chunk.get("company_name", "")
                 vectorized_chunks_count = len(doc_chunks)
                 
-                # 构建资产key: ["silver", "vectorized_chunks", market, doc_type, stock_code]
-                asset_key = ["silver", "vectorized_chunks", market, doc_type, stock_code]
+                # 构建资产key: ["gold", "vectorized_chunks", market, doc_type, stock_code]
+                asset_key = ["gold", "vectorized_chunks", market, doc_type, stock_code]
                 
                 # 构建父资产key（指向chunked_documents）
                 parent_asset_key = ["silver", "chunked_documents", market, doc_type, stock_code]

@@ -157,9 +157,9 @@ crawl_jobs (Bronze)
 parse_jobs (Silver: parsed_documents)
     ↓
 chunk_jobs (Silver: chunked_documents)
-    ├─→ vectorize_jobs (Silver: vectorized_chunks)
-    ├─→ graph_jobs (Gold: graph_nodes)
-    └─→ elasticsearch_jobs (Gold: elasticsearch_index)
+    ├─→ vectorize_jobs (Gold: vectorized_chunks)
+    ├─→ graph_jobs (Gold: doc_toc_graph)
+    └─→ elasticsearch_jobs (Gold: doc_index)
 ```
 
 ### 关键特性

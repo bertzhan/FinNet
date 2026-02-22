@@ -29,7 +29,7 @@ from dagster import (
     MetadataValue,
 )
 
-from src.ingestion.us_stock.jobs.update_us_companies_job import update_us_companies_job as get_us_companies_job_fn
+from src.ingestion.us_stock.jobs.get_us_companies_job import get_us_companies_job as get_us_companies_job_fn
 from src.ingestion.us_stock.jobs.crawl_us_reports_job import crawl_us_reports_job as crawl_us_reports_job_fn
 from src.common.config import common_config
 

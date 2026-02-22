@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Job 1: 更新美股公司列表
+Job 1: 获取美股公司列表
 从 SEC API 获取所有 13,000+ 上市公司，写入 us_listed_companies 表
 
 功能：
@@ -69,13 +69,13 @@ def _extract_submissions_fields(submissions: Dict) -> Dict[str, Any]:
     return result
 
 
-def update_us_companies_job(
+def get_us_companies_job(
     clear_before_update: bool = False,
     basic_info_only: bool = False,
     progress_callback: Optional[Callable[[int, int, str], None]] = None,
 ) -> Dict:
     """
-    更新美股公司列表
+    获取美股公司列表
 
     从 SEC EDGAR API 获取所有上市公司（约 13,000+），
     写入 us_listed_companies 表。
@@ -95,7 +95,7 @@ def update_us_companies_job(
     """
     start_time = datetime.now()
     logger.info("=" * 80)
-    logger.info("开始更新美股公司列表")
+    logger.info("开始获取美股公司列表")
     logger.info("=" * 80)
 
     # 1. 从 SEC 获取公司列表
@@ -252,7 +252,7 @@ def update_us_companies_job(
     }
 
     logger.info("=" * 80)
-    logger.info("✅ 美股公司列表更新完成")
+    logger.info("✅ 美股公司列表获取完成")
     logger.info(f"  总公司数: {result['total_companies']}")
     logger.info(f"  新增: {result['companies_added']}")
     logger.info(f"  更新: {result['companies_updated']}")
@@ -264,5 +264,5 @@ def update_us_companies_job(
 
 if __name__ == '__main__':
     """命令行直接运行（用于测试）"""
-    result = update_us_companies_job()
-    print(f"\n更新结果: {result}")
+    result = get_us_companies_job()
+    print(f"\n获取结果: {result}")

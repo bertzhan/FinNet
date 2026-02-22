@@ -415,8 +415,8 @@ def doc_index_op(context, scan_result: Dict) -> Dict:
             company_name = first_chunk.get("company_name", "")
             indexed_chunks_count = len(doc_chunks)
             
-            # 构建资产key: ["gold", "elasticsearch_index", market, doc_type, stock_code]
-            asset_key = ["gold", "elasticsearch_index", market, doc_type, stock_code]
+            # 构建资产key: ["gold", "doc_index", market, doc_type, stock_code]
+            asset_key = ["gold", "doc_index", market, doc_type, stock_code]
             
             # 构建父资产key（指向chunked_documents，因为elasticsearch_jobs直接依赖chunk_jobs）
             parent_asset_key = ["silver", "chunked_documents", market, doc_type, stock_code]

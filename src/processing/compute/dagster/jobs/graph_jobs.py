@@ -373,8 +373,8 @@ def doc_toc_graph_op(context, scan_result: Dict) -> Dict:
                 stock_code = doc_info.get("stock_code", "")
                 company_name = doc_info.get("company_name", "")
                 
-                # 构建资产key: ["gold", "graph_nodes", market, doc_type, stock_code]
-                asset_key = ["gold", "graph_nodes", market, doc_type, stock_code]
+                # 构建资产key: ["gold", "doc_toc_graph", market, doc_type, stock_code]
+                asset_key = ["gold", "doc_toc_graph", market, doc_type, stock_code]
                 
                 # 构建父资产key（指向chunked_documents，因为graph_jobs直接依赖chunk_jobs）
                 parent_asset_key = ["silver", "chunked_documents", market, doc_type, stock_code]
