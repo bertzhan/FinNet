@@ -62,6 +62,12 @@ REPORT_CRAWL_CONFIG_SCHEMA = {
         is_required=False,
         description="List of stock codes. Example: ['000001', '000002']",
     ),
+    "force_recrawl": Field(
+        bool,
+        is_required=False,
+        default_value=False,
+        description="强制重新爬取，清理已存在文档的下游数据后重新下载",
+    ),
 }
 
 IPO_CRAWL_CONFIG_SCHEMA = {
@@ -72,6 +78,12 @@ IPO_CRAWL_CONFIG_SCHEMA = {
         list,
         is_required=False,
         description="List of stock codes. Example: ['000001', '000002']",
+    ),
+    "force_recrawl": Field(
+        bool,
+        is_required=False,
+        default_value=False,
+        description="强制重新爬取，清理已存在文档的下游数据后重新下载",
     ),
 }
 
@@ -131,6 +143,7 @@ def crawl_hs_reports_op(context) -> Dict:
     year = config.get("year")
     limit = config.get("limit")
     stock_codes = config.get("stock_codes")
+    force_recrawl = config.get("force_recrawl", False)
 
     if year is None:
         logger.error("year 参数是必需的")
@@ -144,7 +157,7 @@ def crawl_hs_reports_op(context) -> Dict:
             "source_type": "hs_stock",
         }
 
-    logger.info(f"开始爬取 A股 定期报告 | 年份: {year} | 季度: Q1-Q4")
+    logger.info(f"开始爬取 A股 定期报告 | 年份: {year} | 季度: Q1-Q4" + (f" | force_recrawl={force_recrawl}" if force_recrawl else ""))
 
     def on_success(result, idx: int, total: int) -> None:
         q = result.task.quarter or 0
@@ -172,6 +185,7 @@ def crawl_hs_reports_op(context) -> Dict:
             workers=workers,
             limit=limit,
             stock_codes=stock_codes,
+            force_recrawl=force_recrawl,
             on_success=on_success,
         )
     except Exception as e:
@@ -197,8 +211,9 @@ def crawl_hs_ipo_op(context) -> Dict:
     workers = config.get("workers", 4)
     limit = config.get("limit")
     stock_codes = config.get("stock_codes")
+    force_recrawl = config.get("force_recrawl", False)
 
-    logger.info("开始爬取 A股 IPO招股书")
+    logger.info("开始爬取 A股 IPO招股书" + (f" | force_recrawl={force_recrawl}" if force_recrawl else ""))
 
     def on_success(result, idx: int, total: int) -> None:
         context.log_event(
@@ -223,6 +238,7 @@ def crawl_hs_ipo_op(context) -> Dict:
             workers=workers,
             limit=limit,
             stock_codes=stock_codes,
+            force_recrawl=force_recrawl,
             on_success=on_success,
         )
     except Exception as e:

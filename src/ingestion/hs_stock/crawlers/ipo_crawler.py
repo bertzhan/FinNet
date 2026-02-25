@@ -38,18 +38,21 @@ class CninfoIPOProspectusCrawler(CninfoBaseCrawler):
         self,
         enable_minio: bool = True,
         enable_postgres: bool = True,
-        workers: int = 1
+        workers: int = 1,
+        force_recrawl: bool = False
     ):
         """
         Args:
             enable_minio: 是否启用 MinIO 上传
             enable_postgres: 是否启用 PostgreSQL 记录
             workers: 并行进程数（1 表示单线程）
+            force_recrawl: 强制重新爬取，忽略已存在记录并清理下游
         """
         super().__init__(
             market=Market.HS,
             enable_minio=enable_minio,
-            enable_postgres=enable_postgres
+            enable_postgres=enable_postgres,
+            force_recrawl=force_recrawl
         )
         self.workers = workers
 
@@ -294,11 +297,13 @@ class CninfoIPOProspectusCrawler(CninfoBaseCrawler):
             except ImportError:
                 from src.ingestion.hs_stock.processor.ipo_processor import run_ipo_multiprocessing
 
-            # 0. 检查数据库，过滤已存在的任务（避免重复爬取）
+            # 0. 检查数据库，过滤已存在的任务（force_recrawl 时不过滤）
             tasks_to_crawl = []
             skipped_results = {}  # {stock_code: CrawlResult}
-            
-            if self.enable_postgres and self.pg_client:
+
+            if self.force_recrawl:
+                tasks_to_crawl = list(tasks)
+            elif self.enable_postgres and self.pg_client:
                 try:
                     from src.storage.metadata import crud
                     with self.pg_client.get_session() as session:

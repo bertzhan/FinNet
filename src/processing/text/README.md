@@ -198,8 +198,11 @@
 ```python
 from chunk_by_rules import StructureGenerator, ChunkGenerator
 
-# 第一步：生成文档结构
-structure_generator = StructureGenerator(document_path='document.md')
+# 第一步：生成文档结构（chunk_mode: chinese | english | simple）
+structure_generator = StructureGenerator(
+    document_path='document.md',
+    chunk_mode='chinese'  # 中文：第X节、一、；英文：PART/ITEM全大写；简易：一级无 pattern，有序号则下一级
+)
 structure = structure_generator.run(output_structure='structure.json')
 
 # 第二步：根据结构生成分块
@@ -239,7 +242,7 @@ self.patterns = [
 ## ⚠️ 注意事项
 
 1. **文档格式要求**：输入文档必须是 Markdown 格式，标题使用 `#` 标记
-2. **标题格式**：程序主要针对中文标题格式优化，英文标题可能需要调整规则
+2. **标题格式**：支持三种 chunk_mode：`chinese`（第X节、一、）、`english`（PART/ITEM 全大写）、`simple`（一级无 pattern）
 3. **规则顺序很重要**：规则按优先级顺序应用，规则1的优先级最高
 4. **格式识别精度**：算法会区分细微的格式差异（如空格、括号类型等），确保规则1的正确应用
 5. **文件编码**：确保文档使用 UTF-8 编码

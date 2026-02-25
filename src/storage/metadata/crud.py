@@ -5,7 +5,7 @@ CRUD 操作辅助类
 """
 
 import uuid
-from typing import Optional, List, Dict, Any, Union
+from typing import Any, Optional, List, Dict, Union
 from datetime import datetime, date
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, desc, func, String, text
@@ -566,6 +566,132 @@ def delete_document_chunks(
     session.flush()
     logger.info(f"删除文档 {document_id} 的 {count} 个分块")
     return count
+
+
+def delete_document_downstream_data(session: Session, document_id: Union[uuid.UUID, str]) -> int:
+    """
+    删除文档的下游数据（force_recrawl 时调用）
+    按 FK 依赖顺序删除，并重置 document 的解析相关字段。
+
+    Args:
+        session: 数据库会话
+        document_id: 文档 ID
+
+    Returns:
+        删除的 DB 记录总数
+    """
+    doc_id = _to_uuid(document_id)
+    total = 0
+
+    # 1. ImageAnnotation (via Image.document_id)
+    images = session.query(Image.id).filter(Image.document_id == doc_id).all()
+    for (img_id,) in images:
+        n = session.query(ImageAnnotation).filter(ImageAnnotation.image_id == img_id).delete()
+        total += n
+
+    # 2. Image
+    n = session.query(Image).filter(Image.document_id == doc_id).delete()
+    total += n
+
+    # 3. DocumentChunk
+    n = session.query(DocumentChunk).filter(DocumentChunk.document_id == doc_id).delete()
+    total += n
+
+    # 4. ParsedDocument
+    n = session.query(ParsedDocument).filter(ParsedDocument.document_id == doc_id).delete()
+    total += n
+
+    # 5. ParseTask
+    n = session.query(ParseTask).filter(ParseTask.document_id == doc_id).delete()
+    total += n
+
+    # 6. EmbeddingTask
+    n = session.query(EmbeddingTask).filter(EmbeddingTask.document_id == doc_id).delete()
+    total += n
+
+    # 7. ValidationLog
+    n = session.query(ValidationLog).filter(ValidationLog.document_id == doc_id).delete()
+    total += n
+
+    # 8. 重置 document 的解析相关字段
+    doc = session.query(Document).filter(Document.id == doc_id).first()
+    if doc:
+        doc.parsed_at = None
+        doc.chunked_at = None
+        doc.vectorized_at = None
+        doc.graphed_at = None
+        doc.status = DocumentStatus.CRAWLED.value
+        session.flush()
+
+    if total > 0:
+        logger.info(f"删除文档 {document_id} 的下游数据: {total} 条记录")
+    return total
+
+
+def delete_document_minio_artifacts(
+    minio_client: Any,
+    session: Session,
+    document_id: Union[uuid.UUID, str]
+) -> int:
+    """
+    删除文档关联的 MinIO 对象（force_recrawl 时调用，须在 delete_document_downstream_data 之前）
+    Bronze 层：按 minio_object_path 目录前缀删除；Silver 层：按 parsed_documents 路径删除。
+
+    Args:
+        minio_client: MinIOClient 实例（需有 delete_file、delete_objects_by_prefix）
+        session: 数据库会话
+        document_id: 文档 ID
+
+    Returns:
+        删除的 MinIO 对象数量
+    """
+    doc_id = _to_uuid(document_id)
+    doc = session.query(Document).filter(Document.id == doc_id).first()
+    if not doc:
+        return 0
+
+    total = 0
+
+    # Silver 层：先收集 parsed_documents 的路径再删除（避免删 DB 后丢失路径）
+    parsed_docs = session.query(ParsedDocument).filter(ParsedDocument.document_id == doc_id).all()
+    paths_to_delete = []
+    prefixes_to_delete = []
+    for pd in parsed_docs:
+        if pd.content_json_path:
+            paths_to_delete.append(pd.content_json_path)
+        if pd.markdown_path:
+            paths_to_delete.append(pd.markdown_path)
+        if pd.middle_json_path:
+            paths_to_delete.append(pd.middle_json_path)
+        if pd.model_json_path:
+            paths_to_delete.append(pd.model_json_path)
+        if pd.structure_json_path:
+            paths_to_delete.append(pd.structure_json_path)
+        if pd.chunks_json_path:
+            paths_to_delete.append(pd.chunks_json_path)
+        if pd.image_folder_path:
+            # 图片目录按前缀删除
+            prefix = pd.image_folder_path.rstrip('/') + '/'
+            if prefix not in prefixes_to_delete:
+                prefixes_to_delete.append(prefix)
+
+    for path in paths_to_delete:
+        if minio_client.file_exists(path):
+            if minio_client.delete_file(path):
+                total += 1
+    for prefix in prefixes_to_delete:
+        total += minio_client.delete_objects_by_prefix(prefix)
+
+    # Bronze 层：按 minio_object_path 所在目录前缀删除
+    if doc.minio_object_path:
+        parts = doc.minio_object_path.rsplit('/', 1)
+        if len(parts) == 2:
+            bronze_prefix = parts[0] + '/'
+            total += minio_client.delete_objects_by_prefix(bronze_prefix)
+
+    if total > 0:
+        logger.info(f"删除文档 {document_id} 的 MinIO 对象: {total} 个")
+    return total
 
 
 def update_chunk_embedding(

@@ -5,6 +5,7 @@
 """
 
 import json
+import re
 import tempfile
 import hashlib
 import uuid
@@ -13,6 +14,7 @@ from datetime import datetime
 from pathlib import Path
 
 from src.processing.text.chunk_by_rules import StructureGenerator, ChunkGenerator
+from src.processing.text.structure_utils import structure_tree_to_text
 from src.storage.object_store.minio_client import MinIOClient
 from src.storage.object_store.path_manager import PathManager
 from src.storage.metadata.postgres_client import get_postgres_client
@@ -21,6 +23,48 @@ from src.storage.metadata.models import Document, ParsedDocument, DocumentChunk
 from src.common.constants import Market, DocType
 from src.common.logger import get_logger, LoggerMixin
 from src.common.utils import calculate_file_hash
+
+# 市场与分块模式的 pattern 检测
+_HS_SECTION_PATTERN = re.compile(r"#\s*第[一二三四五六七八九十\d]+节")
+_US_PART_PATTERN = re.compile(r"#\s*PART\s+(?:I{1,3}|IV|V|VI+|IX|X+|\d+)", re.I)
+
+
+def resolve_chunk_mode(market: str, markdown_content: str) -> str:
+    """
+    根据市场和文档内容解析分块模式。
+
+    规则：
+    - hs_stock: 默认 chinese，若文档不包含 `# 第X节` 则用 simple
+    - hk_stock: 默认 simple
+    - us_stock: 默认 english，若文档不包含 `# PART X` 则用 simple
+    - 其他: 默认 simple
+
+    Args:
+        market: 市场标识 (hs_stock/hk_stock/us_stock)
+        markdown_content: Markdown 文档内容
+
+    Returns:
+        分块模式: 'chinese' | 'english' | 'simple'
+    """
+    if not markdown_content:
+        return "simple"
+
+    market = (market or "").strip().lower()
+
+    if market == "hs_stock":
+        if _HS_SECTION_PATTERN.search(markdown_content):
+            return "chinese"
+        return "simple"
+
+    if market == "hk_stock":
+        return "simple"
+
+    if market == "us_stock":
+        if _US_PART_PATTERN.search(markdown_content):
+            return "english"
+        return "simple"
+
+    return "simple"
 
 
 class TextChunker(LoggerMixin):
@@ -48,7 +92,8 @@ class TextChunker(LoggerMixin):
     def chunk_document(
         self,
         document_id: Union[uuid.UUID, str],
-        force_rechunk: bool = False
+        force_rechunk: bool = False,
+        chunk_mode: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         对单个文档进行分块（完整流程）
@@ -56,15 +101,17 @@ class TextChunker(LoggerMixin):
         流程：
         1. 获取 ParsedDocument 和 Document 信息
         2. 从 Silver 层读取 Markdown 文件
-        3. 生成文档结构（structure.json）
-        4. 根据结构生成分块（chunks.json）
-        5. 保存 structure.json 和 chunks.json 到 Silver 层
-        6. 保存分块到数据库
-        7. 更新 ParsedDocument 记录
+        3. 若 chunk_mode 为 None 或 'auto'，根据市场与文档内容解析分块模式
+        4. 生成文档结构（structure.json）
+        5. 根据结构生成分块（chunks.json）
+        6. 保存 structure.json 和 chunks.json 到 Silver 层
+        7. 保存分块到数据库
+        8. 更新 ParsedDocument 记录
 
         Args:
             document_id: 文档ID
             force_rechunk: 是否强制重新分块（删除旧分块）
+            chunk_mode: 分块模式，'chinese'|'english'|'simple'；None 或 'auto' 时按市场与内容自动解析
 
         Returns:
             分块结果字典，包含：
@@ -131,8 +178,14 @@ class TextChunker(LoggerMixin):
                     "error_message": f"无法读取 Markdown 文件: {markdown_path}"
                 }
 
+            # 3.5. 若未指定 chunk_mode，根据市场与文档内容解析
+            if chunk_mode is None or (isinstance(chunk_mode, str) and chunk_mode.lower() == "auto"):
+                market_str = getattr(market, "value", str(market)) if market else ""
+                chunk_mode = resolve_chunk_mode(market_str, markdown_content)
+                self.logger.debug(f"自动解析 chunk_mode: market={market_str} -> {chunk_mode}")
+
             # 4. 生成文档结构
-            structure = self._generate_structure(markdown_content)
+            structure = self._generate_structure(markdown_content, chunk_mode=chunk_mode)
             if not structure:
                 return {
                     "success": False,
@@ -140,7 +193,7 @@ class TextChunker(LoggerMixin):
                 }
 
             # 5. 生成分块
-            chunks = self._generate_chunks(markdown_content, structure)
+            chunks = self._generate_chunks(markdown_content, structure, chunk_mode=chunk_mode)
             if not chunks:
                 return {
                     "success": False,
@@ -278,12 +331,17 @@ class TextChunker(LoggerMixin):
                 Path(tmp_path).unlink()
             return None
 
-    def _generate_structure(self, markdown_content: str) -> Optional[List[Dict[str, Any]]]:
+    def _generate_structure(
+        self,
+        markdown_content: str,
+        chunk_mode: str = "chinese"
+    ) -> Optional[List[Dict[str, Any]]]:
         """
         生成文档结构
 
         Args:
             markdown_content: Markdown 内容
+            chunk_mode: 分块模式，'chinese' | 'english' | 'simple'
 
         Returns:
             文档结构（树形结构），失败返回 None
@@ -295,7 +353,7 @@ class TextChunker(LoggerMixin):
                 tmp_file.write(markdown_content)
 
             # 使用 StructureGenerator 生成结构
-            structure_generator = StructureGenerator(document_path=tmp_path)
+            structure_generator = StructureGenerator(document_path=tmp_path, chunk_mode=chunk_mode)
             structure = structure_generator.run()
 
             # 清理临时文件
@@ -310,7 +368,8 @@ class TextChunker(LoggerMixin):
     def _generate_chunks(
         self,
         markdown_content: str,
-        structure: List[Dict[str, Any]]
+        structure: List[Dict[str, Any]],
+        chunk_mode: str = "chinese"
     ) -> Optional[List[Dict[str, Any]]]:
         """
         根据结构生成分块
@@ -318,6 +377,7 @@ class TextChunker(LoggerMixin):
         Args:
             markdown_content: Markdown 内容
             structure: 文档结构
+            chunk_mode: 分块模式
 
         Returns:
             分块列表，失败返回 None
@@ -335,7 +395,8 @@ class TextChunker(LoggerMixin):
             # 使用 ChunkGenerator 生成分块
             chunk_generator = ChunkGenerator(
                 document_path=tmp_md_path,
-                structure_path=tmp_structure_path
+                structure_path=tmp_structure_path,
+                chunk_mode=chunk_mode
             )
             chunks = chunk_generator.run()
 
@@ -348,32 +409,6 @@ class TextChunker(LoggerMixin):
         except Exception as e:
             self.logger.error(f"生成分块失败: {e}", exc_info=True)
             return None
-
-    def _generate_structure_txt(self, structure: List[Dict[str, Any]]) -> str:
-        """
-        生成目录结构树的文本格式
-
-        Args:
-            structure: 文档结构（树形结构）
-
-        Returns:
-            文本格式的目录结构树
-        """
-        lines = []
-        
-        def print_tree_node(node: Dict[str, Any], indent: int = 0) -> None:
-            """递归打印树节点"""
-            prefix = '  ' * indent
-            level_marker = f"[L{node['level']}] " if node.get('level') else ""
-            lines.append(f"{prefix}{level_marker}{node['title']}")
-            
-            for child in node.get('children', []):
-                print_tree_node(child, indent + 1)
-        
-        for root_node in structure:
-            print_tree_node(root_node)
-        
-        return '\n'.join(lines)
 
     def _save_structure_to_silver(
         self,
@@ -437,7 +472,7 @@ class TextChunker(LoggerMixin):
         self.logger.debug(f"✅ structure.json 已保存: {structure_path}")
 
         # 生成并上传 structure.txt
-        structure_txt_content = self._generate_structure_txt(structure)
+        structure_txt_content = structure_tree_to_text(structure)
         structure_txt_bytes = structure_txt_content.encode('utf-8')
 
         success_txt = self.minio_client.upload_file(

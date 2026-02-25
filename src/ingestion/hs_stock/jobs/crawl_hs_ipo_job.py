@@ -25,6 +25,7 @@ def crawl_hs_ipo_job(
     workers: int = 4,
     limit: Optional[int] = None,
     stock_codes: Optional[List[str]] = None,
+    force_recrawl: bool = False,
     on_success: Optional[Callable[[object, int, int], None]] = None,
 ) -> Dict:
     """
@@ -67,7 +68,12 @@ def crawl_hs_ipo_job(
             "source_type": "hs_stock",
         }
 
-    crawler = CninfoIPOProspectusCrawler(enable_minio=True, enable_postgres=True, workers=workers)
+    crawler = CninfoIPOProspectusCrawler(
+        enable_minio=True,
+        enable_postgres=True,
+        workers=workers,
+        force_recrawl=force_recrawl,
+    )
     tasks = [
         CrawlTask(
             stock_code=c["code"],

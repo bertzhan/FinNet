@@ -1,0 +1,704 @@
+# UNITED STATES
+# SECURITIES AND EXCHANGE COMMISSION
+# WASHINGTON, D.C. 20549
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# Not Applicable
+# Cayman Islands
+# 68 Xinqing Road
+# Suzhou Industrial Park
+# Thomas J. Knapp
+<table><tr><td rowspan="2">INTRODUCTION</td><td>Page</td></tr><tr><td>ii</td></tr><tr><td>PART I</td><td>1</td></tr><tr><td>ITEM 1. IDENTITY OF DIRECTORS, SENIOR MANAGEMENT AND ADVISERS</td><td>1</td></tr><tr><td>ITEM 2. OFFER STATISTICS AND EXPECTED TIMETABLE</td><td>1</td></tr><tr><td>ITEM 3. KEY INFORMATION</td><td>1</td></tr><tr><td>ITEM 4. INFORMATION ON THE COMPANY</td><td>78</td></tr><tr><td>ITEM 4A. UNRESOLVED STAFF COMMENTS</td><td>159</td></tr><tr><td>ITEM 5. OPERATING AND FINANCIAL REVIEW AND PROSPECTS</td><td>159</td></tr><tr><td>ITEM 6. DIRECTORS, SENIOR MANAGEMENT AND EMPLOYEES</td><td>169</td></tr><tr><td>ITEM 7. MAJOR SHAREHOLDERS AND RELATED PARTY TRANSACTIONS</td><td>186</td></tr><tr><td>ITEM 8. FINANCIAL INFORMATION</td><td>189</td></tr><tr><td>ITEM 9. THE OFFER AND LISTING</td><td>190</td></tr><tr><td>ITEM 10. ADDITIONAL INFORMATION</td><td>191</td></tr><tr><td>ITEM 11. QUANTITATIVE AND QUALITATIVE DISCLOSURES ABOUT MARKET RISKS</td><td>199</td></tr><tr><td>ITEM 12. DESCRIPTION OF SECURITIES OTHER THAN EQUITY SECURITIES</td><td>201</td></tr><tr><td>PART II</td><td>203</td></tr><tr><td>ITEM 13. DEFAULTS, DIVIDEND ARREARAGES AND DELINQUENCIES</td><td>203</td></tr><tr><td>ITEM 14. MATERIAL MODIFICATIONS TO THE RIGHTS OF SECURITY HOLDERS AND USE OF PROCEEDS</td><td>203</td></tr><tr><td>ITEM 15. CONTROLS AND PROCEDURES</td><td>203</td></tr><tr><td>ITEM 16. [RESERVED]</td><td>204</td></tr><tr><td>ITEM 16A. AUDIT COMMITTEE FINANCIAL EXPERT</td><td>204</td></tr><tr><td>ITEM 16B. CODE OF ETHICS</td><td>204</td></tr><tr><td>ITEM 16C. PRINCIPAL ACCOUNTANT FEES AND SERVICES</td><td>205</td></tr><tr><td>ITEM 16D. EXEMPTIONS FROM THE LISTING STANDARDS FOR AUDIT COMMITTEES</td><td>205</td></tr><tr><td>ITEM 16E. PURCHASES OF EQUITY SECURITIES BY THE ISSUER AND AFFILIATED PURCHASERS</td><td>205</td></tr><tr><td>ITEM 16F. CHANGE IN REGISTRANT&#x27;S CERTIFYING ACCOUNTANT</td><td>205</td></tr><tr><td>ITEM 16G. CORPORATE GOVERNANCE</td><td>205</td></tr><tr><td>ITEM 16H. MINE SAFETY DISCLOSURE</td><td>206</td></tr><tr><td>ITEM 16I. DISCLOSURE REGARDING FOREIGN JURISDICTIONS THAT PREVENT INSPECTIONS</td><td>206</td></tr><tr><td>ITEM 16J. INSIDER TRADING POLICIES</td><td>206</td></tr><tr><td>ITEM 16K. CYBERSECURITY</td><td>206</td></tr><tr><td>PART III</td><td>208</td></tr><tr><td>ITEM 17. FINANCIAL STATEMENTS</td><td>208</td></tr><tr><td>ITEM 18. FINANCIAL STATEMENTS</td><td>208</td></tr><tr><td>ITEM 19. EXHIBITS</td><td>208</td></tr></table>
+# INTRODUCTION
+# PRESENTATION OF FINANCIAL INFORMATION
+# FREQUENTLY USED TERMS
+# Key Business Terms
+# INDUSTRY AND MARKET DATA
+# TRADEMARKS AND SERVICE MARKS
+# CAUTIONARY NOTE REGARDING FORWARD-LOOKING STATEMENTS
+# PART I
+# ITEM 1. IDENTITY OF DIRECTORS, SENIOR MANAGEMENT AND ADVISERS
+# ITEM 2. OFFER STATISTICS AND EXPECTED TIMETABLE
+# ITEM 3. KEY INFORMATION
+# Summary of risk factors
+# Risks related to clinical development
+# Risks related to obtaining regulatory approval
+# Risks related to commercialization
+# Risks related to our intellectual property
+# Risks related to our reliance on third parties
+# Risks related to our industry, business and operations
+# Risks related to doing business in the PRC
+# Risks related to our ordinary shares and the ADSs
+# Risks related to our financial position and need for additional capital
+# Risks related to clinical development
+# Many of our drug candidates are in early stages of clinical trials.
+# Risks related to obtaining regulatory approval
+# The FDA, NMPA and other comparable foreign regulatory authorities may not accept data from trials conducted in locations outside of their jurisdiction.
+# Risks related to commercialization
+# The market opportunities for our drug candidates may be limited to those patients who are ineligible for or have failed prior treatments and may be small.
+# A variety of risks associated with testing, manufacturing, marketing and other activities in connection with our drug candidates internationally may materially adversely af ect our business.
+# Risks related to our intellectual property
+# We may not be able to protect our intellectual property rights throughout the world.
+# Intellectual property rights do not necessarily address all potential threats to our competitive advantage.
+# Risks related to our reliance on third parties
+# If third-party manufacturers fail to comply with manufacturing regulations, our financial results and financial condition will be adversely af ected.
+# We have entered into collaborations and other relationships with leading biotechnology companies and research institutions and may form or seek other collaborations or strategic alliances or enter into additional licensing arrangements in the future, and we may not realize the benefits of such alliances or licensing arrangements.
+# Risks related to our industry, business and operations
+# If product liability lawsuits are brought against us, we may incur substantial liabilities and may be required to limit commercialization of our drug candidates.
+# We face uncertainties with respect to our leased properties.
+# Risks related to doing business in the PRC
+# We may be restricted from transferring our scientific data abroad.
+# Risks related to our ordinary shares and the ADSs
+# If securities or industry analysts do not publish research or reports about our business, or if they adversely change their recommendations regarding the ADSs and ordinary shares, the market price for the ADSs or ordinary shares and trading volume could decline.
+# Techniques employed by short sellers may drive down the market price of the ADSs.
+# We have broad discretion in the use of the net proceeds from our public and private financings and may not use them ef ectively.
+# Certain judgments obtained against us by our shareholders may not be enforceable.
+# We may lose our foreign private issuer status in the future, which could result in significant additional costs and expenses.
+# We currently report our financial results under IFRS, which dif ers in certain significant respect from U.S. generally accepted accounting principles, or U.S. GAAP.
+# We are an emerging growth company within the meaning of the Securities Act and may take advantage of certain reduced reporting requirements.
+# We will incur increased costs as a result of being a public company in the United States, particularly after we cease to qualify as an “emerging growth company.”
+# ITEM 4. INFORMATION ON THE COMPANY
+# A. History and Development of the Company
+# B. Business Overview
+# Overview
+# Our pipeline
+# Note:
+# Our competitive strengths
+# Our strategy
+# Disease and industry background
+# Chronic myeloid leukemia (CML)
+# Acute lymphocytic leukemia (ALL)
+# Chronic lymphocytic leukemia (CLL) and small lymphocytic lymphoma (SLL)
+# Acute myeloid leukemia (AML)
+# Myelodysplastic syndrome (MDS)
+# Multiple Myeloma (MM)
+# Our first lead asset: olverembatinib
+# Note:
+# Current treatment paradigm and its limitations
+# Our solution: Olverembatinib
+# Mechanism of action
+# Mechanism of Action of Olverembatinib
+# Key clinical results
+# 1. Long-term durability of response in TKI-resistant CML
+# 2. Significantly improved EFS in CML-CP resistant and/or intolerant to 3 TKIs
+# 3. Clinical benefit in patients with ponatinib- and asciminib-failed CML-CP and $P h + A L L$
+# 4. Clinical benefit as a Second-Line Therapy in Patients with Chronic Phase-Chronic Myeloid Leukemia
+# Efficacy results.
+# Safety results.
+# 5. Combination with venetoclax can permit reduced-chemotherapy for newly diagnosed $P h + A L L$
+# Best Response, CMR Rates and OS of Olverembatinib and Venetoclax in newly diagnosed Ph+ ALL
+# 6. Combination with VP Regimen as frontline therapy for $P h + A L L$
+# 7. Combination with pediatric-inspired chemo protocol as potential frontline treatment for $P h + A L L$
+# 8. Combination with blinatumomab as a potential chemo-free therapy for Ph+/Ph-like ALL
+# Ef icacy results.
+# Safety results.
+# Olverembatinib Registrational Trials
+# POLARIS-2—Registrational Phase 3 trial for the treatment of CML-CP
+# POLARIS-3—Registrational Phase 3 trial for SDH-deficient GIST
+# Our second lead asset: lisaftoclax
+# Current treatment paradigm and its limitations
+# CLL/SLL
+# AML
+# MDS
+# MM
+# Our solution: Lisaftoclax
+# Mechanism of action
+# Key clinical results
+# 1. Favorable safety and unique PK profile in FIH open-label trial
+# 2. Pooled analyses of patients with heavily pretreated CLL in two clinical trials
+# Efficacy results.
+# Safety results.
+# 4. Strong response to combination therapies in r/r AML, MDS and other myeloid malignancies
+<table><tr><td></td><td>Therapy</td><td>Diagnosis</td><td>#evaluablepts</td><td>ORR1(%)</td><td>CR/CRi (%)</td></tr><tr><td>A</td><td>Lisftoclax + LD-HHT</td><td>r/r AML</td><td>3</td><td>0.0%</td><td>0.0%</td></tr><tr><td>B</td><td>Lisftoclax + SD-HHT</td><td>r/r AML</td><td>8</td><td>75.0%</td><td>75.0%</td></tr><tr><td>C</td><td>Lisftoclax + AZA</td><td>r/r AML2</td><td>36</td><td>75.0%</td><td>44.4%</td></tr><tr><td>E</td><td>Lisftoclax + AZA</td><td>newly diagnosed,older/unfit AML</td><td>21</td><td>71.4%</td><td>47.6%</td></tr><tr><td>D</td><td>Lisftoclax + AZA</td><td>HR MDS</td><td>10</td><td>70.0%</td><td>60.0%</td></tr></table>
+# 5. Combination with AZA continues to show promise for the treatment of patients with newly diagnosed or r/r AML
+# Efficacy results.
+# Safety results.
+# 7. Combination has potential in r/r MM or immunoglobulin light-chain, or AL, amyloidosis
+# Lisaftoclax, alrizomadlin and combination therapy in venetoclaxsensitive and venetoclax- resistant xenograft mouse models
+# Lisaftoclax registrational trials
+# GLORA-2—Registrational Phase 3 trial for frontline treatment in newly diagnosed CLL/SLL
+# GLORA-4—Registrational Phase 3 trial as frontline treatment for newly diagnosed patients with HR MDS
+# Alrizomadlin (APG-115)
+# Malignant peripheral nerve sheath tumor (MPNST)
+# Our Solution: Alrizomadlin
+# Select clinical trial results
+# 1. Malignant peripheral nerve sheath tumor (MPNST)
+# 2. Adenoid cystic carcinoma (ACC)
+# Other programs
+# Data publication
+# Pelcitoclax (APG-1252)
+# Select clinical trial results
+# APG-2449
+# Select clinical trial results
+# APG-5918
+# Data Publication:
+# Discovery pipeline: protein degraders
+# Competition
+# Agreements with the University of Michigan
+# License agreement with the University of Michigan
+# BCL-2 license agreements
+# Strategic partnership with Innovent
+# Takeda exclusive option agreement
+# Intellectual property
+# Commercialization
+# Manufacturing and facilities
+# Employees and human capital
+# Legal proceedings
+# Government regulation
+# U.S. regulation
+# U.S. drug development
+# Clinical trials
+# NDA review process
+# Orphan drugs
+# Expedited review programs
+# Post-approval requirements
+# FDA regulation of companion diagnostics
+# 510(k) clearance process
+# De novo classification process
+# PMA process
+# Other U.S. regulatory matters
+# U.S. patent-term restoration and marketing exclusivity
+# U.S. coverage and reimbursement
+# U.S. healthcare reform
+# Drug approval outside of the United States
+# PRC regulation
+# Introduction
+# Principal regulatory authorities
+# Non-clinical research and animal experiment
+# Registration categories
+# Expedited programs
+# Clinical trials and marketing approval
+# Trial approval
+# Drug clinical trial registration
+# Human genetic resources approval
+# Trial exemptions and acceptance of non-PRC data
+# Clinical trial process and good clinical practices
+# New drug application and approval
+# Manufacturing and distribution
+# Other significant PRC regulations affecting our business activities in the PRC
+# PRC regulations of environment protection
+# PRC regulations of intellectual property rights
+# Patents
+# Patent enforcement
+# Trade secrets
+# Trademarks and domain names
+# PRC regulations on labor contracts and social security
+# PRC regulations relating to employee stock incentive plan
+# PRC regulations relating to dividend distribution
+# PRC regulations relating to foreign currency exchange
+# PRC regulations of commercial bribery
+# PRC regulations of product liability
+# PRC tort law
+# PRC regulations on cybersecurity review and data privacy
+# PRC regulations on securities of ering and listing outside of China
+# C. Organizational Structure
+# D. Property, Plants and Equipment
+# ITEM 4A. UNRESOLVED STAFF COMMENTS
+# ITEM 5. OPERATING AND FINANCIAL REVIEW AND PROSPECTS
+# A. Operating Results
+# Strategic partnership with Innovent
+# Components of results of operations
+# Revenue
+# Cost of sales
+# Other income and gains
+# Operating expenses
+# Administrative Expenses
+# Finance costs
+# Other Expenses
+# Share of profit of a joint venture
+# Income tax
+# Cayman Islands
+# Hong Kong
+# Mainland China
+# United States
+# Results of operations
+# Revenue
+# Cost of sales
+# Other income and gains
+# Operating expenses
+# Share of profit/(loss) of a joint venture
+# Loss for the reporting period
+# Income tax (expense)/credit
+# B. Liquidity and Capital Resources
+# Cash flows
+# Net cash used in operating activities
+# Net cash used in investing activities
+# Net cash provided by financing activities
+# Contractual obligations and loans
+# C. Research and Development, Patents and Licenses, etc.
+# D. Trend Information
+# E. Critical accounting estimates
+# Goodwill
+# Income tax
+# Revenue recognition
+# (b) Commercialization rights
+# (c) Intellectual property income
+# (d) Others
+# Other estimates
+# ITEM 6. DIRECTORS, SENIOR MANAGEMENT AND EMPLOYEES
+# A. Directors and senior management
+# Family relationships
+# Arrangements for election of directors and members of management
+# B. Compensation
+# Executive officer and director compensation
+# Equity incentive plans
+# 2021 Restricted Share Unit Scheme
+# Pre-IPO share option scheme
+# Post-IPO share option scheme
+# Employment agreements and indemnification agreements
+# Dajun Yang labor contract
+# Yifang Zhai labor contract
+# Jef Kmetz employment and severance agreements
+# Thomas Knapp of er letter
+# Shaomeng Wang Service Agreement
+# Jin Cao labor contract
+# Adoption of compensation recovery policy
+# C. Board Practices
+# Board of directors
+# Director independence
+# Board committees
+# Audit committee
+# Remuneration committee
+# Nomination committee
+# Duties of directors
+# Board composition and election of directors and officers
+# D. Employees
+# E. Share Ownership
+# F. Disclosure of a Registrant’s Action to Recover Erroneously Awarded Compensation
+# ITEM 7. MAJOR SHAREHOLDERS AND RELATED PARTY TRANSACTIONS
+# A. Major Shareholders
+# Significant changes in percentage ownership
+# Voting rights
+# Shareholders in the United States
+# B. Related Party Transactions
+# Healthquest acquisition
+# Private placements
+# Deed of Non-Competition
+# Concert Party Confirmation Deed
+# Employment agreements and indemnification agreements
+# Equity incentive plans and agreements
+# C. Interests of Experts and Counsel
+# ITEM 8. FINANCIAL INFORMATION
+# A. Consolidated Statements and Other Financial Information
+# Financial Statements
+# Legal Proceedings
+# Dividends and Dividend Policy
+# B. Significant Changes
+# ITEM 9. THE OFFER AND LISTING
+# A. Offer and Listing Details
+# B. Plan of Distribution
+# C. Markets
+# D. Selling Shareholders
+# E. Dilution
+# F. Expenses of the Issue
+# ITEM 10. ADDITIONAL INFORMATION
+# A. Share Capital
+# B. Memorandum and Articles of Association
+# Registered office and objects
+# Board of directors
+# Ordinary shares
+# Register of members
+# C. Material Contracts
+# D. Exchange Controls
+# E. Taxation
+# Cayman Islands taxation
+# Material People’s Republic of China taxation
+# Material U.S. federal income tax considerations
+# General
+# Dividends
+# Sale or other disposition
+# Passive foreign investment company rules
+# Information reporting and backup withholding
+# Information with respect to foreign financial assets
+# F. Dividends and Paying Agents
+# G. Statement by Experts
+# H. Documents on Display
+# I. Subsidiary Information
+# J. Annual Report to Security Holders
+# ITEM 11. QUANTITATIVE AND QUALITATIVE DISCLOSURES ABOUT MARKET RISKS
+# Credit risk
+# Liquidity risk
+# Interest rate risk
+# Inflation risk
+# Foreign exchange risk
+# ITEM 12. DESCRIPTION OF SECURITIES OTHER THAN EQUITY SECURITIES
+# A. Debt Securities
+# B. Warrants and Rights
+# C. Other Securities
+# D. American Depositary Shares
+# Fees and expenses
+# PART II
+# ITEM 13. DEFAULTS, DIVIDEND ARREARAGES AND DELINQUENCIES
+# ITEM 14. MATERIAL MODIFICATIONS TO THE RIGHTS OF SECURITY HOLDERS AND USE OF PROCEEDS
+# A. — D. Material Modifications to the Rights of Security Holders
+# E. Use of Proceeds
+# ITEM 15. CONTROLS AND PROCEDURES
+# A. Disclosure Controls and Procedures
+# B. Management’s Annual Report on Internal Control over Financial Reporting
+# Previously-identified material weakness
+# Remediation activities
+# C. Attestation Report of Registered Public Accounting Firm
+# D. Changes in Internal Control over Financial Reporting
+# ITEM 16. [RESERVED]
+# ITEM 16A. AUDIT COMMITTEE FINANCIAL EXPERT
+# ITEM 16B. CODE OF ETHICS
+# ITEM 16C. PRINCIPALACCOUNTANT FEES AND SERVICES
+# Audit Committee pre-approval policies and procedures
+# ITEM 16D. EXEMPTIONS FROM THE LISTING STANDARDS FOR AUDIT COMMITTEES
+# ITEM 16E. PURCHASES OF EQUITY SECURITIES BY THE ISSUER AND AFFILIATED PURCHASERS
+# ITEM 16F. CHANGE IN REGISTRANT’S CERTIFYING ACCOUNTANT
+# ITEM 16G. CORPORATE GOVERNANCE
+# ITEM 16H. MINE SAFETY DISCLOSURE
+# ITEM 16I. DISCLOSURE REGARDING FOREIGN JURISDICTIONS THAT PREVENT INSPECTIONS
+# ITEM 16J. INSIDER TRADING POLICIES
+# ITEM 16K. CYBERSECURITY
+# Governance
+# PART III
+# ITEM 17. FINANCIAL STATEMENTS
+# ITEM 18. FINANCIAL STATEMENTS
+# ITEM 19. EXHIBITS
+<table><tr><td rowspan="2">Exhibit No.</td><td rowspan="2">Description</td><td colspan="4">Incorporation by Reference</td></tr><tr><td>Form</td><td>File Number</td><td>Exhibit No.</td><td>Filing Date</td></tr><tr><td>1.1</td><td>Second Amended and Restated Memorandum and Articles of Association of the Registrant</td><td>F-1/A</td><td>333-284064</td><td>3.1</td><td>January 21, 2025</td></tr><tr><td>2.1</td><td>Form of Specimen American Depositary Receipt (included in Exhibit 4.3)</td><td>F-1/A</td><td>333-284064</td><td>4.1</td><td>January 21, 2025</td></tr><tr><td>2.2</td><td>Registrant's Specimen Certificate for ordinary shares</td><td>F-1/A</td><td>333-284064</td><td>4.1</td><td>January 21, 2025</td></tr><tr><td>2.3</td><td>Deposit Agreement, among the Registrant, the depositary and all holders and beneficial owners of American Depositary Shares</td><td>F-6</td><td>333-284315</td><td>a</td><td>January 16, 2025</td></tr><tr><td>2.4*</td><td>Description of Securities</td><td></td><td></td><td></td><td></td></tr><tr><td>4.1#</td><td>Form of Indemnification Agreement between the Registrant and each of its directors and executive officers</td><td>F-1</td><td>333-284064</td><td>10.12</td><td>December 27, 2024</td></tr><tr><td>4.2</td><td>Concert Party Confirmation Deed</td><td>F-1</td><td>333-284064</td><td>10.1</td><td>December 27, 2024</td></tr><tr><td>4.3#</td><td>Pre-IPO Share Option Plan</td><td>F-1</td><td>333-284064</td><td>10.2</td><td>December 27, 2024</td></tr><tr><td>4.4#</td><td>Post-IPO Share Option Plan</td><td>F-1</td><td>333-284064</td><td>10.3</td><td>December 27, 2024</td></tr><tr><td>4.5#</td><td>2018 RSU Scheme</td><td>F-1</td><td>333-284064</td><td>10.4</td><td>December 27, 2024</td></tr><tr><td>4.6#</td><td>2021 RSU Scheme</td><td>F-1</td><td>333-284064</td><td>10.5</td><td>December 27, 2024</td></tr><tr><td>4.7#</td><td>2022 RSU Scheme</td><td>F-1</td><td>333-284064</td><td>10.6</td><td>December 27, 2024</td></tr><tr><td>4.8†</td><td>Collaboration and License Agreement between Ascentage Pharma Group Corp Limited, Guangzhou Healthquest Pharma Corp Limited, and Innovent Biologics (Suzhou) Co., LTD, Dated as of July 14, 2021</td><td>F-1</td><td>333-284064</td><td>10.7</td><td>December 27, 2024</td></tr><tr><td>4.9†</td><td>License Agreement between Ascentage Pharma Group Corp Limited and the Regents of the University of Michigan, dated as of December 1, 2010, as amended</td><td>F-1</td><td>333-284064</td><td>10.8</td><td>December 27, 2024</td></tr><tr><td>4.10</td><td>English translation of Guangzhou Shunjian Biomedical Technology Co., Ltd. Share Transfer Agreement, dated as of December 5, 2016</td><td>F-1</td><td>333-284064</td><td>10.9</td><td>December 27, 2024</td></tr><tr><td>4.11#</td><td>Employment Agreement between Ascentage Pharma Group Inc. and Raymond Jeffrey Kmetz</td><td>F-1</td><td>333-284064</td><td>10.10</td><td>December 27, 2024</td></tr><tr><td>4.12#</td><td>Services Agreement between Ascentage Pharma Group Inc. and Shaomeng Wang</td><td>F-1</td><td>333-284064</td><td>10.11</td><td>December 27, 2024</td></tr><tr><td>4.13#</td><td>Deed of non-competition among Dr. Dajun Yang, Dr. Yifan Zhai, Dr. Shaomeng Wang, Dr. Edward Ming Guo, Ascentage Limited and HealthQuest Pharma Limited, dated April 24, 2019</td><td>F-1</td><td>333-284064</td><td>10.13</td><td>December 27, 2024</td></tr><tr><td>4.14†</td><td>Exclusive Option Agreement, by and among Ascentage Pharma Group Corp Limited, Guangzhou Healthquest Pharma Co., Ltd., Suzhou Ascentage Pharmaceutical Co., Ltd., Ascentage Pharma Group International and Takeda Pharmaceuticals International AG, dated as of June 14, 2024</td><td>F-1</td><td>333-284064</td><td>10.14</td><td>December 27, 2024</td></tr><tr><td>4.15†</td><td>Registration Rights Agreement, dated as of June 20, 2024, by and between Ascentage Pharma Group International and Takeda Pharmaceuticals AG</td><td>F-1</td><td>333-284064</td><td>10.15</td><td>December 27, 2024</td></tr><tr><td>4.16#</td><td>English translation of Labor Contract between Suzhou Ascentage Pharma Co., Ltd. and Dr. Dajun Yang</td><td>F-1</td><td>333-284064</td><td>10.16</td><td>December 27, 2024</td></tr><tr><td>4.17#</td><td>English translation of Labor Contract between Guangzhou Healthquest Pharma Co., Ltd. and Dr. Yifan Zhai</td><td>F-1</td><td>333-284064</td><td>10.17</td><td>December 27, 2024</td></tr><tr><td>4.18#</td><td>Offer letter between Ascentage Pharma Group Inc. and Raymond Jeffrey Knetz</td><td>F-1</td><td>333-284064</td><td>10.18</td><td>December 27, 2024</td></tr><tr><td>4.19#</td><td>Offer letter between Ascentage Pharma Group Inc. and Thomas J. Knapp, as amended</td><td>F-1</td><td>333-284064</td><td>10.19</td><td>December 27, 2024</td></tr><tr><td>4.20#</td><td>English translation of Labor Contract between Suzhou Ascentage Pharma Co., Ltd. and Jin Cao</td><td>F-1</td><td>333-284064</td><td>10.20</td><td>December 27, 2024</td></tr><tr><td>8.1*</td><td>List of subsidiaries of the Registrant</td><td></td><td></td><td></td><td></td></tr><tr><td>11.1*</td><td>English translation of Ascentage Pharma Group International Insider Trading Policy</td><td></td><td></td><td></td><td></td></tr><tr><td>12.1*</td><td>Certification by Principal Executive Officer pursuant to Rule 13a-14(a) of the Securities Exchange Act of 1934</td><td></td><td></td><td></td><td></td></tr><tr><td>12.2*</td><td>Certification by Principal Financial and Accounting Officer pursuant to Rule 13a-14(a) of the Securities Exchange Act of 1934</td><td></td><td></td><td></td><td></td></tr><tr><td>13.1*</td><td>Certification by Principal Executive Officer pursuant to Rule 13a-14(b) of the Securities Exchange Act of 1934 and Section 1350 of Chapter 63 of Title 18 of the United States Code</td><td></td><td></td><td></td><td></td></tr><tr><td>13.2*</td><td>Certification by Principal Financial and Accounting Officer pursuant to Rule 13a-14(b) of the Securities Exchange Act of 1934 and Section 1350 of Chapter 63 of Title 18 of the United States Code</td><td></td><td></td><td></td><td></td></tr><tr><td>15.1*</td><td>Consent of Ernst &amp; Young Hua Ming LLP, independent registered public accounting firm</td><td></td><td></td><td></td><td></td></tr><tr><td>15.2*</td><td>Consent of Walkers (Hong Kong)</td><td></td><td></td><td></td><td></td></tr><tr><td>15.3*</td><td>Consent of JunHe LLP</td><td></td><td></td><td></td><td></td></tr><tr><td>15.4*</td><td>Consent of Frost &amp; Sullivan</td><td></td><td></td><td></td><td></td></tr><tr><td>97.1*</td><td>Ascentage Pharma Group International Compensation Recovery Policy</td><td></td><td></td><td></td><td></td></tr><tr><td>101. INS*</td><td>Inline XBRL Instance Document.</td><td></td><td></td><td></td><td></td></tr><tr><td>101. SCH*</td><td>Inline XBRL Taxonomy Extension Schema Document</td><td></td><td></td><td></td><td></td></tr><tr><td>101. CAL*</td><td>Inline XBRL Taxonomy Extension Calculation Linkbase Document</td><td></td><td></td><td></td><td></td></tr><tr><td>101. DEF*</td><td>Inline XBRL Taxonomy Extension Definition Linkbase Document</td><td></td><td></td><td></td><td></td></tr><tr><td>101. LAB*</td><td>Inline XBRL Taxonomy Extension Label Linkbase Document</td><td></td><td></td><td></td><td></td></tr><tr><td>101. PRE*</td><td>Inline XBRL Taxonomy Extension Presentation Linkbase Document</td><td></td><td></td><td></td><td></td></tr><tr><td>104*</td><td>Inline XBRL for the cover page of this Annual Report on Form 20-F (embedded within the Inline XBRL document)</td><td></td><td></td><td></td><td></td></tr></table>
+# Indicates a management contract or any compensatory plan, contract or arrangement.
+# SIGNATURES
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# ASCENTAGE PHARMA GROUP INTERNATIONALAND ITS SUBSIDIARIESCONSOLIDATED STATEMENTS OF COMPREHENSIVE INCOME
+# Opinion on the Financial Statements
+# Basis for Opinion
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 1. CORPORATE AND GROUP INFORMATION
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”) except for number of shares and per share data)
+# 2. ACCOUNTING POLICIES
+# 2.1 BASIS OF PREPARATION
+# Basis of consolidation
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$” except for number of shares and per share data)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# Fair value measurement
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# Related parties
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 2. ACCOUNTING POLICIES (continued)
+# 2.4 MATERIAL ACCOUNTING POLICIES (continued)
+# Property, plant and equipment and depreciation
+# Property, plant and equipment and depreciation
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 2. ACCOUNTING POLICIES (continued)
+# 2.4 MATERIAL ACCOUNTING POLICIES (continued)
+# Research and development costs
+# Leases
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 2. ACCOUNTING POLICIES (continued)
+# 2.4 MATERIAL ACCOUNTING POLICIES (continued)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# Simplified approach
+# Financial liabilities
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”) except for number of shares and per share data)
+# 2. ACCOUNTING POLICIES (continued)
+# 2.4 MATERIAL ACCOUNTING POLICIES (continued)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# Government grants
+# Revenue recognition
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”) except for number of shares and per share data)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”) except for number of shares and per share data)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”) except for number of shares and per share data)
+# Foreign currencies
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 3. SIGNIFICANT ACCOUNTING JUDGEMENTS AND ESTIMATES
+# Judgements
+# Revenue from contracts with customers
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 4. OPERATING SEGMENT INFORMATION
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 4. OPERATING SEGMENT INFORMATION (continued)
+# 5. REVENUE, OTHER INCOME AND GAINS
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 5. REVENUE, OTHER INCOME AND GAINS (continued)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 5. REVENUE, OTHER INCOME AND GAINS (continued)
+# Other income and gains
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 6. LOSS BEFORE TAX
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# 7. OTHER EXPENSES
+# 8. FINANCE COSTS
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 9. INCOME TAX
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 9. INCOME TAX (continued)
+# 10. DIVIDENDS
+# 11. LOSS PER SHARE ATTRIBUTABLE TO ORDINARY EQUITY HOLDERS OF THE COMPANY
+<table><tr><td rowspan="3"></td><td colspan="4">For the years ended December 31</td></tr><tr><td>2022</td><td>2023</td><td>2024</td><td>2024</td></tr><tr><td>RMB</td><td>RMB</td><td>RMB</td><td>US$</td></tr><tr><td colspan="5">Loss</td></tr><tr><td>Loss attributable to ordinary equity holders of the Company, used in the basic loss per share calculation</td><td>(882,924)</td><td>(925,637)</td><td>(405,433)</td><td>(55,543)</td></tr><tr><td></td><td></td><td colspan="3">Number of shares</td></tr><tr><td></td><td></td><td>2022</td><td>2023</td><td>2024</td></tr><tr><td colspan="5">Shares</td></tr><tr><td>Weighted average number of ordinary shares outstanding during the year used in the basic loss per share calculation#</td><td></td><td>263,688,827</td><td>282,299,269</td><td>302,062,104</td></tr></table>
+# The weighted average number of shares was after taking into account the effect of treasury shares held.
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 13. INVESTMENT PROPERTY
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 14. LEASES
+# The Group as a lessee
+# (a) Right-of-use assets
+# (b) Lease liabilities
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 14. LEASES (continued)
+# 15. GOODWILL
+# Impairment testing of goodwill
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# 16. OTHER INTANGIBLE ASSET
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# 17. INVESTMENT IN A JOINT VENTURE
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# 18. FINANCIAL ASSETS AT FAIR VALUE THROUGH PROFIT OR LOSS
+# 19. DEFERRED TAX
+# Deferred tax liabilities
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# 19. DEFERRED TAX (continued)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 22. TRADE RECEIVABLES, NET
+# 23. PREPAYMENTS, OTHER RECEIVABLES AND OTHER ASSETS
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 24. CASH AND BANK BALANCES
+# 25. TRADE PAYABLES
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# 26. OTHER PAYABLES AND ACCRUALS
+# 27. CONTRACT LIABILITIES
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# 28. INTEREST-BEARING BANK AND OTHER BORROWINGS
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 28. INTEREST-BEARING BANK AND OTHER BORROWINGS (continued)
+# 29. LONG-TERM PAYABLES
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# 30. DEFERRED INCOME
+# 31. SHARE CAPITAL AND TREASURY SHARES
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# 31. SHARE CAPITAL AND TREASURY SHARES (continued)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$” except for number of shares and per share data)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”) except for number of shares and per share data)
+# 33. SHARE-BASED PAYMENTS
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 33. SHARE-BASED PAYMENTS (continued)
+# (a) Share option scheme (continued)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 33. SHARE-BASED PAYMENTS (continued)
+# (b) RSUs granted to employees
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 33. SHARE-BASED PAYMENTS (continued)
+# (b) RSUs granted to employees (continued)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 33. SHARE-BASED PAYMENTS (continued)
+# (b) RSUs granted to employees (continued)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 33. SHARE-BASED PAYMENTS (continued)
+# (b) RSUs granted to employees (continued)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 33. SHARE-BASED PAYMENTS (continued)
+# (b) RSUs granted to employees (continued)
+# 34. NOTES TO THE CONSOLIDATED STATEMENTS OF CASH FLOWS
+# a) Major non-cash transactions
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# 34. NOTES TO THE CONSOLIDATED STATEMENTS OF CASH FLOWS (continued)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 35. COMMITMENTS
+# 36. CONTINGENT LIABILITIES
+# 37. PLEDGE OF ASSETS
+# 38. RELATED PARTY TRANSACTIONS
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 39. FINANCIAL INSTRUMENTS BY CATEGORY
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# 39. FINANCIAL INSTRUMENTS BY CATEGORY (continued)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 40. FAIR VALUE AND FAIR VALUE HIERARCHY OF FINANCIAL INSTRUMENTS
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 40. FAIR VALUE AND FAIR VALUE HIERARCHY OF FINANCIAL INSTRUMENTS (continued)
+# 41. FINANCIAL RISK MANAGEMENT OBJECTIVES AND POLICIES
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 41. FINANCIAL RISK MANAGEMENT OBJECTIVES AND POLICIES (continued)
+# Credit risk
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 41. FINANCIAL RISK MANAGEMENT OBJECTIVES AND POLICIES (continued)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 41. FINANCIAL RISK MANAGEMENT OBJECTIVES AND POLICIES (continued)
+# Liquidity risk
+# Equity price risk
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 41. FINANCIAL RISK MANAGEMENT OBJECTIVES AND POLICIES (continued)
+# Capital management
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 42. EVENT AFTER THE REPORTING PERIOD
+# 43. CONDENSED FINANCIAL INFORMATION OF THE COMPANY
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)
+# 43. CONDENSED FINANCIAL INFORMATION OF THE COMPANY (continued)
+# ASCENTAGE PHARMA GROUP INTERNATIONAL
+# NOTES TO THE CONSOLIDATED FINANCIAL STATEMENTS
+# (Amounts in thousands of Renminbi (“RMB”) and US dollars (“US$”)
+# except for number of shares and per share data)

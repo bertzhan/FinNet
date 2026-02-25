@@ -97,7 +97,12 @@ def scan_parsed_documents_op(context) -> Dict:
     stock_codes_filter = config.get("stock_codes")
 
     logger.info(f"开始扫描待分块文档...")
-    force_rechunk = config.get("force_rechunk", False)
+    # force_rechunk 可从本 op 或 doc_chunk_op 读取（用户可能只配置了一处）
+    force_rechunk = config.get("force_rechunk")
+    if force_rechunk is None:
+        run_config = getattr(context, "run_config", None) or {}
+        doc_chunk_config = run_config.get("ops", {}).get("doc_chunk_op", {}).get("config", {})
+        force_rechunk = doc_chunk_config.get("force_rechunk", False)
     logger.info(f"配置: batch_size={batch_size}, limit={limit}, market={market_filter}, doc_type={doc_type_filter}, stock_codes={stock_codes_filter}, force_rechunk={force_rechunk}")
     
     pg_client = get_postgres_client()
@@ -192,6 +197,11 @@ def scan_parsed_documents_op(context) -> Dict:
             default_value=False,
             description="是否强制重新分块（删除旧分块）"
         ),
+        "chunk_mode": Field(
+            str,
+            default_value="auto",
+            description="分块模式: auto(按市场与文档内容自动选择), chinese(第X节/一、), english(PART/ITEM全大写), simple(一级无pattern)"
+        ),
     }
 )
 def doc_chunk_op(context, scan_result: Dict) -> Dict:
@@ -222,6 +232,7 @@ def doc_chunk_op(context, scan_result: Dict) -> Dict:
     # 安全获取 config
     config = context.op_config if hasattr(context, 'op_config') else {}
     force_rechunk = config.get("force_rechunk", False) if config else False
+    chunk_mode = config.get("chunk_mode", "auto") if config else "auto"
     
     if not scan_result.get("success"):
         logger.error(f"扫描失败，跳过分块: {scan_result.get('error_message')}")
@@ -268,7 +279,8 @@ def doc_chunk_op(context, scan_result: Dict) -> Dict:
         try:
             result = chunker.chunk_document(
                 document_id=document_id,
-                force_rechunk=force_rechunk
+                force_rechunk=force_rechunk,
+                chunk_mode=chunk_mode
             )
             
             # 检查 result 是否为 None
@@ -475,6 +487,7 @@ def validate_chunk_results_op(context, chunk_results: Dict) -> Dict:
             "scan_parsed_documents_op": {
                 "config": {
                     "batch_size": 50,
+                    "force_rechunk": False,  # 与 doc_chunk_op 保持一致；仅设 doc_chunk_op 时 scan 也会读取
                     # limit 不设置表示处理全部，doc_type 是可选的，不设置表示所有类型
                 }
             },

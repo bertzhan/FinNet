@@ -27,6 +27,7 @@ def crawl_hs_reports_job(
     workers: int = 4,
     limit: Optional[int] = None,
     stock_codes: Optional[List[str]] = None,
+    force_recrawl: bool = False,
     on_success: Optional[Callable[[object, int, int], None]] = None,
 ) -> Dict:
     """
@@ -78,31 +79,37 @@ def crawl_hs_reports_job(
         }
 
     years_quarters = [(year, 1), (year, 2), (year, 3), (year, 4)]
-    crawler = ReportCrawler(enable_minio=True, enable_postgres=True, workers=workers)
+    crawler = ReportCrawler(
+        enable_minio=True,
+        enable_postgres=True,
+        workers=workers,
+        force_recrawl=force_recrawl
+    )
 
-    # 预过滤：排除 documents 表中已存在的任务（按 stock_code/year/quarter 或 source_url）
+    # 预过滤：排除 documents 表中已存在的任务（force_recrawl 时不过滤）
     existing_keys = set()
-    try:
-        pg = get_postgres_client()
-        with pg.get_session() as session:
-            from src.storage.metadata.models import Document
-            from sqlalchemy import and_
-            rows = session.query(Document.stock_code, Document.year, Document.quarter).filter(
-                and_(
-                    Document.market == "hs_stock",
-                    Document.year == year,
-                )
-            ).all()
-            existing_keys = {(r.stock_code, r.year, r.quarter) for r in rows}
-        if existing_keys:
-            logger.info(f"documents 表已存在 {len(existing_keys)} 条记录（stock_code/year/quarter），将跳过对应任务")
-    except Exception as e:
-        logger.warning(f"查询 documents 表失败，将不进行预过滤: {e}")
+    if not force_recrawl:
+        try:
+            pg = get_postgres_client()
+            with pg.get_session() as session:
+                from src.storage.metadata.models import Document
+                from sqlalchemy import and_
+                rows = session.query(Document.stock_code, Document.year, Document.quarter).filter(
+                    and_(
+                        Document.market == "hs_stock",
+                        Document.year == year,
+                    )
+                ).all()
+                existing_keys = {(r.stock_code, r.year, r.quarter) for r in rows}
+            if existing_keys:
+                logger.info(f"documents 表已存在 {len(existing_keys)} 条记录（stock_code/year/quarter），将跳过对应任务")
+        except Exception as e:
+            logger.warning(f"查询 documents 表失败，将不进行预过滤: {e}")
 
     tasks = []
     for company in companies:
         for y, q in years_quarters:
-            if (company["code"], y, q) in existing_keys:
+            if not force_recrawl and (company["code"], y, q) in existing_keys:
                 continue
             doc_type = DocType.ANNUAL_REPORT if q == 4 else (
                 DocType.INTERIM_REPORT if q == 2 else DocType.QUARTERLY_REPORT
@@ -116,7 +123,7 @@ def crawl_hs_reports_job(
                 quarter=q,
             ))
 
-    logger.info(f"生成 {len(tasks)} 个爬取任务（已排除 {len(existing_keys)} 条已存在记录）")
+    logger.info(f"生成 {len(tasks)} 个爬取任务" + (f"（已排除 {len(existing_keys)} 条已存在记录）" if existing_keys else ""))
     results = []
     success_count = 0
     fail_count = 0

@@ -61,7 +61,7 @@ PARSE_CONFIG_SCHEMA = {
     "doc_type": Field(
         str,
         is_required=False,
-        description="文档类型过滤（quarterly_report/annual_report/ipo_prospectus），None 表示所有类型"
+        description="文档类型过滤（quarterly_reports/annual_reports/interim_reports/ipo_prospectus 等），None 表示所有类型"
     ),
     "stock_codes": Field(
         list,
@@ -172,8 +172,6 @@ def scan_pending_documents_op(context) -> Dict:
             if doc_type_filter:
                 documents = [d for d in documents if d.doc_type == doc_type_filter]
                 logger.info(f"文档类型过滤后: {len(documents)} 个文档")
-
-                logger.info(f"行业过滤后: {len(documents)} 个文档")
 
             # 应用股票代码过滤
             if stock_codes_filter:
@@ -578,7 +576,8 @@ def validate_parse_results_op(context, parse_results: Dict) -> Dict:
             "scan_pending_documents_op": {
                 "config": {
                     "batch_size": 50,
-                    # limit 不设置表示处理全部，doc_type 是可选的，不设置表示所有类型
+                    # doc_type 可选，不配置表示所有类型；可选值：quarterly_reports/annual_reports/interim_reports/ipo_prospectus
+                    # limit 不设置表示处理全部
                 }
             },
             "doc_parse_op": {
@@ -602,11 +601,18 @@ def doc_parse_job():
 
     默认配置：
     - scan_pending_documents_op:
-        - batch_size: 2 (并发解析2个文档)
-        - limit: 10 (最多处理10个文档)
+        - batch_size: 50
+        - doc_type: None (可选，指定 quarterly_reports/annual_reports/interim_reports/ipo_prospectus 过滤)
+        - limit: 不设置表示处理全部
     - doc_parse_op:
         - start_page_id: 0
         - enable_silver_upload: True
+
+    如需指定 doc_type 过滤，在 Launchpad 中配置：
+    ops:
+      scan_pending_documents_op:
+        config:
+          doc_type: "ipo_prospectus"  # 只解析招股说明书
 
     如需指定页面范围，请在 Launchpad 中配置 end_page_id：
     ops:
@@ -627,7 +633,8 @@ def doc_parse_job():
             "scan_pending_documents_op": {
                 "config": {
                     "batch_size": 50,
-                    # limit 不设置表示处理全部，doc_type 是可选的，不设置表示所有类型
+                    # doc_type 可选，不配置表示所有类型；可选值：quarterly_reports/annual_reports/interim_reports/ipo_prospectus
+                    # limit 不设置表示处理全部
                 }
             },
             "doc_parse_op": {

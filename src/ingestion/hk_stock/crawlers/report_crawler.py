@@ -51,6 +51,7 @@ class HKReportCrawler(BaseCrawler):
         start_date: str = "2022-01-01",
         end_date: str = "2025-12-31",
         workers: int = 4,
+        force_recrawl: bool = False,
     ):
         """
         Args:
@@ -60,12 +61,14 @@ class HKReportCrawler(BaseCrawler):
             start_date: 查询报告的开始日期
             end_date: 查询报告的结束日期
             workers: 并行线程数（默认4，1表示单线程）
+            force_recrawl: 强制重新爬取，忽略已存在记录并清理下游
         """
         super().__init__(
             market=Market.HK_STOCK,
             enable_minio=enable_minio,
             enable_postgres=enable_postgres,
-            enable_quarantine=enable_quarantine
+            enable_quarantine=enable_quarantine,
+            force_recrawl=force_recrawl
         )
         
         self.start_date = start_date

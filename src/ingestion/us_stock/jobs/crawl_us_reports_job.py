@@ -47,6 +47,7 @@ def crawl_us_reports_job(
     tickers: Optional[List[str]] = None,
     enable_minio: bool = True,
     enable_postgres: bool = True,
+    force_recrawl: bool = False,
     on_filing_success: Optional[Callable[[CrawlResult, int, int], None]] = None,
 ) -> Dict:
     """
@@ -91,7 +92,8 @@ def crawl_us_reports_job(
     crawler = SECFilingsCrawler(
         enable_minio=enable_minio,
         enable_postgres=enable_postgres,
-        download_images=True  # 下载并上传 HTML 中的图片到 MinIO
+        download_images=True,  # 下载并上传 HTML 中的图片到 MinIO
+        force_recrawl=force_recrawl
     )
 
     # 5. 爬取财报
@@ -136,7 +138,7 @@ def crawl_us_reports_job(
                     primary_document=filing['primary_document']
                 )
 
-                if _document_exists(source_url):
+                if not force_recrawl and _document_exists(source_url):
                     filings_skipped += 1
                     logger.debug(f"  跳过已存在: {accession}")
                     continue

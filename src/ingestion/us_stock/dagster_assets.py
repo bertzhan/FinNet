@@ -75,6 +75,12 @@ FILINGS_CRAWL_CONFIG_SCHEMA = {
         is_required=False,
         description="List of stock codes to crawl (None = all companies). Example: ['AAPL', 'MSFT', 'GOOGL']"
     ),
+    "force_recrawl": Field(
+        bool,
+        is_required=False,
+        default_value=False,
+        description="强制重新爬取，清理已存在文档的下游数据后重新下载",
+    ),
 }
 
 
@@ -172,6 +178,7 @@ def crawl_us_reports_op(context) -> Dict:
     year = config.get("year")
     limit = config.get("limit")
     stock_codes = config.get("stock_codes")
+    force_recrawl = config.get("force_recrawl", False)
 
     if year is None:
         logger.error("year 参数是必需的")
@@ -222,6 +229,7 @@ def crawl_us_reports_op(context) -> Dict:
             tickers=stock_codes,
             enable_minio=True,
             enable_postgres=True,
+            force_recrawl=force_recrawl,
             on_filing_success=on_filing_success,
         )
 

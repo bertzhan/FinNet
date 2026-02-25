@@ -26,6 +26,7 @@ def crawl_hk_reports_job(
     workers: int = 4,
     limit: Optional[int] = None,
     stock_codes: Optional[List[str]] = None,
+    force_recrawl: bool = False,
     on_success: Optional[Callable[[object, int, int], None]] = None,
 ) -> Dict:
     """
@@ -84,6 +85,7 @@ def crawl_hk_reports_job(
         start_date=start_date,
         end_date=end_date,
         workers=workers,
+        force_recrawl=force_recrawl,
     )
 
     quarter_doc_type_map = {

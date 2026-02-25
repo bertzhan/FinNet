@@ -10,7 +10,7 @@ HTML处理工具（编码保持和图片路径重写）
 4. 优雅处理编码边界情况
 """
 import re
-from typing import Dict
+from typing import Dict, Optional, Tuple
 from bs4 import BeautifulSoup
 from pathlib import Path
 from urllib.parse import urlparse
@@ -20,37 +20,91 @@ from src.common.logger import get_logger
 logger = get_logger(__name__)
 
 
-def detect_encoding(content_bytes: bytes) -> str:
+# chardet 返回的编码名到 Python codec 名的映射
+_CHARDET_TO_PYTHON = {
+    'ascii': 'ascii',
+    'utf-8': 'utf-8',
+    'utf-8-sig': 'utf-8-sig',
+    'iso-8859-1': 'latin-1',
+    'latin-1': 'latin-1',
+    'windows-1252': 'cp1252',
+    'cp1252': 'cp1252',
+    'iso-8859-2': 'iso-8859-2',
+    'gb2312': 'gb2312',
+    'gbk': 'gbk',
+    'gb18030': 'gb18030',
+    'big5': 'big5',
+}
+
+
+def _normalize_encoding(name: str) -> str:
+    """将 chardet 等返回的编码名标准化为 Python codec 名"""
+    if not name:
+        return 'utf-8'
+    key = name.lower().strip()
+    return _CHARDET_TO_PYTHON.get(key, key)
+
+
+def detect_encoding_from_declaration(content_bytes: bytes) -> str:
     """
-    从HTML/XML内容中检测声明的编码
+    从 HTML/XML 内容中提取声明的编码
 
     Args:
-        content_bytes: HTML内容的原始字节
+        content_bytes: HTML 内容的原始字节
 
     Returns:
-        检测到的编码字符串（如：'ascii', 'utf-8'）
+        声明的编码（如 'ascii', 'utf-8'），未找到则返回 'utf-8'
     """
-    # 在前500字节中搜索编码声明
     header = content_bytes[:500]
-
-    # 匹配模式如 encoding='ASCII' 或 encoding="UTF-8"
     match = re.search(rb"encoding=['\"]([^'\"]+)['\"]", header, re.IGNORECASE)
 
     if match:
         declared = match.group(1).decode('ascii').lower()
-
-        # 标准化编码名称
         if 'ascii' in declared:
             return 'ascii'
         elif 'utf' in declared:
             return 'utf-8'
         elif 'iso-8859' in declared or 'latin' in declared:
             return 'latin-1'
-        else:
-            return declared
+        elif 'windows' in declared or 'cp1252' in declared:
+            return 'cp1252'
+        return declared
 
-    # 如果未找到声明，默认使用UTF-8
     return 'utf-8'
+
+
+def detect_encoding_with_chardet(content_bytes: bytes) -> Tuple[Optional[str], float]:
+    """
+    使用 chardet 检测字节流实际编码
+
+    Args:
+        content_bytes: 原始字节（可截断以加速，chardet 建议至少 32KB）
+
+    Returns:
+        (编码名, 置信度)，检测失败或置信度过低时编码为 None
+    """
+    try:
+        import chardet
+    except ImportError:
+        return None, 0.0
+
+    # 大文件采样以加速（chardet 文档建议 32KB 以上）
+    sample = content_bytes[:131072] if len(content_bytes) > 131072 else content_bytes
+    result = chardet.detect(sample)
+    if not result or not result.get('encoding'):
+        return None, 0.0
+
+    enc = _normalize_encoding(result['encoding'])
+    confidence = result.get('confidence', 0.0)
+    return enc, confidence
+
+
+def detect_encoding(content_bytes: bytes) -> str:
+    """
+    检测编码（兼容旧接口，优先声明，失败时用 chardet）
+    实际解码逻辑在 process_html_preserve_encoding 中。
+    """
+    return detect_encoding_from_declaration(content_bytes)
 
 
 def process_html_preserve_encoding(
@@ -83,9 +137,40 @@ def process_html_preserve_encoding(
         >>> b"encoding='ASCII'" in result  # 编码已保留
         True
     """
-    # 检测原始编码
-    original_encoding = detect_encoding(content_bytes)
+    # 解码流程：先尝试声明编码 → 失败则 chardet 检测 → 最后 utf-8 兜底
+    declared_encoding = detect_encoding_from_declaration(content_bytes)
+    content_str = None
+    used_encoding = None
 
+    try:
+        content_str = content_bytes.decode(declared_encoding)
+        used_encoding = declared_encoding
+    except (UnicodeDecodeError, LookupError) as e:
+        logger.debug(
+            f"声明编码 {declared_encoding} 解码失败，尝试 chardet",
+            extra={"declared": declared_encoding, "error": str(e)}
+        )
+        chardet_enc, confidence = detect_encoding_with_chardet(content_bytes)
+        if chardet_enc and confidence >= 0.5:
+            try:
+                content_str = content_bytes.decode(chardet_enc)
+                used_encoding = chardet_enc
+                logger.info(
+                    f"使用 chardet 检测编码: {chardet_enc} (置信度 {confidence:.2f})",
+                    extra={"encoding": chardet_enc, "confidence": confidence}
+                )
+            except (UnicodeDecodeError, LookupError):
+                pass
+
+    if content_str is None:
+        logger.warning(
+            "所有编码尝试失败，使用 UTF-8 (errors=replace)",
+            extra={"declared": declared_encoding}
+        )
+        content_str = content_bytes.decode('utf-8', errors='replace')
+        used_encoding = 'utf-8'
+
+    original_encoding = used_encoding
     logger.debug(
         f"处理HTML，编码: {original_encoding}，替换数: {len(img_replacements)}",
         extra={
@@ -93,21 +178,6 @@ def process_html_preserve_encoding(
             "replacements_count": len(img_replacements)
         }
     )
-
-    # 使用检测到的编码解码
-    try:
-        content_str = content_bytes.decode(original_encoding)
-    except (UnicodeDecodeError, LookupError) as e:
-        # 回退到UTF-8并处理错误
-        logger.warning(
-            f"编码解码失败: {original_encoding}，回退到UTF-8",
-            extra={
-                "declared_encoding": original_encoding,
-                "error": str(e)
-            }
-        )
-        content_str = content_bytes.decode('utf-8', errors='replace')
-        original_encoding = 'utf-8'
 
     # 使用html.parser解析（不使用lxml），避免字符标准化
     # html.parser保留ASCII字符原样，不会转换为UTF-8
@@ -152,6 +222,10 @@ def process_html_preserve_encoding(
 
     # 转换回字符串
     result_str = str(soup)
+
+    # 若使用了与声明不同的编码（如 chardet 检测到），更新 HTML 声明以避免读者误解析
+    if used_encoding and used_encoding != declared_encoding:
+        result_str = _update_encoding_declaration(result_str, used_encoding)
 
     # 确定输出编码：若原始编码无法表示解析后的 Unicode 字符（如 BeautifulSoup 将 &#8217; 转为 '），
     # 则升级为 UTF-8，避免 errors='replace' 将字符变成 ?

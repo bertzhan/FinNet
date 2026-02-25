@@ -95,7 +95,8 @@ class BaseCrawler(ABC, LoggerMixin):
         market: Market,
         enable_minio: bool = True,
         enable_postgres: bool = True,
-        enable_quarantine: bool = True
+        enable_quarantine: bool = True,
+        force_recrawl: bool = False
     ):
         """
         Args:
@@ -103,11 +104,13 @@ class BaseCrawler(ABC, LoggerMixin):
             enable_minio: 是否启用 MinIO 上传
             enable_postgres: 是否启用 PostgreSQL 记录
             enable_quarantine: 是否启用自动隔离（验证失败时）
+            force_recrawl: 强制重新爬取，忽略已存在记录并清理下游
         """
         self.market = market
         self.enable_minio = enable_minio
         self.enable_postgres = enable_postgres
         self.enable_quarantine = enable_quarantine
+        self.force_recrawl = force_recrawl
 
         # 从配置读取 bucket 名称，确保 PathManager 和 MinIOClient 使用相同的 bucket
         self.bucket_name = minio_config.MINIO_BUCKET
@@ -220,8 +223,8 @@ class BaseCrawler(ABC, LoggerMixin):
         else:
             self.logger.info(f"开始爬取: {task.stock_code} {task.year} Q{task.quarter}")
 
-        # 0. 检查数据库是否已存在（避免重复爬取）
-        if self.enable_postgres and self.pg_client:
+        # 0. 检查数据库是否已存在（避免重复爬取），force_recrawl 时跳过
+        if not self.force_recrawl and self.enable_postgres and self.pg_client:
             try:
                 with self.pg_client.get_session() as session:
                     existing_doc = crud.get_document_by_task(
@@ -329,7 +332,26 @@ class BaseCrawler(ABC, LoggerMixin):
             file_hash = None
             file_size = None
 
-        # 4. 生成 MinIO 路径（A股/港股/US格式一致：bronze/{market}/{stock_code}/{year}/{period}/{filename}）
+        # 4. force_recrawl 时：清理已有文档的 MinIO 和下游数据（须在上传前执行）
+        if self.force_recrawl and self.enable_postgres and self.pg_client and self.minio_client:
+            try:
+                with self.pg_client.get_session() as session:
+                    existing_doc = crud.get_document_by_task(
+                        session=session,
+                        stock_code=task.stock_code,
+                        market=task.market.value,
+                        doc_type=task.doc_type.value,
+                        year=task.year,
+                        quarter=task.quarter
+                    )
+                    if existing_doc:
+                        crud.delete_document_minio_artifacts(self.minio_client, session, existing_doc.id)
+                        crud.delete_document_downstream_data(session, existing_doc.id)
+                        self.logger.info(f"force_recrawl: 已清理 {task.stock_code} {task.year} Q{task.quarter} 的下游数据")
+            except Exception as e:
+                self.logger.warning(f"force_recrawl 清理失败: {e}", exc_info=True)
+
+        # 5. 生成 MinIO 路径（A股/港股/US格式一致：bronze/{market}/{stock_code}/{year}/{period}/{filename}）
         if task.market == Market.HS:
             if task.doc_type == DocType.IPO_PROSPECTUS:
                 actual_filename = os.path.basename(local_file_path)
@@ -376,7 +398,7 @@ class BaseCrawler(ABC, LoggerMixin):
                 filename=filename
             )
 
-        # 5. 上传到 MinIO
+        # 6. 上传到 MinIO
         document_id = None
         if not self.enable_minio:
             self.logger.warning(f"⚠️ MinIO 未启用，跳过上传: {minio_object_path}")
@@ -400,7 +422,7 @@ class BaseCrawler(ABC, LoggerMixin):
             except Exception as e:
                 self.logger.error(f"❌ MinIO 上传异常: {e}", exc_info=True)
 
-        # 6. 记录到 PostgreSQL
+        # 7. 记录到 PostgreSQL
         if self.enable_postgres and self.pg_client:
             try:
                 with self.pg_client.get_session() as session:
@@ -409,6 +431,11 @@ class BaseCrawler(ABC, LoggerMixin):
 
                     if existing_doc:
                         self.logger.info(f"文档已存在: id={existing_doc.id}")
+                        if self.force_recrawl:
+                            existing_doc.file_size = file_size
+                            existing_doc.file_hash = file_hash
+                            existing_doc.crawled_at = datetime.now()
+                            session.flush()
                         document_id = existing_doc.id
                     else:
                         # 对于IPO类型，从文件名中提取年份

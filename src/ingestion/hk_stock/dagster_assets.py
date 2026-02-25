@@ -64,6 +64,12 @@ HK_REPORT_CRAWL_CONFIG_SCHEMA = {
         is_required=False,
         description="List of stock codes (5-digit). Example: ['00001', '00700']",
     ),
+    "force_recrawl": Field(
+        bool,
+        is_required=False,
+        default_value=False,
+        description="强制重新爬取，清理已存在文档的下游数据后重新下载",
+    ),
 }
 
 # ==================== Ops ====================
@@ -119,6 +125,7 @@ def crawl_hk_reports_op(context) -> Dict:
     year = config.get("year")
     limit = config.get("limit")
     stock_codes = config.get("stock_codes")
+    force_recrawl = config.get("force_recrawl", False)
 
     if year is None:
         logger.error("year 参数是必需的")
@@ -132,7 +139,7 @@ def crawl_hk_reports_op(context) -> Dict:
             "source_type": "hk_stock",
         }
 
-    logger.info(f"开始爬取 港股 定期报告 | 年份: {year} | 日期: {year}-01-01 ~ {year+1}-06-30")
+    logger.info(f"开始爬取 港股 定期报告 | 年份: {year} | 日期: {year}-01-01 ~ {year+1}-06-30" + (f" | force_recrawl={force_recrawl}" if force_recrawl else ""))
 
     def on_success(result, idx: int, total: int) -> None:
         q = result.task.quarter or 0
@@ -160,6 +167,7 @@ def crawl_hk_reports_op(context) -> Dict:
             workers=workers,
             limit=limit,
             stock_codes=stock_codes,
+            force_recrawl=force_recrawl,
             on_success=on_success,
         )
     except Exception as e:

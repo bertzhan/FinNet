@@ -6,144 +6,93 @@
 """
 
 import re
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional, Tuple, Union
+
+from .modes import ChunkMode, MODES
 
 
 class TitleLevelDetector:
-    """标题级别检测器"""
-    
-    # 常量定义
-    MAX_TITLE_LENGTH = 200  # 标题最大长度
-    MAX_LEVEL = 9  # 最大层级
-    MIN_LEVEL = 1  # 最小层级
-    MAX_SEPARATOR_COUNT = 3  # 最大分隔符数量
-    
-    def __init__(self):
-        """初始化检测器"""
-        # 定义标题格式模式（按优先级排序）
-        self.patterns = [
-            # 一级标题：第X节、第X章
-            (r'^第[一二三四五六七八九十\d]+[节章]', 1, '一级标题（第X节/章）'),
-            
-            # 二级标题：一、二、三、...、十一、十二、...
-            (r'^[一二三四五六七八九十百]+、', 2, '二级标题（中文数字）'),
-            
-            # 三级标题：多种格式
-            (r'^（[一二三四五六七八九十百]+）', 3, '三级标题（中文括号）'),
-            (r'^\([一二三四五六七八九十百]+\)', 3, '三级标题（英文括号中文数字）'),  # 添加英文括号支持
-            (r'^\d+[、.]', 3, '三级标题（数字编号）'),
-            (r'^\d+[．.]', 3, '三级标题（数字全角句号）'),  # 添加全角句号支持
-            
-            # 四级标题：（1）、（2）、1）、2）和多级数字序号（1.1, 1.2等）
-            (r'^（\d+）', 4, '四级标题（中文括号数字）'),
-            (r'^\(\d+\)', 4, '四级标题（英文括号数字）'),  # 修复：之前写成了d+，应该是\d+
-            (r'^\d+）', 4, '四级标题（右括号数字）'),  # 添加右括号格式支持
-            (r'^\d+\.\d+', 4, '四级标题（多级数字序号，如1.1）'),  # 多级数字序号：1.1, 1.2等
-            
-            # 五级标题：英文序号和罗马序号（包括括号格式）
-            (r'^[（(][a-z][）)]', 5, '五级标题（括号英文小写序号）'),
-            (r'^[（(][A-Z][）)]', 5, '五级标题（括号英文大写序号）'),
-            (r'^[（(][ivxlcdmIVXLCDM]+[）)]', 5, '五级标题（括号罗马序号）'),
-            (r'^[a-z][、.)]', 5, '五级标题（英文小写序号）'),
-            (r'^[A-Z][、.)]', 5, '五级标题（英文大写序号）'),
-            (r'^[ivxlcdmIVXLCDM]+[、.)]', 5, '五级标题（罗马序号）'),
-            
-            # 六级标题：LaTeX格式的圆圈数字
-            (r'\\textcircled\{\d+\}', 6, '六级标题（LaTeX圆圈）'),
-        ]
-        
-        # 特殊关键词（可能是标题但不是标准格式）
+    """标题级别检测器，支持 chinese / english / simple 三种 chunk 模式"""
+
+    MAX_TITLE_LENGTH = 200
+    MAX_LEVEL = 9
+    MIN_LEVEL = 1
+    MAX_SEPARATOR_COUNT = 3
+
+    def __init__(self, chunk_mode: Union[str, ChunkMode] = "chinese"):
+        """
+        初始化检测器
+
+        Args:
+            chunk_mode: 分块模式，'chinese' | 'english' | 'simple' 或 ChunkMode 实例
+        """
+        self.mode = self._resolve_mode(chunk_mode)
         self.title_keywords = ['目录', '释义', '概述', '总结', '附录', '备查文件']
-        
-        # 封面标题关键词（应忽略）
         self.cover_keywords = ['新晨科技', 'BRILLIANCETECH', '年度报告', '股份有限公司']
-    
+
+    def _resolve_mode(self, chunk_mode: Union[str, ChunkMode]) -> ChunkMode:
+        if isinstance(chunk_mode, ChunkMode):
+            return chunk_mode
+        if chunk_mode in MODES:
+            return MODES[chunk_mode]
+        return MODES["chinese"]
+
     def detect_by_format(self, heading: str) -> Tuple[int, str]:
         """
         根据格式模式判断标题层级
-        
-        Args:
-            heading: 标题文本
-            
+
         Returns:
             (level, pattern_name): 层级（0表示不是标题）和匹配的模式名称
         """
         heading = heading.strip()
-        
-        # 如果内容为空，不是标题
         if not heading:
             return (0, '空内容')
-        
-        # 先检查格式模式，如果匹配了格式模式，即使分隔符较多也认为是标题
-        # 这样可以避免误删有效的标题（如长标题）
-        # 注意：如果匹配了格式模式，即使长度超过MAX_TITLE_LENGTH也认为是标题
-        # 但设置一个更大的上限（500字符）避免误判过长的正文
+
         MAX_TITLE_LENGTH_WITH_PATTERN = 500
-        
-        for pattern, level, pattern_name in self.patterns:
-            if re.search(pattern, heading):
-                # 特殊处理：多级数字序号格式（1.1, 1.2, 1.1.1等），根据点的数量确定级别
-                if pattern_name == '四级标题（多级数字序号，如1.1）':
-                    # 提取多级数字序号格式
-                    dot_separated_format = self._extract_dot_separated_format(heading)
-                    if dot_separated_format:
-                        format_type, last_num = dot_separated_format
-                        # 根据点的数量确定基础级别
-                        # dot_separated_2 (1.1): L4
-                        # dot_separated_3 (1.1.1): L4
-                        # dot_separated_4 (1.1.1.1): L5
-                        # dot_separated_5 (1.1.1.1.1): L6
-                        # 等等
-                        if format_type.startswith('dot_separated_'):
-                            num_parts = int(format_type.split('_')[-1])
-                            if num_parts == 2:
-                                adjusted_level = 4  # 1.1 -> L4
-                            elif num_parts == 3:
-                                adjusted_level = 4  # 1.1.1 -> L4
-                            elif num_parts == 4:
-                                adjusted_level = 5  # 1.1.1.1 -> L5
-                            elif num_parts == 5:
-                                adjusted_level = 6  # 1.1.1.1.1 -> L6
-                            elif num_parts >= 6:
-                                adjusted_level = 7  # 1.1.1.1.1.1 -> L7
-                            else:
-                                adjusted_level = 4  # 默认L4
-                            return (adjusted_level, f'多级数字序号（{format_type}）')
-                # 匹配了格式模式，检查长度（允许更长的标题，但不超过上限）
+        patterns = self.mode.get_patterns()
+        re_flags = self.mode.get_re_flags()
+
+        for pattern, level, pattern_name in patterns:
+            if re.search(pattern, heading, re_flags):
+                if self.mode.should_reject_heading(heading, pattern_name):
+                    return (0, '包含(continued)不识别')
+                dot_separated = self._extract_dot_separated_format(heading)
+                special = self.mode.handle_pattern_match_special(heading, pattern_name, dot_separated)
+                if special is not None:
+                    return special
                 if len(heading) <= MAX_TITLE_LENGTH_WITH_PATTERN:
                     return (level, pattern_name)
-                else:
-                    # 即使匹配了格式模式，但如果内容过长（超过500字符），可能是正文
-                    return (0, '内容过长（超过500字符）')
-        
-        # 如果没有匹配格式模式，再检查长度和分隔符（可能是正文）
-        # 如果内容过长（超过200字符），不太可能是标题
+                return (0, '内容过长（超过500字符）')
+
         if len(heading) > self.MAX_TITLE_LENGTH:
             return (0, '内容过长')
-        
         sentence_separators = ['。', '；', ';', '.', '，', ',']
         separator_count = sum(heading.count(sep) for sep in sentence_separators)
         if separator_count > self.MAX_SEPARATOR_COUNT:
             return (0, '包含过多分隔符')
-        
-        # 排除目录内容（包含多个"第X节"的通常是目录）
+
         section_count = len(re.findall(r'第[一二三四五六七八九十\d]+节', heading))
-        if section_count > 1:
-            return (0, '目录内容')
-        
-        # 检查是否包含标题关键词
-        if any(keyword in heading for keyword in self.title_keywords):
-            # 排除目录中的内容
-            if '目录' in heading and len(heading) > 50:
-                return (0, '目录内容')
-            # 如果包含"第X节"，可能是章节标题
-            if section_count == 1:
-                return (1, '章节标题（关键词）')
-            # 其他关键词标题，默认作为四级标题
-            return (4, '关键词标题')
-        
-        return (0, '未匹配')
+        has_keyword = any(kw in heading for kw in self.title_keywords)
+        return self.mode.handle_no_pattern_match(
+            heading, separator_count, section_count, has_keyword, self.title_keywords
+        )
     
+    def is_toc_directory_title(self, heading: str) -> bool:
+        """
+        判断是否为目录行（应忽略，如「第三节 管理层讨论与分析. C」）
+        目录行通常以 . C、. A、. .. 页码 等结尾
+        """
+        heading = heading.strip()
+        if not heading or len(heading) < 4:
+            return False
+        # 以 . 单字母 结尾（如 . C、. A）
+        if re.search(r'\. [A-Z]\s*$', heading):
+            return True
+        # 以 . .. 页码 结尾（如 . .. 34）
+        if re.search(r'\. \.\.\s*\d*\s*$', heading):
+            return True
+        return False
+
     def is_cover_title(self, heading: str) -> bool:
         """
         判断是否为封面标题（应忽略）
@@ -579,6 +528,19 @@ class TitleLevelDetector:
         
         return None
     
+    def _is_arabic_chinese_format_mix(self, prev_format: Optional[Tuple[str, int]], 
+                                       current_format_type: str) -> bool:
+        """
+        判断是否为 arabic(1、2、) + chinese(二、三、) 的格式混用。
+        仅此种混用需拦截； (一)(二) 或 1. 2. 后接 四、 不算混用，因 四、 续 一、二、三、。
+        """
+        if not prev_format:
+            return False
+        prev_type = prev_format[0]
+        if prev_type != 'arabic':
+            return False
+        return current_format_type in ('chinese', 'chinese_space')
+    
     def _apply_special_rule_section(self, heading: str, base_level: int, 
                                     prev_heading: Optional[Dict], 
                                     current_format: Optional[Tuple[str, int]],
@@ -639,7 +601,9 @@ class TitleLevelDetector:
                                               prev_level: int,
                                               current_heading: Optional[str] = None,
                                               prev_heading: Optional[str] = None,
-                                              result_list: Optional[List[Dict]] = None) -> Optional[Tuple[int, str]]:
+                                              result_list: Optional[List[Dict]] = None,
+                                              prev_parent_heading: Optional[Dict] = None,
+                                              prev_parent_chain: Optional[List[Dict]] = None) -> Optional[Tuple[int, str]]:
         """
         规则1：格式相同且数字连续 → 保持同级（最高优先级）
         
@@ -697,38 +661,87 @@ class TitleLevelDetector:
         # 如果前一个标题格式不同，但在result_list中查找相同格式且数字连续的标题
         if current_format and result_list:
             current_format_type, current_num = current_format
-            current_parts = self._extract_dot_separated_parts(current_heading) if current_heading else None
-            
-            # 在result_list中查找相同格式的标题
-            for candidate in reversed(result_list):
-                candidate_level = candidate.get('level', 0)
-                candidate_title = candidate.get('title', candidate.get('content', ''))
-                candidate_format = self._extract_number_format(candidate_title) if candidate_title else None
-                if candidate_format:
-                    candidate_format_type, candidate_num = candidate_format
-                    
-                    # 情况1：格式相同且数字连续（非多级数字序号格式）
-                    if (candidate_format_type == current_format_type and 
-                        not current_format_type.startswith('dot_separated_') and
-                        current_num == candidate_num + 1):
-                        reason = f'规则1：格式相同且数字连续（在result_list中找到）({candidate_num}->{current_num})，保持同级{candidate_level}'
-                        return (candidate_level, reason)
-                    
-                    # 情况2：多级数字序号格式，前缀相同且最后一个数字连续
-                    if (current_format_type.startswith('dot_separated_') and 
-                        candidate_format_type.startswith('dot_separated_') and
-                        current_heading and current_parts):
-                        candidate_parts = self._extract_dot_separated_parts(candidate_title)
-                        if candidate_parts and len(candidate_parts) == len(current_parts):
-                            prefix_current = current_parts[:-1]
-                            prefix_candidate = candidate_parts[:-1]
-                            last_current = current_parts[-1]
-                            last_candidate = candidate_parts[-1]
-                            
-                            # 前缀完全相同，且最后一个数字连续
-                            if prefix_current == prefix_candidate and last_current == last_candidate + 1:
-                                reason = f'规则1：多级数字序号格式相同且数字连续（在result_list中找到）({candidate_title.split()[0] if candidate_title else ""}->{current_heading.split()[0] if current_heading else ""})，保持同级{candidate_level}'
-                                return (candidate_level, reason)
+            # 仅拦截 arabic(1、2、)+chinese(二、三、) 混用，不拦截 (一)(二) 或 1.2. 后接 四、（续 一、二、三、）
+            skip_cross_format = self._is_arabic_chinese_format_mix(prev_format, current_format_type)
+            if not skip_cross_format:
+                current_parts = self._extract_dot_separated_parts(current_heading) if current_heading else None
+                
+                # 情况1：格式相同且数字连续（非多级数字序号格式）
+                # 当存在多个候选时，优先级：1) prev_parent_heading 2) prev_parent_chain 3) 最小 level
+                # 使「二、财务报表」续「一、审计报告」为 L2，而非续「一、审计意见」为 L3
+                parent_match = None
+                best_match = None  # (level, reason) 最小 level 的 fallback
+                chain_best_match = None  # 链内候选优先，取最高 level
+                for candidate in reversed(result_list):
+                    candidate_level = candidate.get('level', 0)
+                    if candidate_level <= 0:
+                        continue
+                    candidate_title = candidate.get('title', candidate.get('content', ''))
+                    candidate_format = self._extract_number_format(candidate_title) if candidate_title else None
+                    if candidate_format:
+                        candidate_format_type, candidate_num = candidate_format
+                        
+                        if (candidate_format_type == current_format_type and 
+                            not current_format_type.startswith('dot_separated_') and
+                            current_num == candidate_num + 1):
+                            # 序号回退：当前序号小于直接父标题序号时，不应用（应为子级）
+                            # 例外：候选在 prev_parent_chain 中则允许匹配（如「二、财务报表」续「一、审计报告」）
+                            candidate_in_chain = prev_parent_chain and any(
+                                candidate_title.strip() == (p.get('title') or '').strip() for p in prev_parent_chain
+                            )
+                            if not candidate_in_chain and prev_parent_heading:
+                                parent_title = prev_parent_heading.get('title', '')
+                                parent_format = self._extract_number_format(parent_title) if parent_title else None
+                                parent_level = prev_parent_heading.get('level', 0)
+                                if parent_format:
+                                    parent_format_type, parent_num = parent_format
+                                    if (parent_format_type == current_format_type and current_num < parent_num and
+                                        candidate_level > parent_level):
+                                        continue  # 仅跳过更深候选，同级（如一、审计报告 L2）允许匹配
+                            reason = f'规则1：格式相同且数字连续（在result_list中找到）({candidate_num}->{current_num})，保持同级{candidate_level}'
+                            if prev_parent_heading and candidate_title.strip() == (prev_parent_heading.get('title') or '').strip():
+                                parent_match = (candidate_level, reason)
+                                break
+                            if candidate_in_chain:
+                                if chain_best_match is None or candidate_level > chain_best_match[0]:
+                                    chain_best_match = (candidate_level, reason)
+                            else:
+                                # 非链内：二、续一、时取最小 level（一、审计报告 L2）；否则取最近匹配（四、续三、关键审计 L3）
+                                if best_match is None:
+                                    best_match = (candidate_level, reason)
+                                elif current_num == 2 and candidate_level < best_match[0]:
+                                    best_match = (candidate_level, reason)
+                if parent_match is not None:
+                    return parent_match
+                # 链内优先：二、财务报表 续 一、审计报告（在 chain 中）为 L2
+                if chain_best_match is not None:
+                    return chain_best_match
+                if best_match is not None:
+                    return best_match
+                
+                # 情况2：多级数字序号格式，前缀相同且最后一个数字连续
+                for candidate in reversed(result_list):
+                    candidate_level = candidate.get('level', 0)
+                    if candidate_level <= 0:
+                        continue
+                    candidate_title = candidate.get('title', candidate.get('content', ''))
+                    candidate_format = self._extract_number_format(candidate_title) if candidate_title else None
+                    if candidate_format:
+                        candidate_format_type, candidate_num = candidate_format
+                        if (current_format_type.startswith('dot_separated_') and 
+                            candidate_format_type.startswith('dot_separated_') and
+                            current_heading and current_parts):
+                            candidate_parts = self._extract_dot_separated_parts(candidate_title)
+                            if candidate_parts and len(candidate_parts) == len(current_parts):
+                                prefix_current = current_parts[:-1]
+                                prefix_candidate = candidate_parts[:-1]
+                                last_current = current_parts[-1]
+                                last_candidate = candidate_parts[-1]
+                                
+                                # 前缀完全相同，且最后一个数字连续
+                                if prefix_current == prefix_candidate and last_current == last_candidate + 1:
+                                    reason = f'规则1：多级数字序号格式相同且数字连续（在result_list中找到）({candidate_title.split()[0] if candidate_title else ""}->{current_heading.split()[0] if current_heading else ""})，保持同级{candidate_level}'
+                                    return (candidate_level, reason)
         
         return None
 
@@ -1046,22 +1059,21 @@ class TitleLevelDetector:
         adjusted_level = base_level
         reasons = [pattern_name]
         rule_applied = False  # 标记是否有规则应用
+        current_format = self._extract_number_format(heading)  # 用于英文模式 L3 约束
         
         # 根据前一个标题调整
         if prev_heading and prev_heading.get('level', 0) > 0:
             prev_level = prev_heading['level']
             prev_title = prev_heading.get('title', '')
-            
-            # 提取数字格式
-            current_format = self._extract_number_format(heading)
             prev_format = self._extract_number_format(prev_title) if prev_title else None
             
             # 按优先级顺序应用规则：
+            # 0. 序号回退规则：当前序号 < 父标题序号时，不可能是同级，保持 prev_level
             # 1. 特殊规则1和2
             # 2. 规则2（从1开始）
             # 3. 规则3和4（父标题匹配）
             # 4. 规则1（格式相同且数字连续）- 最高优先级，最后应用以覆盖之前的规则
-            
+
             # 特殊规则1：处理"第X节"格式
             result = self._apply_special_rule_section(heading, base_level, prev_heading, current_format, prev_format)
             if result:
@@ -1107,8 +1119,8 @@ class TitleLevelDetector:
                         reasons.append(reason)
                         rule_applied = True
                 
-                # # 规则4扩展：检查父标题链同级标题
-                if not rule_applied:
+                # 规则4扩展：检查父标题链同级标题（仅 arabic+chinese 混用时不匹配）
+                if not rule_applied and (not prev_format or not self._is_arabic_chinese_format_mix(prev_format, current_format_type)):
                     result = self._apply_rule_4_extended_sibling_match(current_format, prev_parent_chain, result_list)
                     if result:
                         adjusted_level, reason = result
@@ -1116,33 +1128,40 @@ class TitleLevelDetector:
                         rule_applied = True
                 
                 # 规则4扩展2：在result_list中搜索（只在格式不同时检查，避免与规则1冲突）
+                # 仅 arabic+chinese 混用时不匹配
                 if not rule_applied and (not prev_format or current_format_type != prev_format_type):
-                    result = self._apply_rule_4_extended2_sibling_search(current_format, base_level, prev_heading, result_list, prev_parent_chain)
-                    if result:
-                        adjusted_level, reason = result
-                        reasons.append(reason)
-                        rule_applied = True
+                    if not self._is_arabic_chinese_format_mix(prev_format, current_format_type):
+                        result = self._apply_rule_4_extended2_sibling_search(current_format, base_level, prev_heading, result_list, prev_parent_chain)
+                        if result:
+                            adjusted_level, reason = result
+                            reasons.append(reason)
+                            rule_applied = True
             
             # 规则1：格式相同且数字连续 → 保持同级（最高优先级，覆盖之前的规则）
             if current_format and prev_format:
                 prev_title = prev_heading.get('title', '') if prev_heading else ''
-                result = self._apply_rule_1_same_format_consecutive(current_format, prev_format, prev_level, heading, prev_title, result_list)
+                result = self._apply_rule_1_same_format_consecutive(
+                    current_format, prev_format, prev_level, heading, prev_title, result_list,
+                    prev_parent_heading, prev_parent_chain
+                )
                 if result:
                     adjusted_level, reason = result
                     reasons.append(reason)
                     rule_applied = True
             # 如果前一个标题格式不同，规则1未匹配，但在result_list中查找相同格式的标题
             elif current_format and result_list:
-                result = self._apply_rule_1_same_format_consecutive(current_format, None, 0, heading, None, result_list)
+                result = self._apply_rule_1_same_format_consecutive(
+                    current_format, None, 0, heading, None, result_list,
+                    prev_parent_heading, prev_parent_chain
+                )
                 if result:
                     adjusted_level, reason = result
                     reasons.append(reason)
                     rule_applied = True
             
             # 规则4扩展3：检查当前标题格式是否与上一个标题的任何一级父标题格式相同且连续（或接近连续）
-            # 如果当前标题格式与父标题链中任何一个父标题格式相同且数字连续（或跳过1-3个数字），则识别为同级
-            # 这个规则应该在规则1之后检查，因为规则1优先级最高
-            if not rule_applied and current_format:
+            # 仅 arabic+chinese 混用时不应用
+            if not rule_applied and current_format and (not prev_format or not self._is_arabic_chinese_format_mix(prev_format, current_format[0])):
                 current_format_type, current_num = current_format
                 
                 # 特殊处理：多级数字序号格式，先在result_list中查找相同格式的标题
@@ -1325,10 +1344,41 @@ class TitleLevelDetector:
                                             rule_applied = True
                                             break
             
-            # 如果没有任何规则应用，返回0表示应删除该标题
+            # 序号回退（最终检查）：当前序号<父标题序号时，不可能是同级，应为父下一级
+            # 例外：父序号远大于当前（如父六、当前二、）可能是新序列续写，不应用
+            # 仅 arabic+chinese 混用时不应用
+            if current_format and prev_parent_heading and (not prev_format or not self._is_arabic_chinese_format_mix(prev_format, current_format[0])):
+                current_format_type, current_num = current_format
+                parent_title = prev_parent_heading.get('title', '')
+                parent_level = prev_parent_heading.get('level', 0)
+                parent_format = self._extract_number_format(parent_title) if parent_title else None
+                if parent_format and parent_level > 0:
+                    parent_format_type, parent_num = parent_format
+                    # 父序号>=5 且当前<=2 时，多为新序列（如 六、后接 二、财务报表），跳过回退
+                    is_likely_new_sequence = (parent_format_type == current_format_type and 
+                                             parent_num >= 5 and current_num <= 2)
+                    if (parent_format_type == current_format_type and 
+                        current_num < parent_num and 
+                        adjusted_level <= parent_level and
+                        not is_likely_new_sequence):
+                        adjusted_level = min(parent_level + 1, self.MAX_LEVEL)
+                        reasons.append(f'序号回退：当前({current_num})<父标题({parent_num})，纠正为父下一级L{adjusted_level}')
+                        rule_applied = True
+
+            # 如果没有任何规则应用
             if not rule_applied:
-                # 不满足任何规则，应删除该标题
-                return (0, '无规则应用，删除该标题')
+                # 仅 arabic+chinese 混用时使用 base_level
+                if current_format and prev_format and self._is_arabic_chinese_format_mix(prev_format, current_format[0]):
+                    adjusted_level = base_level
+                    reasons.append(f'格式混用，使用基础层级{base_level}')
+                    rule_applied = True
+                else:
+                    fallback = self.mode.handle_rule_not_applied(base_level, prev_level)
+                    if fallback is None:
+                        return (0, '无规则应用，删除该标题')
+                    adjusted_level, reason = fallback
+                    rule_applied = True
+                    reasons.append(reason)
             # 如果前一个标题层级更高（数字更小），当前标题应该比前一个标题层级低
             # 但如果规则已应用，跳过此调整
             elif prev_level < adjusted_level:
@@ -1382,8 +1432,38 @@ class TitleLevelDetector:
                     adjusted_level = next_level + 1
                     reasons.append(f'下一个标题层级{next_level}，调整为{adjusted_level}')
         
+        # 模式特定：格式最低层级约束（如 english 的 arabic_dot 最低 L3）
+        if current_format:
+            current_format_type, _ = current_format
+            min_level = self.mode.get_min_level_for_format(current_format_type)
+            if min_level is not None and not current_format_type.startswith('dot_separated_') and adjusted_level < min_level:
+                reasons.append(f'{current_format_type} 格式最低 L{min_level}，从 L{adjusted_level} 纠正为 L{min_level}')
+                adjusted_level = min_level
+
         # 限制最终层级在1-7范围内
         adjusted_level = max(self.MIN_LEVEL, min(adjusted_level, self.MAX_LEVEL))
+        
+        # 序号断裂删除：与前面同级标题序号不连续，且序号不是从1开始 → 删除（如 二、监事人员 在 1、2、 后）
+        if (adjusted_level > 0 and current_format and result_list and
+            not current_format[0].startswith('dot_separated_')):
+            current_format_type, current_num = current_format
+            if current_num != 1:
+                prev_sibling = None
+                for r in reversed(result_list):
+                    if r.get('level', 0) == adjusted_level:
+                        prev_sibling = r
+                        break
+                if prev_sibling:
+                    prev_title = prev_sibling.get('title', prev_sibling.get('content', ''))
+                    prev_format = self._extract_number_format(prev_title) if prev_title else None
+                    if prev_format:
+                        prev_format_type, prev_num = prev_format
+                        # 格式相同且连续 → 保留
+                        if prev_format_type == current_format_type and current_num == prev_num + 1:
+                            pass
+                        else:
+                            adjusted_level = 0
+                            reasons.append(f'序号与前面同级不连续且非从1开始，删除')
         
         reason_str = ' | '.join(reasons)
         return (adjusted_level, reason_str)
@@ -1403,8 +1483,15 @@ class TitleLevelDetector:
         if self.is_cover_title(heading):
             return (0, '封面标题（忽略）')
         
+        # 检查是否为目录行（如 第三节 管理层讨论与分析. C）
+        if self.is_toc_directory_title(heading):
+            return (0, '目录行（忽略）')
+        
         # 如果有上下文，使用上下文调整
         if context:
+            # 简易模式：序号不识别，全部为一级标题
+            if getattr(self.mode, 'is_flat_mode', lambda: False)():
+                return (1, '简易模式-一级')
             prev_heading = context.get('prev_heading')
             next_heading = context.get('next_heading')
             prev_parent_heading = context.get('prev_parent_heading')
@@ -1508,6 +1595,18 @@ class TitleLevelDetector:
             
             # 检测层级
             level, reason = self.detect_title_level(heading, context)
+            
+            # 模式特定：第一节下不识别次级标题（chinese mode）
+            if level >= 2 and result:
+                for j in range(len(result) - 1, -1, -1):
+                    candidate = result[j]
+                    candidate_level = candidate.get('level', 0)
+                    if candidate_level > 0 and candidate_level < level:
+                        parent_title = candidate.get('title', candidate.get('content', ''))
+                        if self.mode.should_reject_subheading_under_section(level, parent_title):
+                            level = 0
+                            reason = '第一节下不识别次级标题'
+                        break
             
             # 创建结果项
             result_item = heading_info.copy()

@@ -1,0 +1,5420 @@
+[
+  {
+    "title": "前言",
+    "level": 1,
+    "heading_index": -1,
+    "line_number": 1,
+    "children": [
+      {
+        "title": "一、 本公司董事会、监事会及董事、监事、高级管理人员保证年度报告内容的真实性、准确性、完整性，不存在虚假记载、误导性陈述或重大遗漏，并承担个别和连带的法律责任。",
+        "level": 2,
+        "heading_index": 0,
+        "line_number": 9,
+        "children": []
+      },
+      {
+        "title": "二、 公司全体董事出席董事会会议。",
+        "level": 2,
+        "heading_index": 1,
+        "line_number": 10,
+        "children": []
+      },
+      {
+        "title": "三、 天健会计师事务所(特殊普通合伙)为本公司出具了标准无保留意见的审计报告。",
+        "level": 2,
+        "heading_index": 2,
+        "line_number": 11,
+        "children": []
+      },
+      {
+        "title": "四、 公司负责人张德芹、主管会计工作负责人蒋焰及会计机构负责人（会计主管人员）蔡聪应声明：保证年度报告中财务报告的真实、准确、完整。",
+        "level": 2,
+        "heading_index": 3,
+        "line_number": 12,
+        "children": []
+      },
+      {
+        "title": "五、 董事会决议通过的本报告期利润分配预案或公积金转增股本预案",
+        "level": 2,
+        "heading_index": 4,
+        "line_number": 13,
+        "children": []
+      },
+      {
+        "title": "六、 前瞻性陈述的风险声明",
+        "level": 2,
+        "heading_index": 5,
+        "line_number": 17,
+        "children": []
+      },
+      {
+        "title": "七、 是否存在被控股股东及其他关联方非经营性占用资金情况",
+        "level": 2,
+        "heading_index": 6,
+        "line_number": 23,
+        "children": []
+      },
+      {
+        "title": "八、 是否存在违反规定决策程序对外提供担保的情况",
+        "level": 2,
+        "heading_index": 7,
+        "line_number": 27,
+        "children": []
+      },
+      {
+        "title": "九、 是否存在半数以上董事无法保证公司所披露年度报告的真实性、准确性和完整性",
+        "level": 2,
+        "heading_index": 8,
+        "line_number": 31,
+        "children": []
+      },
+      {
+        "title": "十、 重大风险提示",
+        "level": 2,
+        "heading_index": 9,
+        "line_number": 35,
+        "children": []
+      },
+      {
+        "title": "十一、 其他",
+        "level": 2,
+        "heading_index": 10,
+        "line_number": 39,
+        "children": []
+      }
+    ],
+    "is_preface": true
+  },
+  {
+    "title": "第一节 释义",
+    "level": 1,
+    "heading_index": 11,
+    "line_number": 58,
+    "children": []
+  },
+  {
+    "title": "第二节 公司简介和主要财务指标",
+    "level": 1,
+    "heading_index": 12,
+    "line_number": 66,
+    "children": [
+      {
+        "title": "一、 公司信息",
+        "level": 2,
+        "heading_index": 13,
+        "line_number": 68,
+        "children": []
+      },
+      {
+        "title": "二、 联系人和联系方式",
+        "level": 2,
+        "heading_index": 14,
+        "line_number": 72,
+        "children": []
+      },
+      {
+        "title": "三、 基本情况简介",
+        "level": 2,
+        "heading_index": 15,
+        "line_number": 76,
+        "children": []
+      },
+      {
+        "title": "四、 信息披露及备置地点",
+        "level": 2,
+        "heading_index": 16,
+        "line_number": 80,
+        "children": []
+      },
+      {
+        "title": "五、 公司股票简况",
+        "level": 2,
+        "heading_index": 17,
+        "line_number": 84,
+        "children": []
+      },
+      {
+        "title": "六、 其他相关资料",
+        "level": 2,
+        "heading_index": 18,
+        "line_number": 88,
+        "children": []
+      },
+      {
+        "title": "七、 近三年主要会计数据和财务指标",
+        "level": 2,
+        "heading_index": 19,
+        "line_number": 92,
+        "children": [
+          {
+            "title": "(一) 主要会计数据",
+            "level": 3,
+            "heading_index": 20,
+            "line_number": 94,
+            "children": []
+          },
+          {
+            "title": "(二) 主要财务指标",
+            "level": 3,
+            "heading_index": 21,
+            "line_number": 100,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "八、 境内外会计准则下会计数据差异",
+        "level": 2,
+        "heading_index": 22,
+        "line_number": 108,
+        "children": [
+          {
+            "title": "(一) 同时按照国际会计准则与按中国会计准则披露的财务报告中净利润和归属于上市公司股东的净资产差异情况",
+            "level": 3,
+            "heading_index": 23,
+            "line_number": 110,
+            "children": []
+          },
+          {
+            "title": "(二) 同时按照境外会计准则与按中国会计准则披露的财务报告中净利润和归属于上市公司股东的净资产差异情况",
+            "level": 3,
+            "heading_index": 24,
+            "line_number": 114,
+            "children": []
+          },
+          {
+            "title": "(三)境内外会计准则差异的说明：",
+            "level": 3,
+            "heading_index": 25,
+            "line_number": 118,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "九、 2024 年分季度主要财务数据",
+        "level": 2,
+        "heading_index": 26,
+        "line_number": 122,
+        "children": []
+      },
+      {
+        "title": "十、 非经常性损益项目和金额",
+        "level": 2,
+        "heading_index": 27,
+        "line_number": 132,
+        "children": []
+      },
+      {
+        "title": "十一、 采用公允价值计量的项目",
+        "level": 2,
+        "heading_index": 28,
+        "line_number": 144,
+        "children": []
+      },
+      {
+        "title": "十二、 其他",
+        "level": 2,
+        "heading_index": 29,
+        "line_number": 152,
+        "children": []
+      }
+    ]
+  },
+  {
+    "title": "第三节 管理层讨论与分析",
+    "level": 1,
+    "heading_index": 30,
+    "line_number": 156,
+    "children": [
+      {
+        "title": "一、经营情况讨论与分析",
+        "level": 2,
+        "heading_index": 31,
+        "line_number": 158,
+        "children": []
+      },
+      {
+        "title": "二、报告期内公司所处行业情况",
+        "level": 2,
+        "heading_index": 32,
+        "line_number": 162,
+        "children": []
+      },
+      {
+        "title": "三、报告期内公司从事的业务情况",
+        "level": 2,
+        "heading_index": 33,
+        "line_number": 166,
+        "children": []
+      },
+      {
+        "title": "四、报告期内核心竞争力分析",
+        "level": 2,
+        "heading_index": 34,
+        "line_number": 174,
+        "children": []
+      },
+      {
+        "title": "五、报告期内主要经营情况",
+        "level": 2,
+        "heading_index": 35,
+        "line_number": 180,
+        "children": [
+          {
+            "title": "(一) 主营业务分析",
+            "level": 3,
+            "heading_index": 36,
+            "line_number": 192,
+            "children": [
+              {
+                "title": "1、 利润表及现金流量表相关科目变动分析表",
+                "level": 4,
+                "heading_index": 37,
+                "line_number": 194,
+                "children": []
+              },
+              {
+                "title": "2、 收入和成本分析",
+                "level": 4,
+                "heading_index": 38,
+                "line_number": 218,
+                "children": [
+                  {
+                    "title": "(1). 主营业务分行业、分产品、分地区、分销售模式情况",
+                    "level": 5,
+                    "heading_index": 39,
+                    "line_number": 222,
+                    "children": []
+                  },
+                  {
+                    "title": "(2). 产销量情况分析表",
+                    "level": 5,
+                    "heading_index": 40,
+                    "line_number": 228,
+                    "children": []
+                  },
+                  {
+                    "title": "(3). 重大采购合同、重大销售合同的履行情况",
+                    "level": 5,
+                    "heading_index": 41,
+                    "line_number": 237,
+                    "children": []
+                  },
+                  {
+                    "title": "(4). 成本分析表",
+                    "level": 5,
+                    "heading_index": 42,
+                    "line_number": 241,
+                    "children": []
+                  },
+                  {
+                    "title": "(5). 报告期主要子公司股权变动导致合并范围变化",
+                    "level": 5,
+                    "heading_index": 43,
+                    "line_number": 247,
+                    "children": []
+                  },
+                  {
+                    "title": "(6). 公司报告期内业务、产品或服务发生重大变化或调整有关情况",
+                    "level": 5,
+                    "heading_index": 44,
+                    "line_number": 251,
+                    "children": []
+                  },
+                  {
+                    "title": "(7). 主要销售客户及主要供应商情况",
+                    "level": 5,
+                    "heading_index": 45,
+                    "line_number": 255,
+                    "children": [
+                      {
+                        "title": "A.公司主要销售客户情况",
+                        "level": 6,
+                        "heading_index": 46,
+                        "line_number": 257,
+                        "children": []
+                      },
+                      {
+                        "title": "B.公司主要供应商情况",
+                        "level": 6,
+                        "heading_index": 47,
+                        "line_number": 267,
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "3、 费用",
+                "level": 4,
+                "heading_index": 48,
+                "line_number": 277,
+                "children": []
+              },
+              {
+                "title": "4、 研发投入",
+                "level": 4,
+                "heading_index": 49,
+                "line_number": 285,
+                "children": [
+                  {
+                    "title": "(1).研发投入情况表",
+                    "level": 5,
+                    "heading_index": 50,
+                    "line_number": 287,
+                    "children": []
+                  },
+                  {
+                    "title": "(2).研发人员情况表",
+                    "level": 5,
+                    "heading_index": 51,
+                    "line_number": 297,
+                    "children": []
+                  },
+                  {
+                    "title": "(3).情况说明",
+                    "level": 5,
+                    "heading_index": 52,
+                    "line_number": 303,
+                    "children": []
+                  },
+                  {
+                    "title": "(4).研发人员构成发生重大变化的原因及对公司未来发展的影响",
+                    "level": 5,
+                    "heading_index": 53,
+                    "line_number": 307,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "title": "5、 现金流",
+                "level": 4,
+                "heading_index": 54,
+                "line_number": 311,
+                "children": [
+                  {
+                    "title": "（1）客户存款和同业存放款项净增加额变动主要是公司控股子公司贵州茅台集团财务有限公司归集集团公司其他成员单位资金较上期增加。",
+                    "level": 5,
+                    "heading_index": 55,
+                    "line_number": 319,
+                    "children": []
+                  },
+                  {
+                    "title": "（2）收到的税费返还减少主要是公司控股子公司北京友谊使者商贸有限公司上期收到税费返还。",
+                    "level": 5,
+                    "heading_index": 56,
+                    "line_number": 320,
+                    "children": []
+                  },
+                  {
+                    "title": "（3）收到其他与经营活动有关的现金增加主要是公司收到到期商业银行存款利息增加。",
+                    "level": 5,
+                    "heading_index": 57,
+                    "line_number": 321,
+                    "children": []
+                  },
+                  {
+                    "title": "（4）客户贷款及垫款净增加额增加主要是公司控股子公司贵州茅台集团财务有限公司上期收回发放成员单位贷款及本期买方信贷业务增加。",
+                    "level": 5,
+                    "heading_index": 58,
+                    "line_number": 322,
+                    "children": []
+                  },
+                  {
+                    "title": "（5）存放中央银行和同业款项净增加额减少主要是公司控股子公司贵州茅台集团财务有限公司存入的不可提前支取的同业定期存款净增加额较上期减少。",
+                    "level": 5,
+                    "heading_index": 59,
+                    "line_number": 323,
+                    "children": []
+                  },
+                  {
+                    "title": "（6）拆出资金净增加额减少主要是公司控股子公司贵州茅台集团财务有限公司收回同业拆出资金。",
+                    "level": 5,
+                    "heading_index": 60,
+                    "line_number": 324,
+                    "children": []
+                  },
+                  {
+                    "title": "（7）支付利息、手续费及佣金的现金减少主要是公司控股子公司贵州茅台集团财务有限公司支付利息较上期减少。",
+                    "level": 5,
+                    "heading_index": 61,
+                    "line_number": 325,
+                    "children": []
+                  },
+                  {
+                    "title": "（8）取得投资收益收到的现金减少主要是公司上期收到到期大额存单利息。",
+                    "level": 5,
+                    "heading_index": 62,
+                    "line_number": 326,
+                    "children": []
+                  },
+                  {
+                    "title": "（9）处置固定资产、无形资产和其他长期资产收回的现金净额减少主要是本期处置固定资产较上期减少。",
+                    "level": 5,
+                    "heading_index": 63,
+                    "line_number": 327,
+                    "children": []
+                  },
+                  {
+                    "title": "（10）购建固定资产、无形资产和其他长期资产支付的现金增加主要是支付基本建设工程款较上期增加。",
+                    "level": 5,
+                    "heading_index": 64,
+                    "line_number": 328,
+                    "children": []
+                  },
+                  {
+                    "title": "（11）投资支付的现金减少主要是上期公司支付产业发展基金投资及本期公司控股子公司贵州茅台集团财务有限公司同业存单等投资业务减少。",
+                    "level": 5,
+                    "heading_index": 65,
+                    "line_number": 329,
+                    "children": []
+                  },
+                  {
+                    "title": "（12）支付其他与投资活动有关的现金增加是退付的基本建设履约保证金较上期增加。",
+                    "level": 5,
+                    "heading_index": 66,
+                    "line_number": 330,
+                    "children": []
+                  },
+                  {
+                    "title": "（13）汇率变动对现金及现金等价物的影响增加是公司全资子公司贵州茅台酒巴黎贸易有限公司境外经营财务报表折算为记账本位币报表产生的外币折算差额。",
+                    "level": 5,
+                    "heading_index": 67,
+                    "line_number": 331,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "(二) 非主营业务导致利润重大变化的说明",
+            "level": 3,
+            "heading_index": 68,
+            "line_number": 333,
+            "children": []
+          },
+          {
+            "title": "(三) 资产、负债情况分析",
+            "level": 3,
+            "heading_index": 69,
+            "line_number": 337,
+            "children": [
+              {
+                "title": "1、 资产及负债状况",
+                "level": 4,
+                "heading_index": 70,
+                "line_number": 341,
+                "children": []
+              },
+              {
+                "title": "2、 境外资产情况",
+                "level": 4,
+                "heading_index": 71,
+                "line_number": 347,
+                "children": [
+                  {
+                    "title": "(1) 资产规模",
+                    "level": 5,
+                    "heading_index": 72,
+                    "line_number": 351,
+                    "children": []
+                  },
+                  {
+                    "title": "(2) 境外资产占比较高的相关说明",
+                    "level": 5,
+                    "heading_index": 73,
+                    "line_number": 355,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "title": "3、 截至报告期末主要资产受限情况",
+                "level": 4,
+                "heading_index": 74,
+                "line_number": 359,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "(四) 行业经营性信息分析",
+            "level": 3,
+            "heading_index": 75,
+            "line_number": 365,
+            "children": [
+              {
+                "title": "1、 行业基本情况",
+                "level": 4,
+                "heading_index": 76,
+                "line_number": 371,
+                "children": []
+              },
+              {
+                "title": "2、 产能状况",
+                "level": 4,
+                "heading_index": 77,
+                "line_number": 377,
+                "children": []
+              },
+              {
+                "title": "3、 产品期末库存量",
+                "level": 4,
+                "heading_index": 78,
+                "line_number": 401,
+                "children": []
+              },
+              {
+                "title": "4、 产品情况",
+                "level": 4,
+                "heading_index": 79,
+                "line_number": 415,
+                "children": []
+              },
+              {
+                "title": "5、 原料采购情况",
+                "level": 4,
+                "heading_index": 80,
+                "line_number": 438,
+                "children": [
+                  {
+                    "title": "(1).采购模式",
+                    "level": 5,
+                    "heading_index": 81,
+                    "line_number": 440,
+                    "children": []
+                  },
+                  {
+                    "title": "(2).采购金额",
+                    "level": 5,
+                    "heading_index": 82,
+                    "line_number": 446,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "title": "6、 销售情况",
+                "level": 4,
+                "heading_index": 83,
+                "line_number": 455,
+                "children": [
+                  {
+                    "title": "(1).销售模式",
+                    "level": 5,
+                    "heading_index": 84,
+                    "line_number": 457,
+                    "children": []
+                  },
+                  {
+                    "title": "(2).销售渠道",
+                    "level": 5,
+                    "heading_index": 85,
+                    "line_number": 463,
+                    "children": []
+                  },
+                  {
+                    "title": "(3).区域情况",
+                    "level": 5,
+                    "heading_index": 86,
+                    "line_number": 471,
+                    "children": []
+                  },
+                  {
+                    "title": "(4).经销商情况",
+                    "level": 5,
+                    "heading_index": 87,
+                    "line_number": 483,
+                    "children": []
+                  },
+                  {
+                    "title": "(5).线上销售情况",
+                    "level": 5,
+                    "heading_index": 88,
+                    "line_number": 497,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "title": "7、 公司收入及成本分析",
+                "level": 4,
+                "heading_index": 89,
+                "line_number": 509,
+                "children": [
+                  {
+                    "title": "(1).按不同类型披露公司主营业务构成",
+                    "level": 5,
+                    "heading_index": 90,
+                    "line_number": 511,
+                    "children": []
+                  },
+                  {
+                    "title": "(2).成本情况",
+                    "level": 5,
+                    "heading_index": 91,
+                    "line_number": 527,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "(五) 投资状况分析",
+            "level": 3,
+            "heading_index": 92,
+            "line_number": 537,
+            "children": [
+              {
+                "title": "1、 重大的股权投资",
+                "level": 4,
+                "heading_index": 93,
+                "line_number": 543,
+                "children": []
+              },
+              {
+                "title": "2、 重大的非股权投资",
+                "level": 4,
+                "heading_index": 94,
+                "line_number": 547,
+                "children": []
+              },
+              {
+                "title": "3、 以公允价值计量的金融资产",
+                "level": 4,
+                "heading_index": 95,
+                "line_number": 555,
+                "children": [
+                  {
+                    "title": "(1).茅台招华（贵州）产业发展基金合伙企业（有限合伙）（以下简称“茅台招华基金”）",
+                    "level": 5,
+                    "heading_index": 96,
+                    "line_number": 575,
+                    "children": []
+                  },
+                  {
+                    "title": "(2).茅台金石（贵州）产业发展基金合伙企业（有限合伙）（以下简称“茅台金石基金”）",
+                    "level": 5,
+                    "heading_index": 97,
+                    "line_number": 578,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "title": "4、 报告期内重大资产重组整合的具体进展情况",
+                "level": 4,
+                "heading_index": 98,
+                "line_number": 586,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "(六) 重大资产和股权出售",
+            "level": 3,
+            "heading_index": 99,
+            "line_number": 590,
+            "children": []
+          },
+          {
+            "title": "(七) 主要控股参股公司分析",
+            "level": 3,
+            "heading_index": 100,
+            "line_number": 594,
+            "children": []
+          },
+          {
+            "title": "(八) 公司控制的结构化主体情况",
+            "level": 3,
+            "heading_index": 101,
+            "line_number": 602,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "六、公司关于公司未来发展的讨论与分析",
+        "level": 2,
+        "heading_index": 102,
+        "line_number": 606,
+        "children": [
+          {
+            "title": "(一)行业格局和趋势",
+            "level": 3,
+            "heading_index": 103,
+            "line_number": 608,
+            "children": []
+          },
+          {
+            "title": "(二)公司发展战略",
+            "level": 3,
+            "heading_index": 104,
+            "line_number": 630,
+            "children": []
+          },
+          {
+            "title": "(三)经营计划",
+            "level": 3,
+            "heading_index": 105,
+            "line_number": 636,
+            "children": [
+              {
+                "title": "（一）筑牢核心业务根基，巩固发展主航道。一是持续树牢“质量是生命之魂”质量信仰，以“崇本守道、坚守工艺、贮足陈酿、不卖新酒”的质量观为引领，生产过程坚持质量为先、坚守传统工艺、坚定创新赋能，扎实精细开展过程管理，精益求精抓好生产质量，全力保障“优质稳产”。二是坚持以消费者为中心，将“顺天敬人，明理厚德”企业核心价值观融入市场营销工作全过程，推动从“卖酒”向“卖生活方式”转变。持续增强战略定力、品牌张力、市场活力，做好“三个转型”，不断强化渠道协同、增强消费触达、促进消费转化，着力解决“供需适配”的根本问题。持续筑牢系列酒市场基础，有效提升品牌竞争力。重点从“市场、渠道、服务、品牌”四端发力，构建“T”型多元化产品矩阵，完善国际化表达体系。三是聚焦公司战略目标，强化项目全生命周期管理，优化核心产区规划建设布局，持续推进茅台酒“十四五”中华技改建设项目、坛厂包装物流园、习水同民坝一期项目、中华 6 万吨勾调中心、茅台酒用原料储备库等重大项目建设，不断夯实企业发展基础，增强酒业发展后劲。",
+                "level": 4,
+                "heading_index": 106,
+                "line_number": 642,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "(四)可能面对的风险",
+            "level": 3,
+            "heading_index": 107,
+            "line_number": 652,
+            "children": []
+          },
+          {
+            "title": "(五)其他",
+            "level": 3,
+            "heading_index": 108,
+            "line_number": 658,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "七、公司因不适用准则规定或国家秘密、商业秘密等特殊原因，未按准则披露的情况和原因说明",
+        "level": 2,
+        "heading_index": 109,
+        "line_number": 662,
+        "children": []
+      }
+    ]
+  },
+  {
+    "title": "第四节 公司治理",
+    "level": 1,
+    "heading_index": 110,
+    "line_number": 666,
+    "children": [
+      {
+        "title": "一、公司治理相关情况说明",
+        "level": 2,
+        "heading_index": 111,
+        "line_number": 668,
+        "children": []
+      },
+      {
+        "title": "二、公司控股股东、实际控制人在保证公司资产、人员、财务、机构、业务等方面独立性的具体",
+        "level": 2,
+        "heading_index": 112,
+        "line_number": 689,
+        "children": []
+      },
+      {
+        "title": "三、股东大会情况简介",
+        "level": 2,
+        "heading_index": 113,
+        "line_number": 697,
+        "children": []
+      },
+      {
+        "title": "四、董事、监事和高级管理人员的情况",
+        "level": 2,
+        "heading_index": 114,
+        "line_number": 709,
+        "children": [
+          {
+            "title": "(一) 现任及报告期内离任董事、监事和高级管理人员持股变动及报酬情况",
+            "level": 3,
+            "heading_index": 115,
+            "line_number": 711,
+            "children": []
+          },
+          {
+            "title": "(二) 现任及报告期内离任董事、监事和高级管理人员的任职情况",
+            "level": 3,
+            "heading_index": 116,
+            "line_number": 726,
+            "children": [
+              {
+                "title": "1、 在股东单位任职情况",
+                "level": 4,
+                "heading_index": 117,
+                "line_number": 728,
+                "children": []
+              },
+              {
+                "title": "2、 在其他单位任职情况",
+                "level": 4,
+                "heading_index": 118,
+                "line_number": 734,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "(三) 董事、监事、高级管理人员报酬情况",
+            "level": 3,
+            "heading_index": 119,
+            "line_number": 740,
+            "children": []
+          },
+          {
+            "title": "(四) 公司董事、监事、高级管理人员变动情况",
+            "level": 3,
+            "heading_index": 120,
+            "line_number": 746,
+            "children": []
+          },
+          {
+            "title": "(五) 近三年受证券监管机构处罚的情况说明",
+            "level": 3,
+            "heading_index": 121,
+            "line_number": 752,
+            "children": []
+          },
+          {
+            "title": "(六) 其他",
+            "level": 3,
+            "heading_index": 122,
+            "line_number": 756,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "五、报告期内召开的董事会有关情况",
+        "level": 2,
+        "heading_index": 123,
+        "line_number": 760,
+        "children": []
+      },
+      {
+        "title": "六、董事履行职责情况",
+        "level": 2,
+        "heading_index": 124,
+        "line_number": 764,
+        "children": [
+          {
+            "title": "(一) 董事参加董事会和股东大会的情况",
+            "level": 3,
+            "heading_index": 125,
+            "line_number": 766,
+            "children": []
+          },
+          {
+            "title": "(二) 董事对公司有关事项提出异议的情况",
+            "level": 3,
+            "heading_index": 126,
+            "line_number": 776,
+            "children": []
+          },
+          {
+            "title": "(三) 其他",
+            "level": 3,
+            "heading_index": 127,
+            "line_number": 780,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "七、董事会下设专门委员会情况",
+        "level": 2,
+        "heading_index": 128,
+        "line_number": 784,
+        "children": [
+          {
+            "title": "(一) 董事会下设专门委员会成员情况",
+            "level": 3,
+            "heading_index": 129,
+            "line_number": 788,
+            "children": []
+          },
+          {
+            "title": "(二)报告期内审计委员会召开六次会议",
+            "level": 3,
+            "heading_index": 130,
+            "line_number": 792,
+            "children": []
+          },
+          {
+            "title": "(三)报告期内提名委员会召开两次会议",
+            "level": 3,
+            "heading_index": 131,
+            "line_number": 796,
+            "children": []
+          },
+          {
+            "title": "(四)报告期内薪酬与考核委员会召开三次会议",
+            "level": 3,
+            "heading_index": 132,
+            "line_number": 800,
+            "children": []
+          },
+          {
+            "title": "(五)报告期内战略委员会召开四次会议",
+            "level": 3,
+            "heading_index": 133,
+            "line_number": 804,
+            "children": []
+          },
+          {
+            "title": "(六)存在异议事项的具体情况",
+            "level": 3,
+            "heading_index": 134,
+            "line_number": 808,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "八、监事会发现公司存在风险的说明",
+        "level": 2,
+        "heading_index": 135,
+        "line_number": 812,
+        "children": []
+      },
+      {
+        "title": "九、报告期末母公司和主要子公司的员工情况",
+        "level": 2,
+        "heading_index": 136,
+        "line_number": 818,
+        "children": [
+          {
+            "title": "(一) 员工情况",
+            "level": 3,
+            "heading_index": 137,
+            "line_number": 820,
+            "children": []
+          },
+          {
+            "title": "(二) 薪酬政策",
+            "level": 3,
+            "heading_index": 138,
+            "line_number": 824,
+            "children": []
+          },
+          {
+            "title": "(三) 培训计划",
+            "level": 3,
+            "heading_index": 139,
+            "line_number": 830,
+            "children": []
+          },
+          {
+            "title": "(四) 劳务外包情况",
+            "level": 3,
+            "heading_index": 140,
+            "line_number": 836,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "十、利润分配或资本公积金转增预案",
+        "level": 2,
+        "heading_index": 141,
+        "line_number": 842,
+        "children": [
+          {
+            "title": "(一) 现金分红政策的制定、执行或调整情况",
+            "level": 3,
+            "heading_index": 142,
+            "line_number": 844,
+            "children": []
+          },
+          {
+            "title": "(二) 现金分红政策的专项说明",
+            "level": 3,
+            "heading_index": 143,
+            "line_number": 853,
+            "children": []
+          },
+          {
+            "title": "(三) 报告期内盈利且母公司可供股东分配利润为正，但未提出现金利润分配方案预案的，公司应当详细披露原因以及未分配利润的用途和使用计划",
+            "level": 3,
+            "heading_index": 144,
+            "line_number": 859,
+            "children": []
+          },
+          {
+            "title": "(四) 本报告期利润分配及资本公积金转增股本预案",
+            "level": 3,
+            "heading_index": 145,
+            "line_number": 863,
+            "children": []
+          },
+          {
+            "title": "(五) 最近三个会计年度现金分红情况",
+            "level": 3,
+            "heading_index": 146,
+            "line_number": 871,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "十一、公司股权激励计划、员工持股计划或其他员工激励措施的情况及其影响",
+        "level": 2,
+        "heading_index": 147,
+        "line_number": 879,
+        "children": [
+          {
+            "title": "(一) 相关激励事项已在临时公告披露且后续实施无进展或变化的",
+            "level": 3,
+            "heading_index": 148,
+            "line_number": 881,
+            "children": []
+          },
+          {
+            "title": "(二) 临时公告未披露或有后续进展的激励情况",
+            "level": 3,
+            "heading_index": 149,
+            "line_number": 885,
+            "children": []
+          },
+          {
+            "title": "(三) 董事、高级管理人员报告期内被授予的股权激励情况",
+            "level": 3,
+            "heading_index": 150,
+            "line_number": 903,
+            "children": []
+          },
+          {
+            "title": "(四) 报告期内对高级管理人员的考评机制，以及激励机制的建立、实施情况",
+            "level": 3,
+            "heading_index": 151,
+            "line_number": 907,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "十二、报告期内的内部控制制度建设及实施情况",
+        "level": 2,
+        "heading_index": 152,
+        "line_number": 913,
+        "children": []
+      },
+      {
+        "title": "十三、报告期内对子公司的管理控制情况",
+        "level": 2,
+        "heading_index": 153,
+        "line_number": 923,
+        "children": []
+      },
+      {
+        "title": "十四、内部控制审计报告的相关情况说明",
+        "level": 2,
+        "heading_index": 154,
+        "line_number": 929,
+        "children": []
+      },
+      {
+        "title": "十五、上市公司治理专项行动自查问题整改情况",
+        "level": 2,
+        "heading_index": 155,
+        "line_number": 939,
+        "children": []
+      },
+      {
+        "title": "十六、其他",
+        "level": 2,
+        "heading_index": 156,
+        "line_number": 943,
+        "children": []
+      }
+    ]
+  },
+  {
+    "title": "第五节 环境与社会责任",
+    "level": 1,
+    "heading_index": 157,
+    "line_number": 947,
+    "children": [
+      {
+        "title": "一、环境信息情况",
+        "level": 2,
+        "heading_index": 158,
+        "line_number": 949,
+        "children": [
+          {
+            "title": "(一) 属于环境保护部门公布的重点排污单位的公司及其主要子公司的环保情况说明",
+            "level": 3,
+            "heading_index": 159,
+            "line_number": 953,
+            "children": [
+              {
+                "title": "1、 排污信息",
+                "level": 4,
+                "heading_index": 160,
+                "line_number": 957,
+                "children": [
+                  {
+                    "title": "（1）主要污染物：废水、废气、固体废物。",
+                    "level": 5,
+                    "heading_index": 161,
+                    "line_number": 961,
+                    "children": []
+                  },
+                  {
+                    "title": "（2）特征污染物的名称：COD、氨氮、总磷、总氮、二氧化硫、氮氧化物、烟（粉）尘。",
+                    "level": 5,
+                    "heading_index": 162,
+                    "line_number": 962,
+                    "children": []
+                  },
+                  {
+                    "title": "（3）2024年度污染物排放情况：",
+                    "level": 5,
+                    "heading_index": 163,
+                    "line_number": 963,
+                    "children": [
+                      {
+                        "title": "$\\textcircled{1}$ 废水",
+                        "level": 6,
+                        "heading_index": 164,
+                        "line_number": 965,
+                        "children": []
+                      },
+                      {
+                        "title": "$\\textcircled{2}$ 废气",
+                        "level": 6,
+                        "heading_index": 165,
+                        "line_number": 971,
+                        "children": []
+                      },
+                      {
+                        "title": "$\\textcircled{3}$ 固废处理情况",
+                        "level": 6,
+                        "heading_index": 166,
+                        "line_number": 979,
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "title": "（4）排污许可证管理",
+                    "level": 5,
+                    "heading_index": 167,
+                    "line_number": 983,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "title": "2、 防治污染设施的建设和运行情况",
+                "level": 4,
+                "heading_index": 168,
+                "line_number": 987,
+                "children": []
+              },
+              {
+                "title": "3、 建设项目环境影响评价及其他环境保护行政许可情况",
+                "level": 4,
+                "heading_index": 169,
+                "line_number": 993,
+                "children": [
+                  {
+                    "title": "（1）公司本部完成茅台酒“十四五”技改建设项目、茅台酒用原辅材料储备库、中华 6万吨勾调中心及危普货停车场、新建危废贮存库、茅台本部制酒车间(一片区)排水管网维修改造项目5项环境影响报告手续；和义兴酒业分公司取得柑子坪污水处理厂项目1项环境影响报告手续。",
+                    "level": 5,
+                    "heading_index": 170,
+                    "line_number": 997,
+                    "children": []
+                  },
+                  {
+                    "title": "（2）公司本部完成酱香系列低度酒体配套设施建设工程项目、老厂区和中华片区制酒生产及其配套设施技改项目一期、茅台酒“十二五”扩建技改项目纯净水生产车间 3 个项目竣工环保验收。和义兴酒业分公司完成柑子坪、大地“9改 7”项目2项竣工环保验收。",
+                    "level": 5,
+                    "heading_index": 171,
+                    "line_number": 998,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "title": "4、 突发环境事件应急预案",
+                "level": 4,
+                "heading_index": 172,
+                "line_number": 1000,
+                "children": []
+              },
+              {
+                "title": "5、 环境自行监测方案",
+                "level": 4,
+                "heading_index": 173,
+                "line_number": 1006,
+                "children": []
+              },
+              {
+                "title": "6、 报告期内因环境问题受到行政处罚的情况",
+                "level": 4,
+                "heading_index": 174,
+                "line_number": 1012,
+                "children": []
+              },
+              {
+                "title": "7、 其他应当公开的环境信息",
+                "level": 4,
+                "heading_index": 175,
+                "line_number": 1016,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "(二) 重点排污单位之外的公司环保情况说明",
+            "level": 3,
+            "heading_index": 176,
+            "line_number": 1020,
+            "children": []
+          },
+          {
+            "title": "(三) 有利于保护生态、防治污染、履行环境责任的相关信息",
+            "level": 3,
+            "heading_index": 177,
+            "line_number": 1024,
+            "children": []
+          },
+          {
+            "title": "(四) 在报告期内为减少其碳排放所采取的措施及效果",
+            "level": 3,
+            "heading_index": 178,
+            "line_number": 1035,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "二、社会责任工作情况",
+        "level": 2,
+        "heading_index": 179,
+        "line_number": 1043,
+        "children": [
+          {
+            "title": "(一)是否单独披露社会责任报告、可持续发展报告或 ESG报告",
+            "level": 3,
+            "heading_index": 180,
+            "line_number": 1045,
+            "children": []
+          },
+          {
+            "title": "(二)社会责任工作具体情况",
+            "level": 3,
+            "heading_index": 181,
+            "line_number": 1051,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "三、巩固拓展脱贫攻坚成果、乡村振兴等工作具体情况",
+        "level": 2,
+        "heading_index": 182,
+        "line_number": 1059,
+        "children": []
+      }
+    ]
+  },
+  {
+    "title": "第六节 重要事项",
+    "level": 1,
+    "heading_index": 183,
+    "line_number": 1069,
+    "children": [
+      {
+        "title": "一、承诺事项履行情况",
+        "level": 2,
+        "heading_index": 184,
+        "line_number": 1071,
+        "children": [
+          {
+            "title": "(一) 公司实际控制人、股东、关联方、收购人以及公司等承诺相关方在报告期内或持续到报告期内的承诺事项",
+            "level": 3,
+            "heading_index": 185,
+            "line_number": 1073,
+            "children": []
+          },
+          {
+            "title": "(二) 公司资产或项目存在盈利预测，且报告期仍处在盈利预测期间，公司就资产或项目",
+            "level": 3,
+            "heading_index": 186,
+            "line_number": 1079,
+            "children": []
+          },
+          {
+            "title": "(三) 业绩承诺的完成情况及其对商誉减值测试的影响",
+            "level": 3,
+            "heading_index": 187,
+            "line_number": 1085,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "二、报告期内控股股东及其他关联方非经营性占用资金情况",
+        "level": 2,
+        "heading_index": 188,
+        "line_number": 1089,
+        "children": []
+      },
+      {
+        "title": "三、违规担保情况",
+        "level": 2,
+        "heading_index": 189,
+        "line_number": 1093,
+        "children": []
+      },
+      {
+        "title": "四、公司董事会对会计师事务所“非标准意见审计报告”的说明",
+        "level": 2,
+        "heading_index": 190,
+        "line_number": 1097,
+        "children": []
+      },
+      {
+        "title": "五、公司对会计政策、会计估计变更或重大会计差错更正原因和影响的分析说明",
+        "level": 2,
+        "heading_index": 191,
+        "line_number": 1101,
+        "children": [
+          {
+            "title": "（一）公司对会计政策、会计估计变更原因及影响的分析说明",
+            "level": 3,
+            "heading_index": 192,
+            "line_number": 1103,
+            "children": []
+          },
+          {
+            "title": "（二）公司对重大会计差错更正原因及影响的分析说明",
+            "level": 3,
+            "heading_index": 193,
+            "line_number": 1107,
+            "children": []
+          },
+          {
+            "title": "（三）与前任会计师事务所进行的沟通情况",
+            "level": 3,
+            "heading_index": 194,
+            "line_number": 1111,
+            "children": []
+          },
+          {
+            "title": "（四）审批程序及其他说明",
+            "level": 3,
+            "heading_index": 195,
+            "line_number": 1115,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "六、聘任、解聘会计师事务所情况",
+        "level": 2,
+        "heading_index": 196,
+        "line_number": 1119,
+        "children": []
+      },
+      {
+        "title": "七、面临退市风险的情况",
+        "level": 2,
+        "heading_index": 197,
+        "line_number": 1141,
+        "children": [
+          {
+            "title": "(一)导致退市风险警示的原因",
+            "level": 3,
+            "heading_index": 198,
+            "line_number": 1143,
+            "children": []
+          },
+          {
+            "title": "(二)公司拟采取的应对措施",
+            "level": 3,
+            "heading_index": 199,
+            "line_number": 1147,
+            "children": []
+          },
+          {
+            "title": "(三)面临终止上市的情况和原因",
+            "level": 3,
+            "heading_index": 200,
+            "line_number": 1151,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "八、破产重整相关事项",
+        "level": 2,
+        "heading_index": 201,
+        "line_number": 1155,
+        "children": []
+      },
+      {
+        "title": "九、重大诉讼、仲裁事项",
+        "level": 2,
+        "heading_index": 202,
+        "line_number": 1159,
+        "children": []
+      },
+      {
+        "title": "十、上市公司及其董事、监事、高级管理人员、控股股东、实际控制人涉嫌违法违规、受到处罚及整改情况",
+        "level": 2,
+        "heading_index": 203,
+        "line_number": 1163,
+        "children": []
+      },
+      {
+        "title": "十一、报告期内公司及其控股股东、实际控制人诚信状况的说明",
+        "level": 2,
+        "heading_index": 204,
+        "line_number": 1167,
+        "children": []
+      },
+      {
+        "title": "十二、重大关联交易",
+        "level": 2,
+        "heading_index": 205,
+        "line_number": 1173,
+        "children": [
+          {
+            "title": "(一)与日常经营相关的关联交易",
+            "level": 3,
+            "heading_index": 206,
+            "line_number": 1175,
+            "children": [
+              {
+                "title": "1、 已在临时公告披露且后续实施无进展或变化的事项",
+                "level": 4,
+                "heading_index": 207,
+                "line_number": 1177,
+                "children": []
+              },
+              {
+                "title": "2、 已在临时公告披露，但有后续实施的进展或变化的事项",
+                "level": 4,
+                "heading_index": 208,
+                "line_number": 1181,
+                "children": []
+              },
+              {
+                "title": "3、 临时公告未披露的事项",
+                "level": 4,
+                "heading_index": 209,
+                "line_number": 1185,
+                "children": [
+                  {
+                    "title": "（1）经董事会审议通过的与同一关联人发生的关联交易",
+                    "level": 5,
+                    "heading_index": 210,
+                    "line_number": 1189,
+                    "children": []
+                  },
+                  {
+                    "title": "（2）经股东大会审议通过的与同一关联人发生的关联交易",
+                    "level": 5,
+                    "heading_index": 211,
+                    "line_number": 1199,
+                    "children": []
+                  },
+                  {
+                    "title": "（3）与其他关联方的关联交易",
+                    "level": 5,
+                    "heading_index": 212,
+                    "line_number": 1203,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "(二)资产或股权收购、出售发生的关联交易",
+            "level": 3,
+            "heading_index": 213,
+            "line_number": 1207,
+            "children": [
+              {
+                "title": "1、 已在临时公告披露且后续实施无进展或变化的事项",
+                "level": 4,
+                "heading_index": 214,
+                "line_number": 1209,
+                "children": []
+              },
+              {
+                "title": "2、 已在临时公告披露，但有后续实施的进展或变化的事项",
+                "level": 4,
+                "heading_index": 215,
+                "line_number": 1213,
+                "children": []
+              },
+              {
+                "title": "3、 临时公告未披露的事项",
+                "level": 4,
+                "heading_index": 216,
+                "line_number": 1217,
+                "children": []
+              },
+              {
+                "title": "4、 涉及业绩约定的，应当披露报告期内的业绩实现情况",
+                "level": 4,
+                "heading_index": 217,
+                "line_number": 1221,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "(三)共同对外投资的重大关联交易",
+            "level": 3,
+            "heading_index": 218,
+            "line_number": 1225,
+            "children": [
+              {
+                "title": "1、 已在临时公告披露且后续实施无进展或变化的事项",
+                "level": 4,
+                "heading_index": 219,
+                "line_number": 1227,
+                "children": []
+              },
+              {
+                "title": "2、 已在临时公告披露，但有后续实施的进展或变化的事项",
+                "level": 4,
+                "heading_index": 220,
+                "line_number": 1231,
+                "children": []
+              },
+              {
+                "title": "3、 临时公告未披露的事项",
+                "level": 4,
+                "heading_index": 221,
+                "line_number": 1239,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "(四)关联债权债务往来",
+            "level": 3,
+            "heading_index": 222,
+            "line_number": 1243,
+            "children": [
+              {
+                "title": "1、 已在临时公告披露且后续实施无进展或变化的事项",
+                "level": 4,
+                "heading_index": 223,
+                "line_number": 1245,
+                "children": []
+              },
+              {
+                "title": "2、 已在临时公告披露，但有后续实施的进展或变化的事项",
+                "level": 4,
+                "heading_index": 224,
+                "line_number": 1249,
+                "children": []
+              },
+              {
+                "title": "3、 临时公告未披露的事项",
+                "level": 4,
+                "heading_index": 225,
+                "line_number": 1253,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "(五)公司与存在关联关系的财务公司、公司控股财务公司与关联方之间的金融业务",
+            "level": 3,
+            "heading_index": 226,
+            "line_number": 1257,
+            "children": [
+              {
+                "title": "1、 存款业务",
+                "level": 4,
+                "heading_index": 227,
+                "line_number": 1261,
+                "children": []
+              },
+              {
+                "title": "2、 贷款业务",
+                "level": 4,
+                "heading_index": 228,
+                "line_number": 1275,
+                "children": []
+              },
+              {
+                "title": "3、 授信业务或其他金融业务",
+                "level": 4,
+                "heading_index": 229,
+                "line_number": 1287,
+                "children": []
+              },
+              {
+                "title": "4、 其他说明",
+                "level": 4,
+                "heading_index": 230,
+                "line_number": 1295,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "(六)其他",
+            "level": 3,
+            "heading_index": 231,
+            "line_number": 1299,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "十三、重大合同及其履行情况",
+        "level": 2,
+        "heading_index": 232,
+        "line_number": 1303,
+        "children": [
+          {
+            "title": "(一) 托管、承包、租赁事项",
+            "level": 3,
+            "heading_index": 233,
+            "line_number": 1305,
+            "children": [
+              {
+                "title": "1、 托管情况",
+                "level": 4,
+                "heading_index": 234,
+                "line_number": 1307,
+                "children": []
+              },
+              {
+                "title": "2、 承包情况",
+                "level": 4,
+                "heading_index": 235,
+                "line_number": 1311,
+                "children": []
+              },
+              {
+                "title": "3、 租赁情况",
+                "level": 4,
+                "heading_index": 236,
+                "line_number": 1315,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "(二) 担保情况",
+            "level": 3,
+            "heading_index": 237,
+            "line_number": 1319,
+            "children": []
+          },
+          {
+            "title": "(三) 委托他人进行现金资产管理的情况",
+            "level": 3,
+            "heading_index": 238,
+            "line_number": 1323,
+            "children": [
+              {
+                "title": "1、 委托理财情况",
+                "level": 4,
+                "heading_index": 239,
+                "line_number": 1325,
+                "children": [
+                  {
+                    "title": "(1)委托理财总体情况",
+                    "level": 5,
+                    "heading_index": 240,
+                    "line_number": 1327,
+                    "children": []
+                  },
+                  {
+                    "title": "(2)单项委托理财情况",
+                    "level": 5,
+                    "heading_index": 241,
+                    "line_number": 1335,
+                    "children": []
+                  },
+                  {
+                    "title": "(3)委托理财减值准备",
+                    "level": 5,
+                    "heading_index": 242,
+                    "line_number": 1343,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "title": "2、 委托贷款情况",
+                "level": 4,
+                "heading_index": 243,
+                "line_number": 1347,
+                "children": [
+                  {
+                    "title": "(1) 委托贷款总体情况",
+                    "level": 5,
+                    "heading_index": 244,
+                    "line_number": 1349,
+                    "children": []
+                  },
+                  {
+                    "title": "(2)单项委托贷款情况",
+                    "level": 5,
+                    "heading_index": 245,
+                    "line_number": 1357,
+                    "children": []
+                  },
+                  {
+                    "title": "(3) 委托贷款减值准备",
+                    "level": 5,
+                    "heading_index": 246,
+                    "line_number": 1365,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "title": "3、 其他情况",
+                "level": 4,
+                "heading_index": 247,
+                "line_number": 1369,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "(四) 其他重大合同",
+            "level": 3,
+            "heading_index": 248,
+            "line_number": 1373,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "十四、募集资金使用进展说明",
+        "level": 2,
+        "heading_index": 249,
+        "line_number": 1377,
+        "children": []
+      },
+      {
+        "title": "十五、其他对投资者作出价值判断和投资决策有重大影响的重大事项的说明",
+        "level": 2,
+        "heading_index": 250,
+        "line_number": 1381,
+        "children": []
+      }
+    ]
+  },
+  {
+    "title": "第七节 股份变动及股东情况",
+    "level": 1,
+    "heading_index": 251,
+    "line_number": 1385,
+    "children": [
+      {
+        "title": "一、股本变动情况",
+        "level": 2,
+        "heading_index": 252,
+        "line_number": 1387,
+        "children": [
+          {
+            "title": "(一) 股份变动情况表",
+            "level": 3,
+            "heading_index": 253,
+            "line_number": 1389,
+            "children": [
+              {
+                "title": "1、 股份变动情况表",
+                "level": 4,
+                "heading_index": 254,
+                "line_number": 1391,
+                "children": []
+              },
+              {
+                "title": "2、 股份变动情况说明",
+                "level": 4,
+                "heading_index": 255,
+                "line_number": 1395,
+                "children": []
+              },
+              {
+                "title": "3、 股份变动对最近一年和最近一期每股收益、每股净资产等财务指标的影响（如有）",
+                "level": 4,
+                "heading_index": 256,
+                "line_number": 1399,
+                "children": []
+              },
+              {
+                "title": "4、 公司认为必要或证券监管机构要求披露的其他内容",
+                "level": 4,
+                "heading_index": 257,
+                "line_number": 1403,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "(二) 限售股份变动情况",
+            "level": 3,
+            "heading_index": 258,
+            "line_number": 1407,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "二、证券发行与上市情况",
+        "level": 2,
+        "heading_index": 259,
+        "line_number": 1411,
+        "children": [
+          {
+            "title": "(一)截至报告期内证券发行情况",
+            "level": 3,
+            "heading_index": 260,
+            "line_number": 1413,
+            "children": []
+          },
+          {
+            "title": "(二)公司股份总数及股东结构变动及公司资产和负债结构的变动情况",
+            "level": 3,
+            "heading_index": 261,
+            "line_number": 1421,
+            "children": []
+          },
+          {
+            "title": "(三)现存的内部职工股情况",
+            "level": 3,
+            "heading_index": 262,
+            "line_number": 1425,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "三、股东和实际控制人情况",
+        "level": 2,
+        "heading_index": 263,
+        "line_number": 1429,
+        "children": [
+          {
+            "title": "(一) 股东总数",
+            "level": 3,
+            "heading_index": 264,
+            "line_number": 1431,
+            "children": []
+          },
+          {
+            "title": "(二) 截至报告期末前十名股东、前十名流通股东（或无限售条件股东）持股情况表",
+            "level": 3,
+            "heading_index": 265,
+            "line_number": 1435,
+            "children": []
+          },
+          {
+            "title": "(三) 战略投资者或一般法人因配售新股成为前 10 名股东",
+            "level": 3,
+            "heading_index": 266,
+            "line_number": 1459,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "四、控股股东及实际控制人情况",
+        "level": 2,
+        "heading_index": 267,
+        "line_number": 1463,
+        "children": [
+          {
+            "title": "(一) 控股股东情况",
+            "level": 3,
+            "heading_index": 268,
+            "line_number": 1465,
+            "children": [
+              {
+                "title": "1、 法人",
+                "level": 4,
+                "heading_index": 269,
+                "line_number": 1467,
+                "children": []
+              },
+              {
+                "title": "2、 自然人",
+                "level": 4,
+                "heading_index": 270,
+                "line_number": 1473,
+                "children": []
+              },
+              {
+                "title": "3、 公司不存在控股股东情况的特别说明",
+                "level": 4,
+                "heading_index": 271,
+                "line_number": 1477,
+                "children": []
+              },
+              {
+                "title": "4、 报告期内控股股东变更情况的说明",
+                "level": 4,
+                "heading_index": 272,
+                "line_number": 1481,
+                "children": []
+              },
+              {
+                "title": "5、 公司与控股股东之间的产权及控制关系的方框图",
+                "level": 4,
+                "heading_index": 273,
+                "line_number": 1485,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "(二) 实际控制人情况",
+            "level": 3,
+            "heading_index": 274,
+            "line_number": 1491,
+            "children": [
+              {
+                "title": "1、 法人",
+                "level": 4,
+                "heading_index": 275,
+                "line_number": 1493,
+                "children": []
+              },
+              {
+                "title": "2、 自然人",
+                "level": 4,
+                "heading_index": 276,
+                "line_number": 1499,
+                "children": []
+              },
+              {
+                "title": "3、 公司不存在实际控制人情况的特别说明",
+                "level": 4,
+                "heading_index": 277,
+                "line_number": 1503,
+                "children": []
+              },
+              {
+                "title": "4、 报告期内公司控制权发生变更的情况说明",
+                "level": 4,
+                "heading_index": 278,
+                "line_number": 1507,
+                "children": []
+              },
+              {
+                "title": "5、 公司与实际控制人之间的产权及控制关系的方框图",
+                "level": 4,
+                "heading_index": 279,
+                "line_number": 1511,
+                "children": []
+              },
+              {
+                "title": "6、 实际控制人通过信托或其他资产管理方式控制公司",
+                "level": 4,
+                "heading_index": 280,
+                "line_number": 1517,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "(三) 控股股东及实际控制人其他情况介绍",
+            "level": 3,
+            "heading_index": 281,
+            "line_number": 1521,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "五、公司控股股东或第一大股东及其一致行动人累计质押股份数量占其所持公司股份数量比例达到 $80 \\%$ 以上",
+        "level": 2,
+        "heading_index": 282,
+        "line_number": 1525,
+        "children": []
+      },
+      {
+        "title": "六、其他持股在百分之十以上的法人股东",
+        "level": 2,
+        "heading_index": 283,
+        "line_number": 1529,
+        "children": []
+      },
+      {
+        "title": "七、股份限制减持情况说明",
+        "level": 2,
+        "heading_index": 284,
+        "line_number": 1533,
+        "children": []
+      },
+      {
+        "title": "八、股份回购在报告期的具体实施情况",
+        "level": 2,
+        "heading_index": 285,
+        "line_number": 1537,
+        "children": []
+      }
+    ]
+  },
+  {
+    "title": "第八节 优先股相关情况",
+    "level": 1,
+    "heading_index": 286,
+    "line_number": 1545,
+    "children": []
+  },
+  {
+    "title": "第九节 债券相关情况",
+    "level": 1,
+    "heading_index": 287,
+    "line_number": 1549,
+    "children": [
+      {
+        "title": "一、公司债券（含企业债券）和非金融企业债务融资工具",
+        "level": 2,
+        "heading_index": 288,
+        "line_number": 1551,
+        "children": []
+      },
+      {
+        "title": "二、可转换公司债券情况",
+        "level": 2,
+        "heading_index": 289,
+        "line_number": 1555,
+        "children": []
+      }
+    ]
+  },
+  {
+    "title": "第十节 财务报告",
+    "level": 1,
+    "heading_index": 290,
+    "line_number": 1559,
+    "children": [
+      {
+        "title": "一、 审计报告",
+        "level": 2,
+        "heading_index": 291,
+        "line_number": 1561,
+        "children": [
+          {
+            "title": "一、审计意见",
+            "level": 3,
+            "heading_index": 292,
+            "line_number": 1569,
+            "children": []
+          },
+          {
+            "title": "二、形成审计意见的基础",
+            "level": 3,
+            "heading_index": 293,
+            "line_number": 1575,
+            "children": []
+          },
+          {
+            "title": "三、关键审计事项",
+            "level": 3,
+            "heading_index": 294,
+            "line_number": 1579,
+            "children": [
+              {
+                "title": "(一) 收入确认",
+                "level": 4,
+                "heading_index": 295,
+                "line_number": 1583,
+                "children": [
+                  {
+                    "title": "1. 事项描述",
+                    "level": 5,
+                    "heading_index": 296,
+                    "line_number": 1585,
+                    "children": []
+                  },
+                  {
+                    "title": "2. 审计应对",
+                    "level": 5,
+                    "heading_index": 297,
+                    "line_number": 1593,
+                    "children": [
+                      {
+                        "title": "(1) 了解与收入确认相关的关键内部控制，评价这些控制的设计，确定其是否得到执行，并测试相关内部控制的运行有效性；",
+                        "level": 6,
+                        "heading_index": 298,
+                        "line_number": 1597,
+                        "children": []
+                      },
+                      {
+                        "title": "(2) 选取样本检查销售合同，识别与客户取得相关商品控制权时点相关的条款，评价收入确认政策是否符合企业会计准则的规定；",
+                        "level": 6,
+                        "heading_index": 299,
+                        "line_number": 1598,
+                        "children": []
+                      },
+                      {
+                        "title": "(3) 对营业收入及毛利率实施分析程序，识别是否存在重大或异常波动，并查明波动原因；",
+                        "level": 6,
+                        "heading_index": 300,
+                        "line_number": 1599,
+                        "children": []
+                      },
+                      {
+                        "title": "(4) 对于内销收入，选取样本检查与收入确认相关的支持性文件，包括销售合同、销售订单、出库单、签收单、销售发票等；对于出口外销收入，选取样本检查与收入确认相关的支持性文件，包括销售合同、销售订单、出口报关单、货运提单等；",
+                        "level": 6,
+                        "heading_index": 301,
+                        "line_number": 1600,
+                        "children": []
+                      },
+                      {
+                        "title": "(5) 结合合同负债函证，选取项目向主要客户函证报告期销售额；",
+                        "level": 6,
+                        "heading_index": 302,
+                        "line_number": 1601,
+                        "children": []
+                      },
+                      {
+                        "title": "(6) 实施截止测试，检查收入是否在恰当期间确认；",
+                        "level": 6,
+                        "heading_index": 303,
+                        "line_number": 1602,
+                        "children": []
+                      },
+                      {
+                        "title": "(7) 检查与营业收入相关的信息是否已在财务报表中作出恰当列报。",
+                        "level": 6,
+                        "heading_index": 304,
+                        "line_number": 1603,
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "(二) 关联方及其交易",
+                "level": 4,
+                "heading_index": 305,
+                "line_number": 1605,
+                "children": [
+                  {
+                    "title": "1. 事项描述",
+                    "level": 5,
+                    "heading_index": 306,
+                    "line_number": 1607,
+                    "children": []
+                  },
+                  {
+                    "title": "2. 审计应对",
+                    "level": 5,
+                    "heading_index": 307,
+                    "line_number": 1613,
+                    "children": [
+                      {
+                        "title": "(1) 了解贵州茅台公司与识别和披露关联方及关联交易相关的关键内部控制，评价这些控制的设计，确定其是否得到执行，并测试相关内部控制运行的有效性；",
+                        "level": 6,
+                        "heading_index": 308,
+                        "line_number": 1615,
+                        "children": []
+                      },
+                      {
+                        "title": "(2) 获取管理层提供的关联方清单，与通过公开渠道查询的信息进行核对；",
+                        "level": 6,
+                        "heading_index": 309,
+                        "line_number": 1616,
+                        "children": []
+                      },
+                      {
+                        "title": "(3) 获取关联交易相关的董事会决议、股东大会决议，检查关联交易决策权限和程序，检查相关交易是否经过恰当的授权审批；",
+                        "level": 6,
+                        "heading_index": 310,
+                        "line_number": 1617,
+                        "children": []
+                      },
+                      {
+                        "title": "(4) 获取管理层提供的关联方交易发生额和余额明细，与账面记录进行核对；选取项目检查与关联交易相关的支持性文件，包括交易合同、流转单据、结算资料、银行回单等；与关联方对",
+                        "level": 6,
+                        "heading_index": 311,
+                        "line_number": 1618,
+                        "children": []
+                      },
+                      {
+                        "title": "(5) 检查与关联方关系及其交易相关的信息是否已在财务报表中作出充分披露和恰当列报。",
+                        "level": 6,
+                        "heading_index": 312,
+                        "line_number": 1622,
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "四、其他信息",
+            "level": 3,
+            "heading_index": 313,
+            "line_number": 1624,
+            "children": []
+          },
+          {
+            "title": "五、管理层和治理层对财务报表的责任",
+            "level": 3,
+            "heading_index": 314,
+            "line_number": 1634,
+            "children": []
+          },
+          {
+            "title": "六、注册会计师对财务报表审计的责任",
+            "level": 3,
+            "heading_index": 315,
+            "line_number": 1642,
+            "children": [
+              {
+                "title": "(一) 识别和评估由于舞弊或错误导致的财务报表重大错报风险，设计和实施审计程序以应对这些风险，并获取充分、适当的审计证据，作为发表审计意见的基础。由于舞弊可能涉及串通、伪造、故意遗漏、虚假陈述或凌驾于内部控制之上，未能发现由于舞弊导致的重大错报的风险高于未能发现由于错误导致的重大错报的风险。",
+                "level": 4,
+                "heading_index": 316,
+                "line_number": 1648,
+                "children": []
+              },
+              {
+                "title": "(二) 了解与审计相关的内部控制，以设计恰当的审计程序。",
+                "level": 4,
+                "heading_index": 317,
+                "line_number": 1650,
+                "children": []
+              },
+              {
+                "title": "(三) 评价管理层选用会计政策的恰当性和作出会计估计及相关披露的合理性。",
+                "level": 4,
+                "heading_index": 318,
+                "line_number": 1651,
+                "children": []
+              },
+              {
+                "title": "(四) 对管理层使用持续经营假设的恰当性得出结论。同时，根据获取的审计证据，就可能导致对贵州茅台公司持续经营能力产生重大疑虑的事项或情况是否存在重大不确定性得出结论。如果我们得出结论认为存在重大不确定性，审计准则要求我们在审计报告中提请报表使用者注意财务报表中的相关披露；如果披露不充分，我们应当发表非无保留意见。我们的结论基于截至审计报告日可获得的信息。然而，未来的事项或情况可能导致贵州茅台公司不能持续经营。",
+                "level": 4,
+                "heading_index": 319,
+                "line_number": 1653,
+                "children": []
+              },
+              {
+                "title": "(五) 评价财务报表的总体列报、结构和内容，并评价财务报表是否公允反映相关交易和事项。",
+                "level": 4,
+                "heading_index": 320,
+                "line_number": 1654,
+                "children": []
+              },
+              {
+                "title": "(六) 就贵州茅台公司中实体或业务活动的财务信息获取充分、适当的审计证据，以对财务报表发表审计意见。我们负责指导、监督和执行集团审计，并对审计意见承担全部责任。",
+                "level": 4,
+                "heading_index": 321,
+                "line_number": 1655,
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "二、 财务报表",
+        "level": 2,
+        "heading_index": 322,
+        "line_number": 1677,
+        "children": []
+      },
+      {
+        "title": "三、 公司基本情况",
+        "level": 2,
+        "heading_index": 323,
+        "line_number": 1771,
+        "children": [
+          {
+            "title": "1、 公司概况",
+            "level": 3,
+            "heading_index": 324,
+            "line_number": 1773,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "四、 财务报表的编制基础",
+        "level": 2,
+        "heading_index": 325,
+        "line_number": 1783,
+        "children": [
+          {
+            "title": "1、 编制基础",
+            "level": 3,
+            "heading_index": 326,
+            "line_number": 1785,
+            "children": []
+          },
+          {
+            "title": "2、 持续经营",
+            "level": 3,
+            "heading_index": 327,
+            "line_number": 1789,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "五、 重要会计政策及会计估计",
+        "level": 2,
+        "heading_index": 328,
+        "line_number": 1795,
+        "children": [
+          {
+            "title": "1、 遵循企业会计准则的声明",
+            "level": 3,
+            "heading_index": 329,
+            "line_number": 1801,
+            "children": []
+          },
+          {
+            "title": "2、 会计期间",
+            "level": 3,
+            "heading_index": 330,
+            "line_number": 1805,
+            "children": []
+          },
+          {
+            "title": "3、 营业周期",
+            "level": 3,
+            "heading_index": 331,
+            "line_number": 1809,
+            "children": []
+          },
+          {
+            "title": "4、 记账本位币",
+            "level": 3,
+            "heading_index": 332,
+            "line_number": 1815,
+            "children": []
+          },
+          {
+            "title": "5、 重要性标准确定方法和选择依据",
+            "level": 3,
+            "heading_index": 333,
+            "line_number": 1819,
+            "children": []
+          },
+          {
+            "title": "6、 同一控制下和非同一控制下企业合并的会计处理方法",
+            "level": 3,
+            "heading_index": 334,
+            "line_number": 1825,
+            "children": [
+              {
+                "title": "（1）同一控制下的企业合并",
+                "level": 4,
+                "heading_index": 335,
+                "line_number": 1829,
+                "children": []
+              },
+              {
+                "title": "（2）非同一控制下的企业合并",
+                "level": 4,
+                "heading_index": 336,
+                "line_number": 1833,
+                "children": [
+                  {
+                    "title": "A.在个别财务报表中，以购买日之前所持被购买方的股权投资的账面价值与购买日新增投资成本之和，作为该项投资的初始投资成本；购买日之前持有的被购买方的股权涉及其他综合收益的，在处置该项投资时将与其相关的其他综合收益转入当期投资收益。",
+                    "level": 5,
+                    "heading_index": 337,
+                    "line_number": 1837,
+                    "children": []
+                  },
+                  {
+                    "title": "B.在合并财务报表中，对于购买日之前持有的被购买方的股权，按照该股权在购买日的公允价值进行重新计量，公允价值与其账面价值的差额计入当期投资收益；购买日之前持有的被购买方的股权涉及其他综合收益的，与其相关的其他综合收益转为购买日所属当期投资收益。购买方为进行企业合并发生的审计、法律服务、评估咨询等中介费用以及其他相关管理费用，于发生时计入当期损益；购买方作为合并对价发行的权益性证券或债务性证券的交易费用，计入权益性证券或债务性证券的初始确认金额。购买方对合并成本大于合并中取得的被购买方可辨认净资产公允价值份额的差额，确认为商誉。购买方对合并成本小于合并中取得的被购买方可辨认净资产公允价值份额的，经复核后合并成本仍小于合并中取得的被购买方可辨认净资产公允价值份额的差额，计入当期损益。",
+                    "level": 5,
+                    "heading_index": 338,
+                    "line_number": 1838,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "7、 控制的判断标准和合并财务报表的编制方法",
+            "level": 3,
+            "heading_index": 339,
+            "line_number": 1840,
+            "children": [
+              {
+                "title": "(1)控制的判断标准",
+                "level": 4,
+                "heading_index": 340,
+                "line_number": 1844,
+                "children": []
+              },
+              {
+                "title": "(2)合并财务报表的编制方法",
+                "level": 4,
+                "heading_index": 341,
+                "line_number": 1848,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "8、 现金及现金等价物的确定标准",
+            "level": 3,
+            "heading_index": 342,
+            "line_number": 1852,
+            "children": []
+          },
+          {
+            "title": "9、 外币业务和外币报表折算",
+            "level": 3,
+            "heading_index": 343,
+            "line_number": 1856,
+            "children": [
+              {
+                "title": "（1）外币交易",
+                "level": 4,
+                "heading_index": 344,
+                "line_number": 1860,
+                "children": []
+              },
+              {
+                "title": "（2）外币报表折算",
+                "level": 4,
+                "heading_index": 345,
+                "line_number": 1864,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "10、 金融工具",
+            "level": 3,
+            "heading_index": 346,
+            "line_number": 1868,
+            "children": [
+              {
+                "title": "(1)金融工具的确认和终止确认",
+                "level": 4,
+                "heading_index": 347,
+                "line_number": 1872,
+                "children": []
+              },
+              {
+                "title": "(2)金融资产分类和计量",
+                "level": 4,
+                "heading_index": 348,
+                "line_number": 1878,
+                "children": [
+                  {
+                    "title": "A.以摊余成本计量的金融资产",
+                    "level": 5,
+                    "heading_index": 349,
+                    "line_number": 1884,
+                    "children": []
+                  },
+                  {
+                    "title": "B.以公允价值计量且其变动计入其他综合收益的债务工具投资",
+                    "level": 5,
+                    "heading_index": 350,
+                    "line_number": 1888,
+                    "children": []
+                  },
+                  {
+                    "title": "C.以公允价值计量且其变动计入其他综合收益的权益工具投资",
+                    "level": 5,
+                    "heading_index": 351,
+                    "line_number": 1892,
+                    "children": []
+                  },
+                  {
+                    "title": "D.以公允价值计量且其变动计入当期损益的金融资产",
+                    "level": 5,
+                    "heading_index": 352,
+                    "line_number": 1896,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "title": "(3)金融负债分类和计量",
+                "level": 4,
+                "heading_index": 353,
+                "line_number": 1900,
+                "children": [
+                  {
+                    "title": "A.该项指定能够消除或显著减少会计错配；",
+                    "level": 5,
+                    "heading_index": 354,
+                    "line_number": 1906,
+                    "children": []
+                  },
+                  {
+                    "title": "B.根据正式书面文件载明的公司风险管理或投资策略，以公允价值为基础对金融负债组合或金融资产和金融负债组合进行管理和业绩评价，并在公司内部以此为基础向关键管理人员报告；",
+                    "level": 5,
+                    "heading_index": 355,
+                    "line_number": 1907,
+                    "children": []
+                  },
+                  {
+                    "title": "C.该金融负债包含需单独分拆的嵌入衍生工具。",
+                    "level": 5,
+                    "heading_index": 356,
+                    "line_number": 1908,
+                    "children": [
+                      {
+                        "title": "A.以摊余成本计量的金融负债",
+                        "level": 6,
+                        "heading_index": 357,
+                        "line_number": 1914,
+                        "children": []
+                      },
+                      {
+                        "title": "B.以公允价值计量且其变动计入当期损益的金融负债",
+                        "level": 6,
+                        "heading_index": 358,
+                        "line_number": 1916,
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "(4)金融工具抵销",
+                "level": 4,
+                "heading_index": 359,
+                "line_number": 1920,
+                "children": []
+              },
+              {
+                "title": "(5)金融资产减值",
+                "level": 4,
+                "heading_index": 360,
+                "line_number": 1924,
+                "children": []
+              },
+              {
+                "title": "（6）金融资产转移",
+                "level": 4,
+                "heading_index": 361,
+                "line_number": 1954,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "11、 存货",
+            "level": 3,
+            "heading_index": 362,
+            "line_number": 1962,
+            "children": [
+              {
+                "title": "（1）存货的分类",
+                "level": 4,
+                "heading_index": 363,
+                "line_number": 1970,
+                "children": []
+              },
+              {
+                "title": "（2）发出存货的计价方法",
+                "level": 4,
+                "heading_index": 364,
+                "line_number": 1974,
+                "children": []
+              },
+              {
+                "title": "（3）存货的盘存制度",
+                "level": 4,
+                "heading_index": 365,
+                "line_number": 1978,
+                "children": []
+              },
+              {
+                "title": "（4）低值易耗品和包装物的摊销方法",
+                "level": 4,
+                "heading_index": 366,
+                "line_number": 1982,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "12、 长期股权投资",
+            "level": 3,
+            "heading_index": 367,
+            "line_number": 2000,
+            "children": [
+              {
+                "title": "（1）控制和重大影响的判断标准:",
+                "level": 4,
+                "heading_index": 368,
+                "line_number": 2004,
+                "children": []
+              },
+              {
+                "title": "（2）投资成本的确认",
+                "level": 4,
+                "heading_index": 369,
+                "line_number": 2008,
+                "children": [
+                  {
+                    "title": "A.对于企业合并形成的长期股权投资",
+                    "level": 5,
+                    "heading_index": 370,
+                    "line_number": 2010,
+                    "children": []
+                  },
+                  {
+                    "title": "B.对于以企业合并以外的其他方式取得的长期股权投资",
+                    "level": 5,
+                    "heading_index": 371,
+                    "line_number": 2016,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "title": "（3）后续计量及损益确认方法",
+                "level": 4,
+                "heading_index": 372,
+                "line_number": 2020,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "13、 投资性房地产",
+            "level": 3,
+            "heading_index": 373,
+            "line_number": 2028,
+            "children": [
+              {
+                "title": "(1).如果采用成本计量模式的：",
+                "level": 4,
+                "heading_index": 374,
+                "line_number": 2030,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "14、 固定资产",
+            "level": 3,
+            "heading_index": 375,
+            "line_number": 2036,
+            "children": [
+              {
+                "title": "(1).确认条件",
+                "level": 4,
+                "heading_index": 376,
+                "line_number": 2038,
+                "children": []
+              },
+              {
+                "title": "(2).折旧方法",
+                "level": 4,
+                "heading_index": 377,
+                "line_number": 2044,
+                "children": [
+                  {
+                    "title": "A.对于 2014年1 月1日后新购进的专门用于研发的仪器、设备，金额在 100万元以下的，一次性计入当期成本费用。",
+                    "level": 5,
+                    "heading_index": 378,
+                    "line_number": 2050,
+                    "children": []
+                  },
+                  {
+                    "title": "B.2014年1月1日后新购进的专门用于研发的仪器、设备，超过 100万元的，折旧年限如下：",
+                    "level": 5,
+                    "heading_index": 379,
+                    "line_number": 2051,
+                    "children": []
+                  },
+                  {
+                    "title": "C.对于新购进金额在 5,000.00元以下的固定资产，一次性计入当期成本费用。",
+                    "level": 5,
+                    "heading_index": 380,
+                    "line_number": 2055,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "title": "(3).固定资产的减值测试方法、减值准备计提方法",
+                "level": 4,
+                "heading_index": 381,
+                "line_number": 2057,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "15、 在建工程",
+            "level": 3,
+            "heading_index": 382,
+            "line_number": 2061,
+            "children": [
+              {
+                "title": "(1)符合下列情况时，应将在建工程结转为固定资产：",
+                "level": 4,
+                "heading_index": 383,
+                "line_number": 2067,
+                "children": [
+                  {
+                    "title": "A.所购建的固定资产达到预定可使用状态；",
+                    "level": 5,
+                    "heading_index": 384,
+                    "line_number": 2069,
+                    "children": []
+                  },
+                  {
+                    "title": "B.在建工程的实体建造工作已全部完成或实质上已经完成；",
+                    "level": 5,
+                    "heading_index": 385,
+                    "line_number": 2070,
+                    "children": []
+                  },
+                  {
+                    "title": "C.所购建的固定资产与设计要求或合同要求相符，可以正常使用，继续发生在所购建在建工程上的支出金额很少或几乎不再发生时。",
+                    "level": 5,
+                    "heading_index": 386,
+                    "line_number": 2071,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "title": "(2)公司固定资产新建工程、改扩建工程等按所发生的实际支出列入在建工程。用借款进行的工程发生的借款利息和汇兑损益，在固定资产达到预定可使用状态前，符合资本化条件的，可以进行资本化，计入在建工程成本。",
+                "level": 4,
+                "heading_index": 387,
+                "line_number": 2073,
+                "children": []
+              },
+              {
+                "title": "(3)资产负债表日，对在建工程进行逐项检查，如有证据表明在建工程发生减值时，应按可收回金额与账面价值的差额计提减值准备。",
+                "level": 4,
+                "heading_index": 388,
+                "line_number": 2074,
+                "children": [
+                  {
+                    "title": "A.长期停建并且预计在未来三年内不会重新开工；",
+                    "level": 5,
+                    "heading_index": 389,
+                    "line_number": 2078,
+                    "children": []
+                  },
+                  {
+                    "title": "B.所建项目无论在技术上、性能上均已落后，并且给企业带来的经济利益具有很大的不确定性；",
+                    "level": 5,
+                    "heading_index": 390,
+                    "line_number": 2079,
+                    "children": []
+                  },
+                  {
+                    "title": "C.其他足以证明在建工程已发生减值的情形。",
+                    "level": 5,
+                    "heading_index": 391,
+                    "line_number": 2080,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "16、 借款费用",
+            "level": 3,
+            "heading_index": 392,
+            "line_number": 2082,
+            "children": [
+              {
+                "title": "(1)开始资本化：当以下三个条件同时具备时，借款费用才开始资本化：",
+                "level": 4,
+                "heading_index": 393,
+                "line_number": 2090,
+                "children": [
+                  {
+                    "title": "A.资产支出已经发生；",
+                    "level": 5,
+                    "heading_index": 394,
+                    "line_number": 2092,
+                    "children": []
+                  },
+                  {
+                    "title": "B.借款费用已经发生；",
+                    "level": 5,
+                    "heading_index": 395,
+                    "line_number": 2093,
+                    "children": []
+                  },
+                  {
+                    "title": "C.为使资产达到预定可使用或可销售状态所必要的购建或者生产活动已经开始。",
+                    "level": 5,
+                    "heading_index": 396,
+                    "line_number": 2094,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "title": "(2)暂停资本化：若固定资产的购建活动发生非正常中断，并且中断时间连续超过 3个月，暂停借款费用的资本化，将中断期间发生的借款费用确认为当期费用，直至资产的购建活动重新开始。",
+                "level": 4,
+                "heading_index": 397,
+                "line_number": 2096,
+                "children": []
+              },
+              {
+                "title": "(3)停止资本化：当所购建的固定资产达到预定可使用状态时，停止其借款费用的资本化。借款费用资本化金额的计算方法：",
+                "level": 4,
+                "heading_index": 398,
+                "line_number": 2097,
+                "children": [
+                  {
+                    "title": "A.为购建或者生产符合资本化条件的资产而借入专门借款的，以专门借款当期实际发生的利息费用，减去将尚未动用的借款资金存入银行取得的利息收入或进行暂时性投资取得的投资收益后的金额确定；",
+                    "level": 5,
+                    "heading_index": 399,
+                    "line_number": 2099,
+                    "children": []
+                  },
+                  {
+                    "title": "B.为购建或者生产符合资本化条件的资产而占用了一般借款的，公司根据累计资产支出超过专门借款部分的资产支出加权平均数乘以所占用一般借款的资本化率，计算确定一般借款应予资本化的利息金额。其中资本化率根据借款加权平均率计算确定，一般借款发生的辅助费用不予资本化。",
+                    "level": 5,
+                    "heading_index": 400,
+                    "line_number": 2100,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "17、 无形资产",
+            "level": 3,
+            "heading_index": 401,
+            "line_number": 2102,
+            "children": [
+              {
+                "title": "(1).使用寿命及其确定依据、估计情况、摊销方法或复核程序",
+                "level": 4,
+                "heading_index": 402,
+                "line_number": 2104,
+                "children": [
+                  {
+                    "title": "A.无形资产的计价：无形资产按实际取得时的成本进行初始计量。自行研究开发的无形资产，其研究阶段的支出，于发生时计入当期损益；其开发阶段的支出，同时满足下列条件的，确认为无形资产（专利技术和非专利技术）：",
+                    "level": 5,
+                    "heading_index": 403,
+                    "line_number": 2108,
+                    "children": [
+                      {
+                        "title": "a.完成该无形资产以使其能够使用或出售在技术上具有可行性；",
+                        "level": 6,
+                        "heading_index": 404,
+                        "line_number": 2109,
+                        "children": []
+                      },
+                      {
+                        "title": "b.具有完成该无形资产并使用或出售的意图；",
+                        "level": 6,
+                        "heading_index": 405,
+                        "line_number": 2111,
+                        "children": []
+                      },
+                      {
+                        "title": "c.无形资产产生经济利益的方式,包括运用该无形资产生产的产品存在市场或无形资产自身存在市场；",
+                        "level": 6,
+                        "heading_index": 406,
+                        "line_number": 2112,
+                        "children": []
+                      },
+                      {
+                        "title": "d.有足够的技术、财务资源和其他资源支持,以完成该无形资产的开发,并有能力使用或出售该无形资产；",
+                        "level": 6,
+                        "heading_index": 407,
+                        "line_number": 2113,
+                        "children": []
+                      },
+                      {
+                        "title": "e.归属于该无形资产开发阶段的支出能够可靠地计量。",
+                        "level": 6,
+                        "heading_index": 408,
+                        "line_number": 2114,
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "title": "B.无形资产摊销：无形资产自取得当月起按受益年限采用直线法摊销，使用寿命不确定的无形资产不摊销。",
+                    "level": 5,
+                    "heading_index": 409,
+                    "line_number": 2115,
+                    "children": []
+                  },
+                  {
+                    "title": "C.资产负债表日，应当对各项无形资产进行检查，如有减值迹象的，应按可收回金额低于账面价值的差额计提减值准备。",
+                    "level": 5,
+                    "heading_index": 410,
+                    "line_number": 2116,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "title": "(2).研发支出的归集范围及相关会计处理方法",
+                "level": 4,
+                "heading_index": 411,
+                "line_number": 2118,
+                "children": [
+                  {
+                    "title": "A.研发支出的范围主要依据公司的研究开发项目情况制定，主要包括：研发人员人工费、直接投入费用、折旧费用与长期待摊费用、无形资产摊销、设计费用、装备调试与试验费、委托外部研究开发费用、其他费用等。",
+                    "level": 5,
+                    "heading_index": 412,
+                    "line_number": 2122,
+                    "children": []
+                  },
+                  {
+                    "title": "B.公司研发支出区分研究阶段支出与开发阶段支出。研究是指为获取并理解新的科学或技术知识而进行的独创性的有计划调查。开发是指在进行商业性生产或使用前，将研究成果或其他知识应用于某项计划或设计，以生产出新的或具有实质性改进的材料、装置、产品等。",
+                    "level": 5,
+                    "heading_index": 413,
+                    "line_number": 2123,
+                    "children": []
+                  },
+                  {
+                    "title": "C.研究阶段的支出，于发生时计入当期损益；开发阶段的支出，同时满足下列条件的，确认为无形资产,否则，计入当期损益。",
+                    "level": 5,
+                    "heading_index": 414,
+                    "line_number": 2124,
+                    "children": [
+                      {
+                        "title": "a.完成该无形资产以使其能够使用或出售在技术上具有可行性；",
+                        "level": 6,
+                        "heading_index": 415,
+                        "line_number": 2126,
+                        "children": []
+                      },
+                      {
+                        "title": "b.具有完成该无形资产并使用或出售的意图；",
+                        "level": 6,
+                        "heading_index": 416,
+                        "line_number": 2127,
+                        "children": []
+                      },
+                      {
+                        "title": "c.无形资产产生经济利益的方式，包括能够证明运用该无形资产生产的产品存在市场或无形资产自身存在市场，无形资产将在内部使用的，应当证明其有用性；",
+                        "level": 6,
+                        "heading_index": 417,
+                        "line_number": 2128,
+                        "children": []
+                      },
+                      {
+                        "title": "d.有足够的技术、财务资源和其他资源支持，以完成该无形资产的开发，并有能力使用或出售该无形资产；",
+                        "level": 6,
+                        "heading_index": 418,
+                        "line_number": 2129,
+                        "children": []
+                      },
+                      {
+                        "title": "e.归属于该无形资产开发阶段的支出能够可靠地计量。",
+                        "level": 6,
+                        "heading_index": 419,
+                        "line_number": 2130,
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "18、 长期待摊费用",
+            "level": 3,
+            "heading_index": 420,
+            "line_number": 2132,
+            "children": []
+          },
+          {
+            "title": "19、 职工薪酬",
+            "level": 3,
+            "heading_index": 421,
+            "line_number": 2138,
+            "children": [
+              {
+                "title": "(1).短期薪酬的会计处理方法",
+                "level": 4,
+                "heading_index": 422,
+                "line_number": 2142,
+                "children": []
+              },
+              {
+                "title": "(2).离职后福利的会计处理方法",
+                "level": 4,
+                "heading_index": 423,
+                "line_number": 2150,
+                "children": []
+              },
+              {
+                "title": "(3).辞退福利的会计处理方法",
+                "level": 4,
+                "heading_index": 424,
+                "line_number": 2158,
+                "children": []
+              },
+              {
+                "title": "(4).其他长期职工福利的会计处理方法",
+                "level": 4,
+                "heading_index": 425,
+                "line_number": 2164,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "20、 收入",
+            "level": 3,
+            "heading_index": 426,
+            "line_number": 2168,
+            "children": [
+              {
+                "title": "(1). 按照业务类型披露收入确认和计量所采用的会计政策",
+                "level": 4,
+                "heading_index": 427,
+                "line_number": 2170,
+                "children": []
+              },
+              {
+                "title": "(2). 同类业务采用不同经营模式涉及不同收入确认方式及计量方法",
+                "level": 4,
+                "heading_index": 428,
+                "line_number": 2178,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "21、 政府补助",
+            "level": 3,
+            "heading_index": 429,
+            "line_number": 2182,
+            "children": [
+              {
+                "title": "A.公司能够满足政府补助所附条件；",
+                "level": 4,
+                "heading_index": 430,
+                "line_number": 2188,
+                "children": []
+              },
+              {
+                "title": "B.公司能够收到政府补助。",
+                "level": 4,
+                "heading_index": 431,
+                "line_number": 2189,
+                "children": [
+                  {
+                    "title": "(1)与资产相关的政府补助判断依据及会计处理方法",
+                    "level": 5,
+                    "heading_index": 432,
+                    "line_number": 2191,
+                    "children": []
+                  },
+                  {
+                    "title": "(2)与收益相关的政府补助判断依据及会计处理方法",
+                    "level": 5,
+                    "heading_index": 433,
+                    "line_number": 2195,
+                    "children": [
+                      {
+                        "title": "A.用于补偿企业以后期间的相关成本费用或损失的，确认为递延收益，并在确认相关成本费用或损失的期间，计入当期损益或冲减相关成本；",
+                        "level": 6,
+                        "heading_index": 434,
+                        "line_number": 2199,
+                        "children": []
+                      },
+                      {
+                        "title": "B.用于补偿企业已发生的相关成本费用或损失的，直接计入当期损益或冲减相关成本。",
+                        "level": 6,
+                        "heading_index": 435,
+                        "line_number": 2200,
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "title": "(3)与企业日常活动相关的政府补助，按照经济业务实质，计入其他收益或冲减相关成本费用。与企业日常活动无关的政府补助，计入营业外收支。",
+                    "level": 5,
+                    "heading_index": 436,
+                    "line_number": 2202,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "22、 递延所得税资产/递延所得税负债",
+            "level": 3,
+            "heading_index": 437,
+            "line_number": 2204,
+            "children": []
+          },
+          {
+            "title": "23、 租赁",
+            "level": 3,
+            "heading_index": 438,
+            "line_number": 2210,
+            "children": [
+              {
+                "title": "a.经营租赁的租金收入在租赁期内各个期间按直线法确认为当期损益。",
+                "level": 4,
+                "heading_index": 439,
+                "line_number": 2234,
+                "children": []
+              },
+              {
+                "title": "b.在租赁期开始日，本公司对融资租赁确认应收融资租赁款，并终止确认融资租赁资产。对应收融资租赁款进行初始计量时，以租赁投资净额作为应收融资租赁款的入账价值。租赁投资净额为未担保余值和租赁期开始日尚未收到的租赁收款额按照租赁内含利率折现的现值之和。",
+                "level": 4,
+                "heading_index": 440,
+                "line_number": 2235,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "24、 其他重要的会计政策和会计估计",
+            "level": 3,
+            "heading_index": 441,
+            "line_number": 2237,
+            "children": [
+              {
+                "title": "(1) 利息收入和支出的确认原则和方法",
+                "level": 4,
+                "heading_index": 442,
+                "line_number": 2239,
+                "children": []
+              },
+              {
+                "title": "(2) 买入返售金融资产的核算方法",
+                "level": 4,
+                "heading_index": 443,
+                "line_number": 2243,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "25、 重要会计政策和会计估计的变更",
+            "level": 3,
+            "heading_index": 444,
+            "line_number": 2247,
+            "children": [
+              {
+                "title": "(1).重要会计政策变更",
+                "level": 4,
+                "heading_index": 445,
+                "line_number": 2249,
+                "children": []
+              },
+              {
+                "title": "(2).重要会计估计变更",
+                "level": 4,
+                "heading_index": 446,
+                "line_number": 2253,
+                "children": []
+              },
+              {
+                "title": "(3).2024 年起首次执行新会计准则或准则解释等涉及调整首次执行当年年初的财务报表",
+                "level": 4,
+                "heading_index": 447,
+                "line_number": 2257,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "26、 其他",
+            "level": 3,
+            "heading_index": 448,
+            "line_number": 2261,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "六、 税项",
+        "level": 2,
+        "heading_index": 449,
+        "line_number": 2265,
+        "children": [
+          {
+            "title": "1、 主要税种及税率",
+            "level": 3,
+            "heading_index": 450,
+            "line_number": 2267,
+            "children": []
+          },
+          {
+            "title": "2、 税收优惠",
+            "level": 3,
+            "heading_index": 451,
+            "line_number": 2281,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "七、 合并财务报表项目注释",
+        "level": 2,
+        "heading_index": 452,
+        "line_number": 2287,
+        "children": [
+          {
+            "title": "1、 货币资金",
+            "level": 3,
+            "heading_index": 453,
+            "line_number": 2289,
+            "children": []
+          },
+          {
+            "title": "2、 拆出资金",
+            "level": 3,
+            "heading_index": 454,
+            "line_number": 2303,
+            "children": []
+          },
+          {
+            "title": "3、 交易性金融资产",
+            "level": 3,
+            "heading_index": 455,
+            "line_number": 2313,
+            "children": []
+          },
+          {
+            "title": "4、 应收票据",
+            "level": 3,
+            "heading_index": 456,
+            "line_number": 2321,
+            "children": [
+              {
+                "title": "(1). 应收票据分类列示",
+                "level": 4,
+                "heading_index": 457,
+                "line_number": 2323,
+                "children": []
+              },
+              {
+                "title": "(2). 期末公司已质押的应收票据",
+                "level": 4,
+                "heading_index": 458,
+                "line_number": 2331,
+                "children": []
+              },
+              {
+                "title": "(3). 期末公司已背书或贴现且在资产负债表日尚未到期的应收票据",
+                "level": 4,
+                "heading_index": 459,
+                "line_number": 2335,
+                "children": []
+              },
+              {
+                "title": "(4). 按坏账计提方法分类披露",
+                "level": 4,
+                "heading_index": 460,
+                "line_number": 2343,
+                "children": []
+              },
+              {
+                "title": "(5). 坏账准备的情况",
+                "level": 4,
+                "heading_index": 461,
+                "line_number": 2363,
+                "children": []
+              },
+              {
+                "title": "(6). 本期实际核销的应收票据情况",
+                "level": 4,
+                "heading_index": 462,
+                "line_number": 2371,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "5、 应收账款",
+            "level": 3,
+            "heading_index": 463,
+            "line_number": 2383,
+            "children": [
+              {
+                "title": "(1). 按账龄披露",
+                "level": 4,
+                "heading_index": 464,
+                "line_number": 2385,
+                "children": []
+              },
+              {
+                "title": "(2).按坏账计提方法分类披露",
+                "level": 4,
+                "heading_index": 465,
+                "line_number": 2393,
+                "children": []
+              },
+              {
+                "title": "(3).坏账准备的情况",
+                "level": 4,
+                "heading_index": 466,
+                "line_number": 2423,
+                "children": []
+              },
+              {
+                "title": "(4).本期实际核销的应收账款情况",
+                "level": 4,
+                "heading_index": 467,
+                "line_number": 2435,
+                "children": []
+              },
+              {
+                "title": "(5).按欠款方归集的期末余额前五名的应收账款和合同资产情况",
+                "level": 4,
+                "heading_index": 468,
+                "line_number": 2447,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "6、 预付款项",
+            "level": 3,
+            "heading_index": 469,
+            "line_number": 2455,
+            "children": [
+              {
+                "title": "(1).预付款项按账龄列示",
+                "level": 4,
+                "heading_index": 470,
+                "line_number": 2457,
+                "children": []
+              },
+              {
+                "title": "(2).按预付对象归集的期末余额前五名的预付款情况",
+                "level": 4,
+                "heading_index": 471,
+                "line_number": 2465,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "7、 其他应收款",
+            "level": 3,
+            "heading_index": 472,
+            "line_number": 2473,
+            "children": [
+              {
+                "title": "(1).按账龄披露",
+                "level": 4,
+                "heading_index": 473,
+                "line_number": 2485,
+                "children": []
+              },
+              {
+                "title": "(2).按款项性质分类情况",
+                "level": 4,
+                "heading_index": 474,
+                "line_number": 2493,
+                "children": []
+              },
+              {
+                "title": "(3).坏账准备计提情况",
+                "level": 4,
+                "heading_index": 475,
+                "line_number": 2501,
+                "children": []
+              },
+              {
+                "title": "(4).坏账准备的情况",
+                "level": 4,
+                "heading_index": 476,
+                "line_number": 2517,
+                "children": []
+              },
+              {
+                "title": "(5).本期实际核销的其他应收款情况",
+                "level": 4,
+                "heading_index": 477,
+                "line_number": 2525,
+                "children": []
+              },
+              {
+                "title": "(6).按欠款方归集的期末余额前五名的其他应收款情况",
+                "level": 4,
+                "heading_index": 478,
+                "line_number": 2537,
+                "children": [
+                  {
+                    "title": "A.中铁二十二局集团有限公司应收款为贵州茅台酒股份有限公司和义兴酒业分公司垫付新寨、大地生产区水电费。",
+                    "level": 5,
+                    "heading_index": 479,
+                    "line_number": 2549,
+                    "children": []
+                  },
+                  {
+                    "title": "B.北京中海地产有限公司应收款为公司控股子公司北京友谊使者商贸有限公司支付租房保证金。",
+                    "level": 5,
+                    "heading_index": 480,
+                    "line_number": 2550,
+                    "children": []
+                  },
+                  {
+                    "title": "C.罗盟为公司职员，款项为办理诉讼及市场维权借款。",
+                    "level": 5,
+                    "heading_index": 481,
+                    "line_number": 2551,
+                    "children": []
+                  },
+                  {
+                    "title": "D.中国石化销售股份有限公司湖南长沙石油分公司应收款为公司控股子公司贵州赖茅酒业有限公司应收促销费。",
+                    "level": 5,
+                    "heading_index": 482,
+                    "line_number": 2552,
+                    "children": []
+                  },
+                  {
+                    "title": "E.天津凯旋门百货有限公司应收款为公司控股子公司贵州茅台酒销售有限公司支付租房保证金。",
+                    "level": 5,
+                    "heading_index": 483,
+                    "line_number": 2553,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "8、 买入返售金融资产",
+            "level": 3,
+            "heading_index": 484,
+            "line_number": 2555,
+            "children": [
+              {
+                "title": "（1） 按交易对手类型",
+                "level": 4,
+                "heading_index": 485,
+                "line_number": 2557,
+                "children": []
+              },
+              {
+                "title": "（2） 按担保物类别",
+                "level": 4,
+                "heading_index": 486,
+                "line_number": 2563,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "9、 存货",
+            "level": 3,
+            "heading_index": 487,
+            "line_number": 2567,
+            "children": [
+              {
+                "title": "(1).存货分类",
+                "level": 4,
+                "heading_index": 488,
+                "line_number": 2569,
+                "children": []
+              },
+              {
+                "title": "(2).确认为存货的数据资源",
+                "level": 4,
+                "heading_index": 489,
+                "line_number": 2577,
+                "children": []
+              },
+              {
+                "title": "(3).存货跌价准备及合同履约成本减值准备",
+                "level": 4,
+                "heading_index": 490,
+                "line_number": 2581,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "10、 一年内到期的非流动资产",
+            "level": 3,
+            "heading_index": 491,
+            "line_number": 2589,
+            "children": [
+              {
+                "title": "(1).一年内到期的债权投资情况",
+                "level": 4,
+                "heading_index": 492,
+                "line_number": 2601,
+                "children": []
+              },
+              {
+                "title": "(2).期末重要的一年内到期的债权投资",
+                "level": 4,
+                "heading_index": 493,
+                "line_number": 2617,
+                "children": []
+              },
+              {
+                "title": "(3).减值准备计提情况",
+                "level": 4,
+                "heading_index": 494,
+                "line_number": 2621,
+                "children": []
+              },
+              {
+                "title": "(4).本期实际核销的一年内到期的债权投资情况",
+                "level": 4,
+                "heading_index": 495,
+                "line_number": 2637,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "11、 其他流动资产",
+            "level": 3,
+            "heading_index": 496,
+            "line_number": 2653,
+            "children": []
+          },
+          {
+            "title": "12、 发放贷款和垫款",
+            "level": 3,
+            "heading_index": 497,
+            "line_number": 2661,
+            "children": []
+          },
+          {
+            "title": "13、 债权投资",
+            "level": 3,
+            "heading_index": 498,
+            "line_number": 2669,
+            "children": [
+              {
+                "title": "(1).债权投资情况",
+                "level": 4,
+                "heading_index": 499,
+                "line_number": 2671,
+                "children": []
+              },
+              {
+                "title": "(2).期末重要的债权投资",
+                "level": 4,
+                "heading_index": 500,
+                "line_number": 2687,
+                "children": []
+              },
+              {
+                "title": "(3).减值准备计提情况",
+                "level": 4,
+                "heading_index": 501,
+                "line_number": 2691,
+                "children": []
+              },
+              {
+                "title": "(4).本期实际的核销债权投资情况",
+                "level": 4,
+                "heading_index": 502,
+                "line_number": 2707,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "14、 其他非流动金融资产",
+            "level": 3,
+            "heading_index": 503,
+            "line_number": 2711,
+            "children": []
+          },
+          {
+            "title": "15、 投资性房地产",
+            "level": 3,
+            "heading_index": 504,
+            "line_number": 2727,
+            "children": [
+              {
+                "title": "(1).采用成本计量模式的投资性房地产",
+                "level": 4,
+                "heading_index": 505,
+                "line_number": 2731,
+                "children": []
+              },
+              {
+                "title": "(2).未办妥产权证书的投资性房地产情况",
+                "level": 4,
+                "heading_index": 506,
+                "line_number": 2737,
+                "children": []
+              },
+              {
+                "title": "(3).采用成本计量模式的投资性房地产的减值测试情况",
+                "level": 4,
+                "heading_index": 507,
+                "line_number": 2741,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "16、 固定资产",
+            "level": 3,
+            "heading_index": 508,
+            "line_number": 2745,
+            "children": [
+              {
+                "title": "(1).固定资产情况",
+                "level": 4,
+                "heading_index": 509,
+                "line_number": 2757,
+                "children": []
+              },
+              {
+                "title": "(2).暂时闲置的固定资产情况",
+                "level": 4,
+                "heading_index": 510,
+                "line_number": 2765,
+                "children": []
+              },
+              {
+                "title": "(3).未办妥产权证书的固定资产情况",
+                "level": 4,
+                "heading_index": 511,
+                "line_number": 2769,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "17、 在建工程",
+            "level": 3,
+            "heading_index": 512,
+            "line_number": 2777,
+            "children": [
+              {
+                "title": "(1).在建工程情况",
+                "level": 4,
+                "heading_index": 513,
+                "line_number": 2789,
+                "children": []
+              },
+              {
+                "title": "(2).重要在建工程项目本期变动情况",
+                "level": 4,
+                "heading_index": 514,
+                "line_number": 2797,
+                "children": []
+              },
+              {
+                "title": "(3).本期计提在建工程减值准备情况",
+                "level": 4,
+                "heading_index": 515,
+                "line_number": 2805,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "18、 使用权资产",
+            "level": 3,
+            "heading_index": 516,
+            "line_number": 2809,
+            "children": [
+              {
+                "title": "(1) 使用权资产情况",
+                "level": 4,
+                "heading_index": 517,
+                "line_number": 2811,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "19、 无形资产",
+            "level": 3,
+            "heading_index": 518,
+            "line_number": 2819,
+            "children": [
+              {
+                "title": "(1).无形资产情况",
+                "level": 4,
+                "heading_index": 519,
+                "line_number": 2821,
+                "children": []
+              },
+              {
+                "title": "(2).确认为无形资产的数据资源",
+                "level": 4,
+                "heading_index": 520,
+                "line_number": 2831,
+                "children": []
+              },
+              {
+                "title": "(3).未办妥产权证书的土地使用权情况",
+                "level": 4,
+                "heading_index": 521,
+                "line_number": 2835,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "20、 开发支出",
+            "level": 3,
+            "heading_index": 522,
+            "line_number": 2843,
+            "children": []
+          },
+          {
+            "title": "21、 长期待摊费用",
+            "level": 3,
+            "heading_index": 523,
+            "line_number": 2849,
+            "children": []
+          },
+          {
+            "title": "22、 递延所得税资产/ 递延所得税负债",
+            "level": 3,
+            "heading_index": 524,
+            "line_number": 2861,
+            "children": [
+              {
+                "title": "(1).未经抵销的递延所得税资产",
+                "level": 4,
+                "heading_index": 525,
+                "line_number": 2863,
+                "children": []
+              },
+              {
+                "title": "(2).未经抵销的递延所得税负债",
+                "level": 4,
+                "heading_index": 526,
+                "line_number": 2871,
+                "children": []
+              },
+              {
+                "title": "(3).以抵销后净额列示的递延所得税资产或负债",
+                "level": 4,
+                "heading_index": 527,
+                "line_number": 2879,
+                "children": []
+              },
+              {
+                "title": "(4).未确认递延所得税资产明细",
+                "level": 4,
+                "heading_index": 528,
+                "line_number": 2883,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "23、 其他非流动资产",
+            "level": 3,
+            "heading_index": 529,
+            "line_number": 2887,
+            "children": []
+          },
+          {
+            "title": "24、 所有权或使用权受限资产",
+            "level": 3,
+            "heading_index": 530,
+            "line_number": 2895,
+            "children": []
+          },
+          {
+            "title": "25、 应付账款",
+            "level": 3,
+            "heading_index": 531,
+            "line_number": 2903,
+            "children": [
+              {
+                "title": "(1).应付账款列示",
+                "level": 4,
+                "heading_index": 532,
+                "line_number": 2905,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "26、 合同负债",
+            "level": 3,
+            "heading_index": 533,
+            "line_number": 2913,
+            "children": [
+              {
+                "title": "(1).合同负债情况",
+                "level": 4,
+                "heading_index": 534,
+                "line_number": 2915,
+                "children": []
+              },
+              {
+                "title": "(2).账龄超过1年的重要合同负债",
+                "level": 4,
+                "heading_index": 535,
+                "line_number": 2923,
+                "children": []
+              },
+              {
+                "title": "(3).报告期内账面价值发生重大变动的金额和原因",
+                "level": 4,
+                "heading_index": 536,
+                "line_number": 2927,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "27、 吸收存款及同业存放",
+            "level": 3,
+            "heading_index": 537,
+            "line_number": 2931,
+            "children": []
+          },
+          {
+            "title": "28、 应付职工薪酬",
+            "level": 3,
+            "heading_index": 538,
+            "line_number": 2937,
+            "children": [
+              {
+                "title": "(1).应付职工薪酬列示",
+                "level": 4,
+                "heading_index": 539,
+                "line_number": 2939,
+                "children": []
+              },
+              {
+                "title": "(2).短期薪酬列示",
+                "level": 4,
+                "heading_index": 540,
+                "line_number": 2947,
+                "children": []
+              },
+              {
+                "title": "(3).设定提存计划列示",
+                "level": 4,
+                "heading_index": 541,
+                "line_number": 2955,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "29、 应交税费",
+            "level": 3,
+            "heading_index": 542,
+            "line_number": 2963,
+            "children": []
+          },
+          {
+            "title": "30、 其他应付款",
+            "level": 3,
+            "heading_index": 543,
+            "line_number": 2971,
+            "children": [
+              {
+                "title": "(1).项目列示",
+                "level": 4,
+                "heading_index": 544,
+                "line_number": 2973,
+                "children": []
+              },
+              {
+                "title": "(2).其他应付款",
+                "level": 4,
+                "heading_index": 545,
+                "line_number": 2981,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "31、 1 年内到期的非流动负债",
+            "level": 3,
+            "heading_index": 546,
+            "line_number": 2995,
+            "children": []
+          },
+          {
+            "title": "32、 其他流动负债",
+            "level": 3,
+            "heading_index": 547,
+            "line_number": 3003,
+            "children": []
+          },
+          {
+            "title": "33、 租赁负债",
+            "level": 3,
+            "heading_index": 548,
+            "line_number": 3013,
+            "children": []
+          },
+          {
+            "title": "34、 股本",
+            "level": 3,
+            "heading_index": 549,
+            "line_number": 3021,
+            "children": []
+          },
+          {
+            "title": "35、 资本公积",
+            "level": 3,
+            "heading_index": 550,
+            "line_number": 3029,
+            "children": []
+          },
+          {
+            "title": "36、 其他综合收益",
+            "level": 3,
+            "heading_index": 551,
+            "line_number": 3037,
+            "children": []
+          },
+          {
+            "title": "37、 盈余公积",
+            "level": 3,
+            "heading_index": 552,
+            "line_number": 3045,
+            "children": []
+          },
+          {
+            "title": "38、 一般风险准备",
+            "level": 3,
+            "heading_index": 553,
+            "line_number": 3053,
+            "children": []
+          },
+          {
+            "title": "39、 未分配利润",
+            "level": 3,
+            "heading_index": 554,
+            "line_number": 3061,
+            "children": []
+          },
+          {
+            "title": "40、 营业收入和营业成本",
+            "level": 3,
+            "heading_index": 555,
+            "line_number": 3069,
+            "children": [
+              {
+                "title": "(1).营业收入和营业成本情况",
+                "level": 4,
+                "heading_index": 556,
+                "line_number": 3071,
+                "children": []
+              },
+              {
+                "title": "(2).营业收入、营业成本的分解信息",
+                "level": 4,
+                "heading_index": 557,
+                "line_number": 3081,
+                "children": []
+              },
+              {
+                "title": "(3).履约义务的说明",
+                "level": 4,
+                "heading_index": 558,
+                "line_number": 3089,
+                "children": []
+              },
+              {
+                "title": "(4).分摊至剩余履约义务的说明",
+                "level": 4,
+                "heading_index": 559,
+                "line_number": 3095,
+                "children": []
+              },
+              {
+                "title": "(5).重大合同变更或重大交易价格调整",
+                "level": 4,
+                "heading_index": 560,
+                "line_number": 3105,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "41、 利息收入、利息支出、手续费及佣金收入及手续费及佣金支出",
+            "level": 3,
+            "heading_index": 561,
+            "line_number": 3109,
+            "children": []
+          },
+          {
+            "title": "42、 税金及附加",
+            "level": 3,
+            "heading_index": 562,
+            "line_number": 3115,
+            "children": []
+          },
+          {
+            "title": "43、 销售费用",
+            "level": 3,
+            "heading_index": 563,
+            "line_number": 3123,
+            "children": []
+          },
+          {
+            "title": "44、 管理费用",
+            "level": 3,
+            "heading_index": 564,
+            "line_number": 3131,
+            "children": []
+          },
+          {
+            "title": "45、 研发费用",
+            "level": 3,
+            "heading_index": 565,
+            "line_number": 3139,
+            "children": []
+          },
+          {
+            "title": "46、 财务费用",
+            "level": 3,
+            "heading_index": 566,
+            "line_number": 3147,
+            "children": []
+          },
+          {
+            "title": "47、 其他收益",
+            "level": 3,
+            "heading_index": 567,
+            "line_number": 3155,
+            "children": []
+          },
+          {
+            "title": "48、 投资收益",
+            "level": 3,
+            "heading_index": 568,
+            "line_number": 3163,
+            "children": []
+          },
+          {
+            "title": "49、 公允价值变动收益",
+            "level": 3,
+            "heading_index": 569,
+            "line_number": 3171,
+            "children": []
+          },
+          {
+            "title": "50、 信用减值损失",
+            "level": 3,
+            "heading_index": 570,
+            "line_number": 3179,
+            "children": []
+          },
+          {
+            "title": "51、 资产处置收益",
+            "level": 3,
+            "heading_index": 571,
+            "line_number": 3187,
+            "children": []
+          },
+          {
+            "title": "52、 营业外收入",
+            "level": 3,
+            "heading_index": 572,
+            "line_number": 3195,
+            "children": []
+          },
+          {
+            "title": "53、 营业外支出",
+            "level": 3,
+            "heading_index": 573,
+            "line_number": 3205,
+            "children": []
+          },
+          {
+            "title": "54、 所得税费用",
+            "level": 3,
+            "heading_index": 574,
+            "line_number": 3213,
+            "children": [
+              {
+                "title": "(1).所得税费用表",
+                "level": 4,
+                "heading_index": 575,
+                "line_number": 3215,
+                "children": []
+              },
+              {
+                "title": "(2).会计利润与所得税费用调整过程",
+                "level": 4,
+                "heading_index": 576,
+                "line_number": 3223,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "55、 其他综合收益",
+            "level": 3,
+            "heading_index": 577,
+            "line_number": 3231,
+            "children": []
+          },
+          {
+            "title": "56、 现金流量表项目",
+            "level": 3,
+            "heading_index": 578,
+            "line_number": 3237,
+            "children": [
+              {
+                "title": "(1).与经营活动有关的现金",
+                "level": 4,
+                "heading_index": 579,
+                "line_number": 3239,
+                "children": []
+              },
+              {
+                "title": "(2).与投资活动有关的现金",
+                "level": 4,
+                "heading_index": 580,
+                "line_number": 3257,
+                "children": []
+              },
+              {
+                "title": "(3).与筹资活动有关的现金",
+                "level": 4,
+                "heading_index": 581,
+                "line_number": 3291,
+                "children": []
+              },
+              {
+                "title": "(4).以净额列报现金流量的说明",
+                "level": 4,
+                "heading_index": 582,
+                "line_number": 3313,
+                "children": []
+              },
+              {
+                "title": "(5).不涉及当期现金收支、但影响企业财务状况或在未来可能影响企业现金流量的重大活动及财务影响",
+                "level": 4,
+                "heading_index": 583,
+                "line_number": 3317,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "57、 金流量表补充资料",
+            "level": 3,
+            "heading_index": 584,
+            "line_number": 3321,
+            "children": [
+              {
+                "title": "(1).现金流量表补充资料",
+                "level": 4,
+                "heading_index": 585,
+                "line_number": 3323,
+                "children": []
+              },
+              {
+                "title": "(2).本期支付的取得子公司的现金净额",
+                "level": 4,
+                "heading_index": 586,
+                "line_number": 3331,
+                "children": []
+              },
+              {
+                "title": "(3).本期收到的处置子公司的现金净额",
+                "level": 4,
+                "heading_index": 587,
+                "line_number": 3335,
+                "children": []
+              },
+              {
+                "title": "(4).现金和现金等价物的构成",
+                "level": 4,
+                "heading_index": 588,
+                "line_number": 3339,
+                "children": []
+              },
+              {
+                "title": "(5).使用范围受限但仍作为现金和现金等价物列示的情况",
+                "level": 4,
+                "heading_index": 589,
+                "line_number": 3347,
+                "children": []
+              },
+              {
+                "title": "(6).不属于现金及现金等价物的货币资金",
+                "level": 4,
+                "heading_index": 590,
+                "line_number": 3351,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "58、 所有者权益变动表项目注释",
+            "level": 3,
+            "heading_index": 591,
+            "line_number": 3359,
+            "children": []
+          },
+          {
+            "title": "59、 外币货币性项目",
+            "level": 3,
+            "heading_index": 592,
+            "line_number": 3365,
+            "children": [
+              {
+                "title": "(1).外币货币性项目",
+                "level": 4,
+                "heading_index": 593,
+                "line_number": 3367,
+                "children": []
+              },
+              {
+                "title": "(2).境外经营实体说明，包括对于重要的境外经营实体，应披露其境外主要经营地、记账本位币及选择依据，记账本位币发生变化的还应披露原因",
+                "level": 4,
+                "heading_index": 594,
+                "line_number": 3375,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "60、租赁",
+            "level": 3,
+            "heading_index": 595,
+            "line_number": 3381,
+            "children": [
+              {
+                "title": "(1) 作为承租人",
+                "level": 4,
+                "heading_index": 596,
+                "line_number": 3383,
+                "children": []
+              },
+              {
+                "title": "(2) 作为出租人",
+                "level": 4,
+                "heading_index": 597,
+                "line_number": 3399,
+                "children": []
+              },
+              {
+                "title": "(3) 作为生产商或经销商确认融资租赁销售损益",
+                "level": 4,
+                "heading_index": 598,
+                "line_number": 3423,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "61、 数据资源",
+            "level": 3,
+            "heading_index": 599,
+            "line_number": 3427,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "八、 研发支出",
+        "level": 2,
+        "heading_index": 600,
+        "line_number": 3431,
+        "children": [
+          {
+            "title": "1、 按费用性质列示",
+            "level": 3,
+            "heading_index": 601,
+            "line_number": 3433,
+            "children": []
+          },
+          {
+            "title": "2、 符合资本化条件的研发项目开发支出",
+            "level": 3,
+            "heading_index": 602,
+            "line_number": 3441,
+            "children": []
+          },
+          {
+            "title": "3、 重要的外购在研项目",
+            "level": 3,
+            "heading_index": 603,
+            "line_number": 3459,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "九、 合并范围的变更",
+        "level": 2,
+        "heading_index": 604,
+        "line_number": 3463,
+        "children": [
+          {
+            "title": "1、 非同一控制下企业合并",
+            "level": 3,
+            "heading_index": 605,
+            "line_number": 3465,
+            "children": []
+          },
+          {
+            "title": "2、 同一控制下企业合并",
+            "level": 3,
+            "heading_index": 606,
+            "line_number": 3469,
+            "children": []
+          },
+          {
+            "title": "3、 反向购买",
+            "level": 3,
+            "heading_index": 607,
+            "line_number": 3473,
+            "children": []
+          },
+          {
+            "title": "4、 处置子公司",
+            "level": 3,
+            "heading_index": 608,
+            "line_number": 3477,
+            "children": []
+          },
+          {
+            "title": "5、 其他原因的合并范围变动",
+            "level": 3,
+            "heading_index": 609,
+            "line_number": 3487,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "十、 在其他主体中的权益",
+        "level": 2,
+        "heading_index": 610,
+        "line_number": 3493,
+        "children": [
+          {
+            "title": "1、 在子公司中的权益",
+            "level": 3,
+            "heading_index": 611,
+            "line_number": 3495,
+            "children": [
+              {
+                "title": "(1).企业集团的构成",
+                "level": 4,
+                "heading_index": 612,
+                "line_number": 3497,
+                "children": []
+              },
+              {
+                "title": "(2).重要的非全资子公司",
+                "level": 4,
+                "heading_index": 613,
+                "line_number": 3509,
+                "children": []
+              },
+              {
+                "title": "(3).重要非全资子公司的主要财务信息",
+                "level": 4,
+                "heading_index": 614,
+                "line_number": 3521,
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "十一、 政府补助",
+        "level": 2,
+        "heading_index": 615,
+        "line_number": 3531,
+        "children": [
+          {
+            "title": "1、 报告期末按应收金额确认的政府补助",
+            "level": 3,
+            "heading_index": 616,
+            "line_number": 3533,
+            "children": []
+          },
+          {
+            "title": "2、 涉及政府补助的负债项目",
+            "level": 3,
+            "heading_index": 617,
+            "line_number": 3541,
+            "children": []
+          },
+          {
+            "title": "3、 计入当期损益的政府补助",
+            "level": 3,
+            "heading_index": 618,
+            "line_number": 3545,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "十二、 与金融工具相关的风险",
+        "level": 2,
+        "heading_index": 619,
+        "line_number": 3553,
+        "children": [
+          {
+            "title": "1、 金融工具的风险",
+            "level": 3,
+            "heading_index": 620,
+            "line_number": 3555,
+            "children": [
+              {
+                "title": "（1）信用风险",
+                "level": 4,
+                "heading_index": 621,
+                "line_number": 3563,
+                "children": []
+              },
+              {
+                "title": "（2）流动性风险",
+                "level": 4,
+                "heading_index": 622,
+                "line_number": 3569,
+                "children": []
+              },
+              {
+                "title": "（3）汇率风险",
+                "level": 4,
+                "heading_index": 623,
+                "line_number": 3575,
+                "children": []
+              },
+              {
+                "title": "（4）利率风险",
+                "level": 4,
+                "heading_index": 624,
+                "line_number": 3579,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "2、 套期",
+            "level": 3,
+            "heading_index": 625,
+            "line_number": 3583,
+            "children": [
+              {
+                "title": "(1) 公司开展套期业务进行风险管理",
+                "level": 4,
+                "heading_index": 626,
+                "line_number": 3585,
+                "children": []
+              },
+              {
+                "title": "(2) 公司开展符合条件套期业务并应用套期会计",
+                "level": 4,
+                "heading_index": 627,
+                "line_number": 3593,
+                "children": []
+              },
+              {
+                "title": "(3) 公司开展套期业务进行风险管理、预期能实现风险管理目标但未应用套期会计",
+                "level": 4,
+                "heading_index": 628,
+                "line_number": 3601,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "3、 金融资产转移",
+            "level": 3,
+            "heading_index": 629,
+            "line_number": 3609,
+            "children": [
+              {
+                "title": "(1) 转移方式分类",
+                "level": 4,
+                "heading_index": 630,
+                "line_number": 3611,
+                "children": []
+              },
+              {
+                "title": "(2) 因转移而终止确认的金融资产",
+                "level": 4,
+                "heading_index": 631,
+                "line_number": 3619,
+                "children": []
+              },
+              {
+                "title": "(3) 继续涉入的转移金融资产",
+                "level": 4,
+                "heading_index": 632,
+                "line_number": 3627,
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "十三、 公允价值的披露",
+        "level": 2,
+        "heading_index": 633,
+        "line_number": 3631,
+        "children": [
+          {
+            "title": "1、 以公允价值计量的资产和负债的期末公允价值",
+            "level": 3,
+            "heading_index": 634,
+            "line_number": 3633,
+            "children": []
+          },
+          {
+            "title": "2、 持续和非持续第一层次公允价值计量项目市价的确定依据",
+            "level": 3,
+            "heading_index": 635,
+            "line_number": 3641,
+            "children": []
+          },
+          {
+            "title": "3、 持续和非持续第二层次公允价值计量项目，采用的估值技术和重要参数的定性及定量信息",
+            "level": 3,
+            "heading_index": 636,
+            "line_number": 3647,
+            "children": []
+          },
+          {
+            "title": "4、 持续和非持续第三层次公允价值计量项目，采用的估值技术和重要参数的定性及定量信息",
+            "level": 3,
+            "heading_index": 637,
+            "line_number": 3651,
+            "children": []
+          },
+          {
+            "title": "5、 持续的第三层次公允价值计量项目，期初与期末账面价值间的调节信息及不可观察参数敏感性分析",
+            "level": 3,
+            "heading_index": 638,
+            "line_number": 3657,
+            "children": []
+          },
+          {
+            "title": "6、 持续的公允价值计量项目，本期内发生各层级之间转换的，转换的原因及确定转换时点的政策",
+            "level": 3,
+            "heading_index": 639,
+            "line_number": 3661,
+            "children": []
+          },
+          {
+            "title": "7、 本期内发生的估值技术变更及变更原因",
+            "level": 3,
+            "heading_index": 640,
+            "line_number": 3665,
+            "children": []
+          },
+          {
+            "title": "8、 不以公允价值计量的金融资产和金融负债的公允价值情况",
+            "level": 3,
+            "heading_index": 641,
+            "line_number": 3669,
+            "children": []
+          },
+          {
+            "title": "9、 其他",
+            "level": 3,
+            "heading_index": 642,
+            "line_number": 3675,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "十四、 关联方及关联交易",
+        "level": 2,
+        "heading_index": 643,
+        "line_number": 3679,
+        "children": [
+          {
+            "title": "1、 本企业的母公司情况",
+            "level": 3,
+            "heading_index": 644,
+            "line_number": 3681,
+            "children": []
+          },
+          {
+            "title": "2、 本企业的子公司情况",
+            "level": 3,
+            "heading_index": 645,
+            "line_number": 3691,
+            "children": []
+          },
+          {
+            "title": "3、 其他关联方情况",
+            "level": 3,
+            "heading_index": 646,
+            "line_number": 3699,
+            "children": [
+              {
+                "title": "(1)昌黎茅台葡萄酒经贸有限公司系贵州茅台酒厂(集团)昌黎葡萄酒业有限公司的全资子公司；",
+                "level": 4,
+                "heading_index": 647,
+                "line_number": 3706,
+                "children": []
+              },
+              {
+                "title": "(2)上海茅台贸易有限公司系上海贵州茅台实业有限公司的全资子公司；",
+                "level": 4,
+                "heading_index": 648,
+                "line_number": 3707,
+                "children": []
+              },
+              {
+                "title": "(3)贵州富明行包装有限公司系贵州茅台酒厂（集团）技术开发有限公司的控股子公司；",
+                "level": 4,
+                "heading_index": 649,
+                "line_number": 3708,
+                "children": []
+              },
+              {
+                "title": "(4)贵州恒道丹林农业科技开发有限公司系贵州茅台（集团）生态农业产业发展有限公司控股子公司；",
+                "level": 4,
+                "heading_index": 650,
+                "line_number": 3709,
+                "children": []
+              },
+              {
+                "title": "(5)贵州久远物业有限公司系中国贵州茅台酒厂（集团）文化旅游有限责任公司的控股子公司；",
+                "level": 4,
+                "heading_index": 651,
+                "line_number": 3711,
+                "children": []
+              },
+              {
+                "title": "(6)贵州茅台（集团）国际旅行社有限公司系中国贵州茅台酒厂（集团）文化旅游有限责任公司的全资子公司；",
+                "level": 4,
+                "heading_index": 652,
+                "line_number": 3712,
+                "children": []
+              },
+              {
+                "title": "(7)贵州茅台醇营销公司系贵州茅台酒厂（集团）技术开发有限公司的全资子公司；",
+                "level": 4,
+                "heading_index": 653,
+                "line_number": 3713,
+                "children": []
+              },
+              {
+                "title": "(8)贵州茅台集团健康产业有限公司系贵州茅台酒厂(集团)保健酒业有限责任公司的控股子公司；",
+                "level": 4,
+                "heading_index": 654,
+                "line_number": 3714,
+                "children": []
+              },
+              {
+                "title": "(9)贵州茅台酒厂（集团）保健酒业销售有限公司系贵州茅台酒厂（集团）保健酒业有限公司的全资子公司；",
+                "level": 4,
+                "heading_index": 655,
+                "line_number": 3715,
+                "children": []
+              },
+              {
+                "title": "(10)贵州茅台酒厂（集团）贵阳高新置业投资发展有限公司系贵州茅台酒厂（集团）置业投资发展有限公司的全资子公司；",
+                "level": 4,
+                "heading_index": 656,
+                "line_number": 3716,
+                "children": []
+              },
+              {
+                "title": "(11)贵州茅台酒厂（集团）三亚投资实业有限公司系贵州茅台酒厂（集团）置业投资发展有限公司全资子公司；",
+                "level": 4,
+                "heading_index": 657,
+                "line_number": 3717,
+                "children": []
+              },
+              {
+                "title": "(12)贵州茅台生态农业销售有限责任公司系贵州茅台（集团）生态农业产业发展有限公司全资子公司；",
+                "level": 4,
+                "heading_index": 658,
+                "line_number": 3718,
+                "children": []
+              },
+              {
+                "title": "(13)贵州茅台物流园区粮食收储有限公司系贵州茅台酒厂（集团）物流有限责任公司的控股子公司；",
+                "level": 4,
+                "heading_index": 659,
+                "line_number": 3719,
+                "children": []
+              },
+              {
+                "title": "(14)贵州省仁怀市申仁包装印务有限责任公司系贵州茅台酒厂（集团）技术开发有限公司的控股子公司；",
+                "level": 4,
+                "heading_index": 660,
+                "line_number": 3720,
+                "children": []
+              },
+              {
+                "title": "(15)贵州新华羲玻璃有限责任公司系贵州茅台酒厂（集团）技术开发有限公司的控股子公司；",
+                "level": 4,
+                "heading_index": 661,
+                "line_number": 3721,
+                "children": []
+              },
+              {
+                "title": "(16)上海仁彩印务有限公司系贵州茅台酒厂（集团）技术开发有限公司的联营企业；",
+                "level": 4,
+                "heading_index": 662,
+                "line_number": 3722,
+                "children": []
+              },
+              {
+                "title": "(17)贵州遵义茅台机场空港生态园区投资开发有限责任公司系贵州遵义茅台机场有限责任公司的全资子公司；",
+                "level": 4,
+                "heading_index": 663,
+                "line_number": 3723,
+                "children": []
+              },
+              {
+                "title": "(18)珠海经济特区龙狮瓶盖有限公司系贵州茅台酒厂（集团）技术开发有限公司的控股子公司；",
+                "level": 4,
+                "heading_index": 664,
+                "line_number": 3724,
+                "children": []
+              },
+              {
+                "title": "(19)贵阳贵银金融租赁有限责任公司系母公司的联营企业；",
+                "level": 4,
+                "heading_index": 665,
+                "line_number": 3725,
+                "children": []
+              },
+              {
+                "title": "(20)贵州银行股份有限公司系母公司的联营企业；",
+                "level": 4,
+                "heading_index": 666,
+                "line_number": 3726,
+                "children": []
+              },
+              {
+                "title": "(21)贵州尊朋酒业有限公司系贵州茅台酒厂（集团）循环经济产业投资开发有限公司的控股子公司；",
+                "level": 4,
+                "heading_index": 667,
+                "line_number": 3727,
+                "children": []
+              },
+              {
+                "title": "(22)贵州茅台酒厂（集团）贵定晶琪玻璃制品有限公司系贵州茅台酒厂（集团）技术开发有限公司全资子公司；",
+                "level": 4,
+                "heading_index": 668,
+                "line_number": 3728,
+                "children": []
+              },
+              {
+                "title": "(23)贵州茅台酒厂（集团）绿生有机肥有限责任公司系贵州茅台酒厂（集团）循环经济产业投资开发有限公司控股子公司；",
+                "level": 4,
+                "heading_index": 669,
+                "line_number": 3729,
+                "children": []
+              },
+              {
+                "title": "(24)贵州省仁怀市仁帅酒业有限公司系贵州茅台酒厂（集团）保健酒业有限公司全资子公司；",
+                "level": 4,
+                "heading_index": 670,
+                "line_number": 3730,
+                "children": []
+              },
+              {
+                "title": "(25)巽风科技（贵州）有限公司系中国贵州茅台酒厂（集团）文化旅游有限责任公司的控股子公司；",
+                "level": 4,
+                "heading_index": 671,
+                "line_number": 3731,
+                "children": []
+              },
+              {
+                "title": "(26)贵州茅台医院系母公司全资设立的事业单位；",
+                "level": 4,
+                "heading_index": 672,
+                "line_number": 3732,
+                "children": []
+              },
+              {
+                "title": "(27)茅台学院系母公司全资设立的事业单位；",
+                "level": 4,
+                "heading_index": 673,
+                "line_number": 3733,
+                "children": []
+              },
+              {
+                "title": "(28)贵州双龙飞天供应链管理有限公司系贵州茅台酒厂（集团）物流有限责任公司的全资子公司；",
+                "level": 4,
+                "heading_index": 674,
+                "line_number": 3734,
+                "children": []
+              },
+              {
+                "title": "(29)贵州仁怀龙狮瓶盖有限公司系珠海经济特区龙狮瓶盖有限公司的全资子公司；",
+                "level": 4,
+                "heading_index": 675,
+                "line_number": 3735,
+                "children": []
+              },
+              {
+                "title": "(30)贵州尊朋酒业销售有限公司系贵州尊朋酒业有限公司的全资子公司；",
+                "level": 4,
+                "heading_index": 676,
+                "line_number": 3736,
+                "children": []
+              },
+              {
+                "title": "(31)贵州茅台集团健康产业销售有限公司系贵州茅台集团健康产业有限公司的全资子公司。",
+                "level": 4,
+                "heading_index": 677,
+                "line_number": 3737,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "4、 关联交易情况",
+            "level": 3,
+            "heading_index": 678,
+            "line_number": 3739,
+            "children": [
+              {
+                "title": "(1).购销商品、提供和接受劳务的关联交易",
+                "level": 4,
+                "heading_index": 679,
+                "line_number": 3741,
+                "children": []
+              },
+              {
+                "title": "(2).关联受托管理/承包及委托管理/出包情况",
+                "level": 4,
+                "heading_index": 680,
+                "line_number": 3759,
+                "children": []
+              },
+              {
+                "title": "(3).关联租赁情况",
+                "level": 4,
+                "heading_index": 681,
+                "line_number": 3781,
+                "children": []
+              },
+              {
+                "title": "(4).关联担保情况",
+                "level": 4,
+                "heading_index": 682,
+                "line_number": 3803,
+                "children": []
+              },
+              {
+                "title": "(5).关联方资金拆借",
+                "level": 4,
+                "heading_index": 683,
+                "line_number": 3817,
+                "children": []
+              },
+              {
+                "title": "(6).关联方资产转让、债务重组情况",
+                "level": 4,
+                "heading_index": 684,
+                "line_number": 3821,
+                "children": []
+              },
+              {
+                "title": "(7).关键管理人员报酬",
+                "level": 4,
+                "heading_index": 685,
+                "line_number": 3825,
+                "children": []
+              },
+              {
+                "title": "(8).其他关联交易",
+                "level": 4,
+                "heading_index": 686,
+                "line_number": 3829,
+                "children": [
+                  {
+                    "title": "A. 公司控股子公司贵州茅台集团财务有限公司与关联方开展存款、贷款、贴现及保函业务“吸收存款及同业存放”为各关联方在贵州茅台集团财务有限公司的存款余额及应计利息；“利息支出”为贵州茅台集团财务有限公司向关联方应付的存款利息；“利息收入”为贵州茅台集团财务有限公司向关联方提供贷款业务按照规定收取的利息；“发放贷款及垫款”为贵州茅台集团财务有限公司向关联方提供贷款余额。(单位：元 币种：人民币)",
+                    "level": 5,
+                    "heading_index": 687,
+                    "line_number": 3833,
+                    "children": [
+                      {
+                        "title": "a.吸收存款及同业存放",
+                        "level": 6,
+                        "heading_index": 688,
+                        "line_number": 3835,
+                        "children": []
+                      },
+                      {
+                        "title": "b.利息支出",
+                        "level": 6,
+                        "heading_index": 689,
+                        "line_number": 3839,
+                        "children": []
+                      },
+                      {
+                        "title": "c.发放贷款及垫款",
+                        "level": 6,
+                        "heading_index": 690,
+                        "line_number": 3843,
+                        "children": []
+                      },
+                      {
+                        "title": "d.利息收入",
+                        "level": 6,
+                        "heading_index": 691,
+                        "line_number": 3847,
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "title": "B.公司在贵州银行的期末存款余额为 1,673,482.12万元，本期利息收入为59,998.03 万元。公司控股子公司贵州茅台集团财务有限公司本期到期赎回从公开市场申购贵州银行有限公司发行的债券本金 10,000.00 万元，本期确认利息收入 1,678.85 万元。截止期末，该债权投资本金余额40,000.00 万元，债券投资减值准备余额 10.21 万元，应计利息余额 614.05 万元，账面价值",
+                    "level": 5,
+                    "heading_index": 692,
+                    "line_number": 3851,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "5、 应收、应付关联方等未结算项目情况",
+            "level": 3,
+            "heading_index": 693,
+            "line_number": 3855,
+            "children": [
+              {
+                "title": "(1).应收项目",
+                "level": 4,
+                "heading_index": 694,
+                "line_number": 3857,
+                "children": [
+                  {
+                    "title": "A.巽风科技（贵州）有限公司应收账款是由于贵州茅台酒销售有限公司通过巽风平台销售，平台系统采用 $\\mathrm { T } { + } \\mathrm { 7 }$ 模式进行货款结算形成的；",
+                    "level": 5,
+                    "heading_index": 695,
+                    "line_number": 3867,
+                    "children": []
+                  },
+                  {
+                    "title": "B.贵州茅台酒厂(集团)贵阳高新置业投资发展有限公司其他应收款是贵州茅台酒销售有限公司和贵州茅台酒进出口有限责任公司支付的租房保证金；",
+                    "level": 5,
+                    "heading_index": 696,
+                    "line_number": 3868,
+                    "children": []
+                  },
+                  {
+                    "title": "C.贵州茅台酒厂(集团)保健酒业销售有限公司的其他应收款为公司控股子公司北京友谊使者商贸有限公司的合同履约保证金；",
+                    "level": 5,
+                    "heading_index": 697,
+                    "line_number": 3869,
+                    "children": []
+                  },
+                  {
+                    "title": "D.昌黎茅台葡萄酒经贸有限公司的其他应收款为公司控股子公司北京友谊使者商贸有限公司的合同履约保证金；",
+                    "level": 5,
+                    "heading_index": 698,
+                    "line_number": 3870,
+                    "children": []
+                  },
+                  {
+                    "title": "E.贵州茅台生态农业销售有限责任公司的其他应收款为公司控股子公司北京友谊使者商贸有限公司的合同履约保证金；",
+                    "level": 5,
+                    "heading_index": 699,
+                    "line_number": 3871,
+                    "children": []
+                  },
+                  {
+                    "title": "F.中国贵州茅台酒厂（集团）有限责任公司其他应收款是贵州茅台酒股份有限公司和义兴酒业分公司的餐饮应收款；",
+                    "level": 5,
+                    "heading_index": 700,
+                    "line_number": 3872,
+                    "children": []
+                  },
+                  {
+                    "title": "G.贵州茅台酒厂(集团)保健酒业销售有限公司的预付账款为公司控股子公司北京友谊使者商贸有限公司的预付货款。",
+                    "level": 5,
+                    "heading_index": 701,
+                    "line_number": 3873,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "title": "(2).应付项目",
+                "level": 4,
+                "heading_index": 702,
+                "line_number": 3875,
+                "children": []
+              },
+              {
+                "title": "(3).其他项目",
+                "level": 4,
+                "heading_index": 703,
+                "line_number": 3883,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "6、 关联方承诺",
+            "level": 3,
+            "heading_index": 704,
+            "line_number": 3887,
+            "children": []
+          },
+          {
+            "title": "7、 其他",
+            "level": 3,
+            "heading_index": 705,
+            "line_number": 3893,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "十五、 承诺及或有事项",
+        "level": 2,
+        "heading_index": 706,
+        "line_number": 3897,
+        "children": [
+          {
+            "title": "1、 重要承诺事项",
+            "level": 3,
+            "heading_index": 707,
+            "line_number": 3899,
+            "children": []
+          },
+          {
+            "title": "2、 或有事项",
+            "level": 3,
+            "heading_index": 708,
+            "line_number": 3913,
+            "children": [
+              {
+                "title": "(1).资产负债表日存在的重要或有事项",
+                "level": 4,
+                "heading_index": 709,
+                "line_number": 3915,
+                "children": []
+              },
+              {
+                "title": "(2).公司没有需要披露的重要或有事项，也应予以说明：",
+                "level": 4,
+                "heading_index": 710,
+                "line_number": 3919,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "3、 其他",
+            "level": 3,
+            "heading_index": 711,
+            "line_number": 3923,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "十六、 资产负债表日后事项",
+        "level": 2,
+        "heading_index": 712,
+        "line_number": 3927,
+        "children": [
+          {
+            "title": "1、 重要的非调整事项",
+            "level": 3,
+            "heading_index": 713,
+            "line_number": 3929,
+            "children": []
+          },
+          {
+            "title": "2、 利润分配情况",
+            "level": 3,
+            "heading_index": 714,
+            "line_number": 3933,
+            "children": []
+          },
+          {
+            "title": "3、 销售退回",
+            "level": 3,
+            "heading_index": 715,
+            "line_number": 3941,
+            "children": []
+          },
+          {
+            "title": "4、 其他资产负债表日后事项说明",
+            "level": 3,
+            "heading_index": 716,
+            "line_number": 3945,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "十七、 其他重要事项",
+        "level": 2,
+        "heading_index": 717,
+        "line_number": 3949,
+        "children": [
+          {
+            "title": "1、 其他对投资者决策有影响的重要交易和事项",
+            "level": 3,
+            "heading_index": 718,
+            "line_number": 3951,
+            "children": []
+          },
+          {
+            "title": "2、 其他",
+            "level": 3,
+            "heading_index": 719,
+            "line_number": 3961,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "十八、 母公司财务报表主要项目注释",
+        "level": 2,
+        "heading_index": 720,
+        "line_number": 3965,
+        "children": [
+          {
+            "title": "1、 应收账款",
+            "level": 3,
+            "heading_index": 721,
+            "line_number": 3967,
+            "children": [
+              {
+                "title": "(1).按账龄披露",
+                "level": 4,
+                "heading_index": 722,
+                "line_number": 3969,
+                "children": []
+              },
+              {
+                "title": "(2).按坏账计提方法分类披露",
+                "level": 4,
+                "heading_index": 723,
+                "line_number": 3977,
+                "children": []
+              },
+              {
+                "title": "(3).按欠款方归集的期末余额前五名的应收账款和合同资产情况",
+                "level": 4,
+                "heading_index": 724,
+                "line_number": 3999,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "2、 其他应收款",
+            "level": 3,
+            "heading_index": 725,
+            "line_number": 4007,
+            "children": [
+              {
+                "title": "(1).按账龄披露",
+                "level": 4,
+                "heading_index": 726,
+                "line_number": 4019,
+                "children": []
+              },
+              {
+                "title": "(2).按款项性质分类情况",
+                "level": 4,
+                "heading_index": 727,
+                "line_number": 4027,
+                "children": []
+              },
+              {
+                "title": "(3).坏账准备计提情况",
+                "level": 4,
+                "heading_index": 728,
+                "line_number": 4035,
+                "children": []
+              },
+              {
+                "title": "(4).坏账准备的情况",
+                "level": 4,
+                "heading_index": 729,
+                "line_number": 4051,
+                "children": []
+              },
+              {
+                "title": "(5).本期实际核销的其他应收款情况",
+                "level": 4,
+                "heading_index": 730,
+                "line_number": 4063,
+                "children": []
+              },
+              {
+                "title": "(6).按欠款方归集的期末余额前五名的其他应收款情况",
+                "level": 4,
+                "heading_index": 731,
+                "line_number": 4079,
+                "children": [
+                  {
+                    "title": "A.中铁二十二局集团有限公司应收款为贵州茅台酒股份有限公司和义兴酒业分公司垫付新寨、大地生产区水电费。",
+                    "level": 5,
+                    "heading_index": 732,
+                    "line_number": 4087,
+                    "children": []
+                  },
+                  {
+                    "title": "B.罗盟为公司职员，款项为办理诉讼及市场维权借款。",
+                    "level": 5,
+                    "heading_index": 733,
+                    "line_number": 4088,
+                    "children": []
+                  },
+                  {
+                    "title": "C.焦元全为公司职员，款项为办理诉讼及市场维权借款。",
+                    "level": 5,
+                    "heading_index": 734,
+                    "line_number": 4089,
+                    "children": []
+                  },
+                  {
+                    "title": "D.吴兰兰为公司职员，款项为办理公司车辆上户业务借款。",
+                    "level": 5,
+                    "heading_index": 735,
+                    "line_number": 4090,
+                    "children": []
+                  },
+                  {
+                    "title": "E.钟方园为公司职员，款项为办理诉讼及市场维权借款。",
+                    "level": 5,
+                    "heading_index": 736,
+                    "line_number": 4091,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "title": "(7).因资金集中管理而列报于其他应收款",
+                "level": 4,
+                "heading_index": 737,
+                "line_number": 4093,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "3、 长期股权投资",
+            "level": 3,
+            "heading_index": 738,
+            "line_number": 4097,
+            "children": [
+              {
+                "title": "(1). 对子公司投资",
+                "level": 4,
+                "heading_index": 739,
+                "line_number": 4105,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "4、 营业收入和营业成本",
+            "level": 3,
+            "heading_index": 740,
+            "line_number": 4113,
+            "children": [
+              {
+                "title": "(1). 营业收入和营业成本情况",
+                "level": 4,
+                "heading_index": 741,
+                "line_number": 4115,
+                "children": []
+              },
+              {
+                "title": "(2). 营业收入、营业成本的分解信息",
+                "level": 4,
+                "heading_index": 742,
+                "line_number": 4125,
+                "children": []
+              },
+              {
+                "title": "(3). 履约义务的说明",
+                "level": 4,
+                "heading_index": 743,
+                "line_number": 4133,
+                "children": []
+              },
+              {
+                "title": "(4). 分摊至剩余履约义务的说明",
+                "level": 4,
+                "heading_index": 744,
+                "line_number": 4139,
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "5、 投资收益",
+            "level": 3,
+            "heading_index": 745,
+            "line_number": 4148,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "十九、 补充资料",
+        "level": 2,
+        "heading_index": 746,
+        "line_number": 4156,
+        "children": [
+          {
+            "title": "1、 当期非经常性损益明细表",
+            "level": 3,
+            "heading_index": 747,
+            "line_number": 4158,
+            "children": []
+          },
+          {
+            "title": "2、 净资产收益率及每股收益",
+            "level": 3,
+            "heading_index": 748,
+            "line_number": 4170,
+            "children": []
+          },
+          {
+            "title": "3、 境内外会计准则下会计数据差异",
+            "level": 3,
+            "heading_index": 749,
+            "line_number": 4176,
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+]

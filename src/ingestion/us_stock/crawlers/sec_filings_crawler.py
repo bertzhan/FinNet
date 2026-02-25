@@ -51,7 +51,8 @@ class SECFilingsCrawler(BaseCrawler):
         enable_minio: bool = True,
         enable_postgres: bool = True,
         enable_quarantine: bool = True,
-        download_images: bool = True
+        download_images: bool = True,
+        force_recrawl: bool = False
     ):
         """
         初始化SEC财报爬虫
@@ -61,12 +62,14 @@ class SECFilingsCrawler(BaseCrawler):
             enable_postgres: 是否启用PostgreSQL记录
             enable_quarantine: 是否启用自动隔离
             download_images: 是否下载HTML中的图片（默认True）
+            force_recrawl: 强制重新爬取，忽略已存在记录并清理下游
         """
         super().__init__(
             market=Market.US_STOCK,
             enable_minio=enable_minio,
             enable_postgres=enable_postgres,
-            enable_quarantine=enable_quarantine
+            enable_quarantine=enable_quarantine,
+            force_recrawl=force_recrawl
         )
 
         self.download_images = download_images
@@ -233,6 +236,20 @@ class SECFilingsCrawler(BaseCrawler):
                     filename="document.htm"
                 )
 
+                # 6.1 force_recrawl：在上传前清理已有文档的 MinIO 和下游
+                source_url = html_url
+                if self.force_recrawl and self.enable_postgres and self.pg_client and self.minio_client:
+                    from src.storage.metadata import crud
+                    try:
+                        with self.pg_client.get_session() as session:
+                            existing_doc = crud.get_document_by_source_url(session, source_url)
+                            if existing_doc:
+                                crud.delete_document_minio_artifacts(self.minio_client, session, existing_doc.id)
+                                crud.delete_document_downstream_data(session, existing_doc.id)
+                                logger.info(f"force_recrawl: 已清理 {task.stock_code} {task.year} 的下游数据")
+                    except Exception as e:
+                        logger.warning(f"force_recrawl 清理失败: {e}", exc_info=True)
+
                 if self.enable_minio:
                     logger.info(f"上传HTML到MinIO: {minio_path}")
                     minio_metadata = self._prepare_us_minio_metadata(task, html_url)
@@ -261,9 +278,6 @@ class SECFilingsCrawler(BaseCrawler):
                 document_id = None
                 if self.enable_postgres:
                     from src.storage.metadata import crud
-
-                    # 构造source_url（包含accession_number用于去重）
-                    source_url = html_url
 
                     with self.pg_client.get_session() as session:
                         document_id = crud.create_or_update_document(
@@ -376,7 +390,6 @@ class SECFilingsCrawler(BaseCrawler):
                         url=full_url,
                         output_path=str(img_local_path)
                     )
-                    # 构建 artifact（build_image_replacement_mapping 需要 url, filename, local_path）
                     artifact = SimpleNamespace(
                         url=full_url,
                         filename=Path(full_url).name.split('?')[0],

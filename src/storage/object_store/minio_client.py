@@ -216,6 +216,34 @@ class MinIOClient(LoggerMixin):
             self.logger.error(f"删除失败: {object_name}, 错误: {e}")
             return False
 
+    def delete_objects_by_prefix(self, prefix: str) -> int:
+        """
+        按前缀删除所有对象（用于 force_recrawl 时清理 Bronze/Silver 层目录）
+
+        Args:
+            prefix: 对象路径前缀，如 "bronze/us_stock/KO/2025/FY/"
+
+        Returns:
+            删除的对象数量
+
+        Example:
+            >>> client = MinIOClient()
+            >>> client.delete_objects_by_prefix("bronze/us_stock/KO/2025/FY/")
+            5
+        """
+        count = 0
+        try:
+            objects = self.client.list_objects(self.bucket, prefix=prefix, recursive=True)
+            for obj in objects:
+                self.client.remove_object(self.bucket, obj.object_name)
+                count += 1
+            if count > 0:
+                self.logger.info(f"按前缀删除 {prefix} 共 {count} 个对象")
+            return count
+        except S3Error as e:
+            self.logger.error(f"按前缀删除失败: {prefix}, 错误: {e}")
+            return count
+
     def file_exists(self, object_name: str) -> bool:
         """
         检查文件是否存在

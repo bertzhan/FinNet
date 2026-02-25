@@ -6,6 +6,7 @@ CNINFO爬虫基类
 import os
 import tempfile
 import csv
+from datetime import datetime
 from typing import List, Optional, Tuple
 from pathlib import Path
 
@@ -173,9 +174,9 @@ class CninfoBaseCrawler(BaseCrawler):
             except Exception as e:
                 self.logger.warning(f"读取metadata文件失败: {e}")
 
-        # 按 source_url 检查是否已存在，若存在则跳过上传和创建
+        # 按 source_url 检查是否已存在，若存在则跳过上传和创建（force_recrawl 时不过滤）
         source_url = (task.metadata or {}).get("source_url") or (task.metadata or {}).get("doc_url") or (task.metadata or {}).get("pdf_url")
-        if source_url and self.enable_postgres and self.pg_client:
+        if not self.force_recrawl and source_url and self.enable_postgres and self.pg_client:
             try:
                 from src.storage.metadata import crud
                 with self.pg_client.get_session() as session:
@@ -223,6 +224,19 @@ class CninfoBaseCrawler(BaseCrawler):
             quarter = task.quarter
             filename = "document.pdf"
         
+        # force_recrawl：在上传前清理已有文档的 MinIO 和下游
+        if self.force_recrawl and source_url and self.enable_postgres and self.pg_client and self.minio_client:
+            try:
+                from src.storage.metadata import crud
+                with self.pg_client.get_session() as session:
+                    existing_doc = crud.get_document_by_source_url(session, source_url)
+                    if existing_doc:
+                        crud.delete_document_minio_artifacts(self.minio_client, session, existing_doc.id)
+                        crud.delete_document_downstream_data(session, existing_doc.id)
+                        self.logger.info(f"force_recrawl: 已清理 {task.stock_code} {task.year or 'IPO'} 的下游数据")
+            except Exception as e:
+                self.logger.warning(f"force_recrawl 清理失败: {e}", exc_info=True)
+
         # 生成 MinIO 路径
         # Q2（半年报）和 Q4（年报）不需要季度文件夹
         if quarter in [2, 4]:
@@ -313,9 +327,14 @@ class CninfoBaseCrawler(BaseCrawler):
                     source_url = (task.metadata or {}).get("source_url") or (task.metadata or {}).get("doc_url") or (task.metadata or {}).get("pdf_url")
                     if source_url:
                         existing_doc = crud.get_document_by_source_url(session, source_url)
-                        if existing_doc:
-                            self.logger.info(f"文档已存在（source_url）: id={existing_doc.id}，跳过创建")
-                            document_id = existing_doc.id
+                    if existing_doc:
+                        self.logger.info(f"文档已存在（source_url）: id={existing_doc.id}")
+                        if self.force_recrawl:
+                            existing_doc.file_size = file_size
+                            existing_doc.file_hash = file_hash
+                            existing_doc.crawled_at = datetime.now()
+                            session.flush()
+                        document_id = existing_doc.id
                     # 否则按 minio 路径检查
                     if document_id is None:
                         existing_doc = crud.get_document_by_path(session, minio_object_path)
