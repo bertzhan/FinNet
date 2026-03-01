@@ -27,6 +27,7 @@ erDiagram
         DateTime chunked_at "分块时间"
         DateTime vectorized_at "向量化时间"
         DateTime graphed_at "图谱化时间"
+        DateTime updated_at "更新时间"
         DateTime publish_date "发布日期"
         Text error_message "错误信息"
         Integer retry_count "重试次数"
@@ -58,6 +59,7 @@ erDiagram
         String structure_json_path "structure.json路径"
         String chunks_json_path "chunks.json路径"
         String content_json_hash "JSON哈希"
+        String markdown_hash "Markdown哈希"
         String source_document_hash "源文档哈希"
         String structure_json_hash "structure哈希"
         String chunks_json_hash "chunks哈希"
@@ -72,6 +74,7 @@ erDiagram
         Boolean has_images "含图片"
         String status "状态"
         DateTime parsed_at "解析时间"
+        DateTime updated_at "更新时间"
         DateTime chunked_at "分块时间"
     }
 
@@ -90,6 +93,7 @@ erDiagram
         BigInteger file_size "文件大小"
         String file_hash "文件哈希"
         DateTime created_at "创建时间"
+        DateTime extracted_at "提取时间"
     }
 
     ImageAnnotation {
@@ -101,10 +105,15 @@ erDiagram
         Float confidence "置信度"
         String annotator_type "标注者类型"
         String annotator_id "标注者ID"
+        String annotator_name "标注者名称"
         String status "状态"
+        String reviewed_by "审核人"
+        DateTime reviewed_at "审核时间"
         Text annotation_text "标注文本"
         JSON tags "标签"
+        JSON extra_metadata "元数据"
         DateTime created_at "创建时间"
+        DateTime updated_at "更新时间"
     }
 
     DocumentChunk {
@@ -123,6 +132,8 @@ erDiagram
         String status "向量化状态"
         String embedding_model "向量模型"
         DateTime vectorized_at "向量化时间"
+        Text vectorization_error "向量化错误"
+        Integer vectorization_retry_count "重试次数"
         DateTime es_indexed_at "ES索引时间"
         JSON extra_metadata "元数据"
     }
@@ -201,22 +212,20 @@ erDiagram
     %% ========================================
 
     ListedCompany {
-        String code PK "股票代码(A股)"
+        String org_id PK "机构ID(A股)"
+        String code "股票代码"
         String name "公司简称"
-        String org_id "机构ID"
         String org_name_cn "全称(中文)"
+        String org_short_name_cn "简称(中文)"
         String org_name_en "全称(英文)"
+        String org_short_name_en "简称(英文)"
+        String pre_name_cn "曾用名"
         Text main_operation_business "主营业务"
         Text operating_scope "经营范围"
-        String telephone "电话"
-        String email "邮箱"
-        String org_website "网站"
-        String reg_address_cn "注册地址"
-        String legal_representative "法定代表人"
+        Text org_cn_introduction "公司简介"
         String provincial_name "省份"
-        BigInteger established_date "成立日期"
-        BigInteger listed_date "上市日期"
-        Float reg_asset "注册资本"
+        Date established_date "成立日期"
+        Date listed_date "上市日期"
         Integer staff_num "员工人数"
         String industry_code "行业代码"
         String industry "行业名称"
@@ -225,26 +234,36 @@ erDiagram
     }
 
     HKListedCompany {
-        String code PK "股票代码(港股)"
+        Integer org_id PK "披露易orgId"
+        String code "股票代码"
         String name "公司名称"
         String org_name_cn "全称(中文)"
         String org_name_en "全称(英文)"
-        Integer org_id "披露易orgId"
-        String category "分类"
-        String sub_category "次分类"
+        String category "板块分类"
         Text org_cn_introduction "公司简介"
-        String telephone "电话"
-        String email "邮箱"
-        String org_website "网站"
-        String reg_location "注册地"
-        String chairman "董事长"
-        BigInteger established_date "成立日期"
-        BigInteger listed_date "上市日期"
+        Date established_date "成立日期"
+        Date listed_date "上市日期"
         Integer staff_num "员工人数"
-        String security_type "证券类型"
+        String fiscal_year_end "年结日"
+        String industry "所属行业"
         Boolean is_sh_hk_connect "沪港通"
         Boolean is_sz_hk_connect "深港通"
-        String industry "所属行业"
+        DateTime created_at "创建时间"
+        DateTime updated_at "更新时间"
+    }
+
+    USListedCompany {
+        String org_id PK "SEC CIK"
+        String code "主Ticker"
+        String tickers "所有Ticker"
+        String name "公司名称"
+        String entity_type "实体类型"
+        String sic "SIC行业代码"
+        String industry "行业描述"
+        String exchanges "交易所"
+        String fiscal_year_end "财年结束日"
+        String state_of_incorporation "注册州"
+        String state_of_incorporation_description "注册州描述"
         DateTime created_at "创建时间"
         DateTime updated_at "更新时间"
     }
@@ -291,8 +310,9 @@ Document (Bronze层 - 原始文档)
     ├── ValidationLog (数据验证)
     └── QuarantineRecord (隔离记录)
 
-ListedCompany (A股上市公司基础数据，表名 hs_listed_companies)
-HKListedCompany (港股上市公司基础数据，独立表)
+ListedCompany (A股上市公司，表名 hs_listed_companies)
+HKListedCompany (港股上市公司，表名 hk_listed_companies)
+USListedCompany (美股上市公司，表名 us_listed_companies)
 ```
 
 ### 外键关系汇总

@@ -37,38 +37,40 @@ OUTPUT_NAME = 'database_er_diagram'
 
 # 表的中文名映射
 TABLE_LABELS = {
-    'documents':          'Document\n(文档表 · Bronze层)',
-    'parse_tasks':        'ParseTask\n(解析任务表)',
-    'parsed_documents':   'ParsedDocument\n(解析文档表 · Silver层)',
-    'images':             'Image\n(图片元数据表)',
-    'image_annotations':  'ImageAnnotation\n(图片标注表)',
-    'document_chunks':    'DocumentChunk\n(文档分块表)',
-    'crawl_tasks':        'CrawlTask\n(爬取任务表)',
-    'embedding_tasks':    'EmbeddingTask\n(向量化任务表)',
-    'validation_logs':    'ValidationLog\n(验证日志表)',
-    'quarantine_records': 'QuarantineRecord\n(隔离记录表)',
-    'listed_companies':   'ListedCompany\n(A股上市公司表)',
+    'documents':           'Document\n(文档表 · Bronze层)',
+    'parse_tasks':         'ParseTask\n(解析任务表)',
+    'parsed_documents':    'ParsedDocument\n(解析文档表 · Silver层)',
+    'images':              'Image\n(图片元数据表)',
+    'image_annotations':   'ImageAnnotation\n(图片标注表)',
+    'document_chunks':     'DocumentChunk\n(文档分块表)',
+    'crawl_tasks':         'CrawlTask\n(爬取任务表)',
+    'embedding_tasks':     'EmbeddingTask\n(向量化任务表)',
+    'validation_logs':     'ValidationLog\n(验证日志表)',
+    'quarantine_records':  'QuarantineRecord\n(隔离记录表)',
+    'hs_listed_companies': 'ListedCompany\n(A股上市公司表)',
     'hk_listed_companies': 'HKListedCompany\n(港股上市公司表)',
+    'us_listed_companies': 'USListedCompany\n(美股上市公司表)',
 }
 
 # 表的颜色分组
 TABLE_COLORS = {
     # 核心文档流水线 - 蓝色系
-    'documents':          '#4A90D9',
-    'parse_tasks':        '#5BA0E0',
-    'parsed_documents':   '#6CB0E8',
-    'images':             '#7DC0F0',
-    'image_annotations':  '#8ED0F8',
-    'document_chunks':    '#5BA0E0',
+    'documents':           '#4A90D9',
+    'parse_tasks':         '#5BA0E0',
+    'parsed_documents':    '#6CB0E8',
+    'images':              '#7DC0F0',
+    'image_annotations':   '#8ED0F8',
+    'document_chunks':     '#5BA0E0',
     # 任务管理 - 绿色系
-    'crawl_tasks':        '#5CB85C',
-    'embedding_tasks':    '#6EC86E',
+    'crawl_tasks':         '#5CB85C',
+    'embedding_tasks':     '#6EC86E',
     # 数据质量 - 橙色系
-    'validation_logs':    '#F0AD4E',
-    'quarantine_records': '#EC971F',
+    'validation_logs':     '#F0AD4E',
+    'quarantine_records':  '#EC971F',
     # 基础数据 - 紫色系
-    'listed_companies':   '#9B59B6',
+    'hs_listed_companies': '#9B59B6',
     'hk_listed_companies': '#8E44AD',
+    'us_listed_companies': '#A569BD',
 }
 
 # 类型缩写映射
@@ -82,6 +84,7 @@ TYPE_SHORT = {
     'BOOLEAN':    'BOOL',
     'FLOAT':      'FLOAT',
     'DATETIME':   'DATETIME',
+    'DATE':       'DATE',
     'JSON':       'JSON',
 }
 
@@ -248,7 +251,7 @@ def generate_diagram():
     # 基础数据
     with dot.subgraph(name='cluster_base') as c:
         c.attr(label='上市公司基础数据', style='dashed', color='#9B59B6', fontcolor='#8E44AD', fontsize='13')
-        for tbl in ['listed_companies', 'hk_listed_companies']:
+        for tbl in ['hs_listed_companies', 'hk_listed_companies', 'us_listed_companies']:
             if tbl in tables_info:
                 info = tables_info[tbl]
                 html = build_table_html(tbl, info['columns'], info['pk_cols'], info['fk_cols'])

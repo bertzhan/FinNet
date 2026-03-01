@@ -240,9 +240,9 @@ digraph "FinNet Database ER Diagram" {
     <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
         <TR><TD COLSPAN="2" BGCOLOR="#9B59B6"><FONT COLOR="white"><B>ListedCompany</B></FONT></TD></TR>
         <TR><TD COLSPAN="2" BGCOLOR="#9B59B6AA"><FONT COLOR="white" POINT-SIZE="10">(A股上市公司表)</FONT></TD></TR>
-        <TR><TD ALIGN="LEFT" PORT="code">🔑 code</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="org_id">🔑 org_id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="code">code</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="name">name</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="org_id">org_id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="org_name_cn">org_name_cn</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="org_short_name_cn">org_short_name_cn</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="org_name_en">org_name_en</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
@@ -251,35 +251,10 @@ digraph "FinNet Database ER Diagram" {
 <TR><TD ALIGN="LEFT" PORT="main_operation_business">main_operation_business</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">TEXT · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="operating_scope">operating_scope</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">TEXT · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="org_cn_introduction">org_cn_introduction</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">TEXT · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="telephone">telephone</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="postcode">postcode</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="fax">fax</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="email">email</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="org_website">org_website</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="reg_address_cn">reg_address_cn</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="reg_address_en">reg_address_en</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="office_address_cn">office_address_cn</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="office_address_en">office_address_en</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="legal_representative">legal_representative</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="general_manager">general_manager</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="secretary">secretary</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="chairman">chairman</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="executives_nums">executives_nums</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="district_encode">district_encode</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="provincial_name">provincial_name</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="actual_controller">actual_controller</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="classi_name">classi_name</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="established_date">established_date</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">BIGINT · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="listed_date">listed_date</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">BIGINT · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="reg_asset">reg_asset</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">FLOAT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="established_date">established_date</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATE · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="listed_date">listed_date</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATE · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="staff_num">staff_num</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="actual_issue_vol">actual_issue_vol</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">FLOAT · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="issue_price">issue_price</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">FLOAT · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="actual_rc_net_amt">actual_rc_net_amt</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">FLOAT · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="pe_after_issuing">pe_after_issuing</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">FLOAT · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="online_success_rate_of_issue">online_success_rate_of_issue</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">FLOAT · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="currency_encode">currency_encode</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="currency">currency</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="industry_code">industry_code</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="industry">industry</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="created_at">created_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
@@ -290,51 +265,54 @@ digraph "FinNet Database ER Diagram" {
     <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
         <TR><TD COLSPAN="2" BGCOLOR="#8E44AD"><FONT COLOR="white"><B>HKListedCompany</B></FONT></TD></TR>
         <TR><TD COLSPAN="2" BGCOLOR="#8E44ADAA"><FONT COLOR="white" POINT-SIZE="10">(港股上市公司表)</FONT></TD></TR>
-        <TR><TD ALIGN="LEFT" PORT="code">🔑 code</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="org_id">🔑 org_id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="code">code</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="name">name</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="org_name_cn">org_name_cn</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="org_name_en">org_name_en</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="org_id">org_id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="category">category</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="sub_category">sub_category</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="org_cn_introduction">org_cn_introduction</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">TEXT · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="telephone">telephone</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="fax">fax</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="email">email</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="org_website">org_website</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="reg_location">reg_location</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="reg_address">reg_address</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="office_address_cn">office_address_cn</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="secretary">secretary</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="chairman">chairman</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="established_date">established_date</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">BIGINT · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="listed_date">listed_date</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">BIGINT · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="established_date">established_date</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATE · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="listed_date">listed_date</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATE · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="staff_num">staff_num</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="fiscal_year_end">fiscal_year_end</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="security_type">security_type</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="issue_price">issue_price</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">FLOAT · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="issue_amount">issue_amount</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">BIGINT · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="lot_size">lot_size</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">INT · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="par_value">par_value</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
-<TR><TD ALIGN="LEFT" PORT="isin">isin</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="industry">industry</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="is_sh_hk_connect">is_sh_hk_connect</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">BOOL · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="is_sz_hk_connect">is_sz_hk_connect</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">BOOL · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="created_at">created_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="updated_at">updated_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
+    </TABLE>
+    >]
+		us_listed_companies [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+        <TR><TD COLSPAN="2" BGCOLOR="#A569BD"><FONT COLOR="white"><B>USListedCompany</B></FONT></TD></TR>
+        <TR><TD COLSPAN="2" BGCOLOR="#A569BDAA"><FONT COLOR="white" POINT-SIZE="10">(美股上市公司表)</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT" PORT="org_id">🔑 org_id</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="code">code</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="tickers">tickers</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="name">name</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="entity_type">entity_type</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="sic">sic</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="industry">industry</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="exchanges">exchanges</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="fiscal_year_end">fiscal_year_end</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="state_of_incorporation">state_of_incorporation</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
+<TR><TD ALIGN="LEFT" PORT="state_of_incorporation_description">state_of_incorporation_description</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">STR · NULL</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="created_at">created_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
 <TR><TD ALIGN="LEFT" PORT="updated_at">updated_at</TD><TD ALIGN="LEFT"><FONT COLOR="#888888">DATETIME</FONT></TD></TR>
     </TABLE>
     >]
 	}
+	image_annotations:image_id -> images:id [label=image_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
+	embedding_tasks:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
 	parsed_documents:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
 	parsed_documents:parse_task_id -> parse_tasks:id [label=parse_task_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
-	document_chunks:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
-	embedding_tasks:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
-	image_annotations:image_id -> images:id [label=image_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
-	crawl_tasks:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#F39C12" dir=both penwidth=1.5 style=dashed]
-	validation_logs:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
-	quarantine_records:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
 	parse_tasks:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
 	images:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
 	images:parsed_document_id -> parsed_documents:id [label=parsed_document_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
+	document_chunks:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
+	crawl_tasks:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#F39C12" dir=both penwidth=1.5 style=dashed]
+	validation_logs:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
+	quarantine_records:document_id -> documents:id [label=document_id arrowhead=crow arrowtail=tee color="#E74C3C" dir=both penwidth=1.5 style=solid]
 	document_chunks:parent_chunk_id -> document_chunks:id [label=parent_chunk_id arrowhead=crow arrowtail=tee color="#9B59B6" dir=both penwidth=1.5 style=dotted]
 }
